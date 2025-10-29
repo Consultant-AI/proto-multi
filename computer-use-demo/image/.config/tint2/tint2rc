@@ -1,9 +1,9 @@
 #-------------------------------------
-# Panel
+# Panel - Modern UI Configuration
 panel_items = TL
-panel_size = 100% 60
+panel_size = 100% 64
 panel_margin = 0 0
-panel_padding = 2 0 2
+panel_padding = 4 0 4
 panel_background_id = 1
 wm_menu = 0
 panel_dock = 0
@@ -17,7 +17,7 @@ autohide_hide_timeout = 0.5
 autohide_height = 2
 strut_policy = follow_size
 panel_window_name = tint2
-disable_transparency = 1
+disable_transparency = 0
 mouse_effects = 1
 font_shadow = 0
 mouse_hover_icon_asb = 100 0 10
@@ -37,64 +37,127 @@ taskbar_hide_inactive_tasks = 0
 taskbar_hide_different_monitor = 0
 taskbar_hide_different_desktop = 0
 taskbar_always_show_all_desktop_tasks = 0
-taskbar_name_padding = 4 2
+taskbar_name_padding = 6 3
 taskbar_name_background_id = 0
 taskbar_name_active_background_id = 0
-taskbar_name_font_color = #e3e3e3 100
+taskbar_name_font = Noto Sans 10
+taskbar_name_font_color = #e0e0e0 100
 taskbar_name_active_font_color = #ffffff 100
 taskbar_distribute_size = 0
 taskbar_sort_order = none
 task_align = left
 
 #-------------------------------------
+# Task
+task_text = 1
+task_icon = 1
+task_centered = 1
+urgent_nb_of_blink = 100000
+task_maximum_size = 200 35
+task_padding = 8 4 8
+task_font = Noto Sans 10
+task_tooltip = 1
+task_thumbnail = 0
+task_thumbnail_size = 210
+task_font_color = #d0d0d0 100
+task_background_id = 2
+task_active_background_id = 3
+task_urgent_background_id = 4
+task_iconified_background_id = 2
+mouse_left = toggle_iconify
+mouse_middle = none
+mouse_right = close
+mouse_scroll_up = toggle
+mouse_scroll_down = iconify
+
+#-------------------------------------
 # Launcher
-launcher_padding = 4 8 4
+launcher_padding = 8 8 8
 launcher_background_id = 0
 launcher_icon_background_id = 0
 launcher_icon_size = 48
 launcher_icon_asb = 100 0 0
-launcher_icon_theme_override = 0
+launcher_icon_theme = Papirus
+launcher_icon_theme_override = 1
 startup_notifications = 1
 launcher_tooltip = 1
 
 #-------------------------------------
-# Launcher icon
-launcher_item_app = /usr/share/applications/libreoffice-calc.desktop
+# Launcher icons - Modern application suite
+launcher_item_app = /home/computeruse/.config/tint2/applications/chrome.desktop
+launcher_item_app = /home/computeruse/.config/tint2/applications/vscode.desktop
 launcher_item_app = /home/computeruse/.config/tint2/applications/terminal.desktop
-launcher_item_app = /home/computeruse/.config/tint2/applications/firefox-custom.desktop
-launcher_item_app = /usr/share/applications/xpaint.desktop
-launcher_item_app = /usr/share/applications/xpdf.desktop
 launcher_item_app = /home/computeruse/.config/tint2/applications/gedit.desktop
-launcher_item_app = /usr/share/applications/galculator.desktop
+launcher_item_app = /usr/share/applications/pcmanfm.desktop
+
+#-------------------------------------
+# System tray (notification area)
+systray_padding = 8 4 8
+systray_background_id = 0
+systray_sort = ascending
+systray_icon_size = 24
+systray_icon_asb = 100 0 0
+systray_monitor = 1
+systray_name_filter =
 
 #-------------------------------------
 # Background definitions
-# ID 1
+# ID 1 - Panel background (modern dark with transparency)
 rounded = 0
 border_width = 0
-background_color = #000000 60
-border_color = #000000 30
+border_sides = TBLR
+background_color = #2d3436 85
+border_color = #2d3436 85
+background_color_hover = #2d3436 90
+border_color_hover = #2d3436 90
+background_color_pressed = #2d3436 90
+border_color_pressed = #2d3436 90
 
-# ID 2
+# ID 2 - Inactive task (modern subtle)
+rounded = 4
+border_width = 0
+border_sides = TBLR
+background_color = #55606e 20
+border_color = #55606e 20
+background_color_hover = #55606e 40
+border_color_hover = #55606e 40
+background_color_pressed = #55606e 50
+border_color_pressed = #55606e 50
+
+# ID 3 - Active task (modern accent)
+rounded = 4
+border_width = 0
+border_sides = TBLR
+background_color = #5294e2 50
+border_color = #5294e2 50
+background_color_hover = #5294e2 60
+border_color_hover = #5294e2 60
+background_color_pressed = #5294e2 70
+border_color_pressed = #5294e2 70
+
+# ID 4 - Urgent task (modern warning)
+rounded = 4
+border_width = 0
+border_sides = TBLR
+background_color = #e27c5c 80
+border_color = #e27c5c 80
+background_color_hover = #e27c5c 90
+border_color_hover = #e27c5c 90
+background_color_pressed = #e27c5c 100
+border_color_pressed = #e27c5c 100
+
+#-------------------------------------
+# Tooltip
+tooltip_show_timeout = 0.5
+tooltip_hide_timeout = 0.1
+tooltip_padding = 8 6
+tooltip_background_id = 5
+tooltip_font_color = #ffffff 100
+tooltip_font = Noto Sans 10
+
+# ID 5 - Tooltip background
 rounded = 4
 border_width = 1
-background_color = #777777 20
-border_color = #777777 30
-
-# ID 3
-rounded = 4
-border_width = 1
-background_color = #777777 20
-border_color = #ffffff 40
-
-# ID 4
-rounded = 4
-border_width = 1
-background_color = #aa4400 100
-border_color = #aa7733 100
-
-# ID 5
-rounded = 4
-border_width = 1
-background_color = #aaaa00 100
-border_color = #aaaa00 100
+border_sides = TBLR
+background_color = #2d3436 95
+border_color = #5294e2 60
