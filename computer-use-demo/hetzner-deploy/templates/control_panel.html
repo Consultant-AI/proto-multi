@@ -339,6 +339,81 @@
             font-weight: 700;
             color: #667eea;
         }
+
+        .cost-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cost-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .cost-item-alt {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .cost-item-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .cost-label {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .cost-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .cost-detail {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .pricing-table {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .pricing-table h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .pricing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        .pricing-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .pricing-label {
+            color: #4a5568;
+        }
+
+        .pricing-value {
+            color: #2d3748;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -349,6 +424,14 @@
             <div class="actions">
                 <button class="btn btn-primary" onclick="openCreateModal()">+ Create New Instance</button>
                 <button class="btn btn-secondary" onclick="loadData()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Cost Summary Card -->
+        <div class="card" style="margin-bottom: 20px;">
+            <h2>💰 Cost Summary</h2>
+            <div id="cost-summary">
+                <div class="loading">Calculating costs...</div>
             </div>
         </div>
 
@@ -415,8 +498,78 @@
     <script>
         var currentInstanceId = null;
 
+        var cachedInstances = [];
+        var cachedSnapshots = [];
+
         async function loadData() {
             await Promise.all([loadInstances(), loadSnapshots()]);
+            updateCostSummary();
+        }
+
+        function updateCostSummary() {
+            const container = document.getElementById('cost-summary');
+
+            // Calculate costs
+            const runningInstances = cachedInstances.filter(i => i.status === 'running');
+            const stoppedInstances = cachedInstances.filter(i => i.status === 'off');
+
+            const hourlyRate = 0.007; // €0.007/hour per CX22 instance
+            const runningCost = runningInstances.length * hourlyRate;
+            const dailyCost = runningCost * 24;
+            const monthlyCost = runningCost * 24 * 30;
+
+            const snapshotCost = cachedSnapshots.reduce((sum, snap) => sum + snap.cost_per_month, 0);
+            const totalMonthlyCost = monthlyCost + snapshotCost;
+
+            container.innerHTML = `
+                <div class="cost-grid">
+                    <div class="cost-item">
+                        <div class="cost-label">Current Hourly</div>
+                        <div class="cost-value">€${runningCost.toFixed(3)}/hr</div>
+                        <div class="cost-detail">${runningInstances.length} running instance(s)</div>
+                    </div>
+                    <div class="cost-item cost-item-alt">
+                        <div class="cost-label">Projected Daily</div>
+                        <div class="cost-value">€${dailyCost.toFixed(2)}</div>
+                        <div class="cost-detail">If running 24/7</div>
+                    </div>
+                    <div class="cost-item cost-item-success">
+                        <div class="cost-label">Projected Monthly</div>
+                        <div class="cost-value">€${totalMonthlyCost.toFixed(2)}</div>
+                        <div class="cost-detail">Instances + Snapshots</div>
+                    </div>
+                </div>
+
+                <div class="pricing-table">
+                    <h3>📋 Cost Breakdown</h3>
+                    <div class="pricing-row">
+                        <span class="pricing-label">Running Instances (${runningInstances.length})</span>
+                        <span class="pricing-value">€${monthlyCost.toFixed(2)}/month</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label">Stopped Instances (${stoppedInstances.length})</span>
+                        <span class="pricing-value">€0.00/month</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label">Snapshots (${cachedSnapshots.length})</span>
+                        <span class="pricing-value">€${snapshotCost.toFixed(2)}/month</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label">Total Estimated Monthly</span>
+                        <span class="pricing-value">€${totalMonthlyCost.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="cost-info" style="margin-top: 15px;">
+                    <strong>💡 Action Costs:</strong><br>
+                    • <strong>Create Instance:</strong> €0.007/hr (~€5/month 24/7)<br>
+                    • <strong>Pause Instance:</strong> Free! (stops billing immediately)<br>
+                    • <strong>Start Instance:</strong> Free (resumes €0.007/hr billing)<br>
+                    • <strong>Create Snapshot:</strong> €0.01/GB/month (~€0.30-0.40 per snapshot)<br>
+                    • <strong>Clone from Snapshot:</strong> €0.007/hr for new instance<br>
+                    • <strong>Delete Snapshot:</strong> Free (stops snapshot billing)
+                </div>
+            `;
         }
 
         async function loadInstances() {
@@ -426,6 +579,8 @@
             try {
                 const response = await fetch('/api/instances');
                 const data = await response.json();
+
+                cachedInstances = data.instances;
 
                 if (data.instances.length === 0) {
                     container.innerHTML = '<div class="empty-state">No instances found. Create one to get started!</div>';
@@ -487,6 +642,8 @@
             try {
                 const response = await fetch('/api/snapshots');
                 const data = await response.json();
+
+                cachedSnapshots = data.snapshots;
 
                 // Also update snapshot selector in create modal
                 const select = document.getElementById('fromSnapshot');
