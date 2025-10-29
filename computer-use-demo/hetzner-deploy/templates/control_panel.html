@@ -413,7 +413,7 @@
     </div>
 
     <script>
-        let currentInstanceId = null;
+        var currentInstanceId = null;
 
         async function loadData() {
             await Promise.all([loadInstances(), loadSnapshots()]);
@@ -570,8 +570,16 @@
         }
 
         async function createSnapshotConfirm() {
-            const description = document.getElementById('snapshotDescription').value;
+            const description = document.getElementById('snapshotDescription').value || `snapshot-${Date.now()}`;
+
+            if (!currentInstanceId) {
+                alert('❌ Error: No instance selected');
+                closeSnapshotModal();
+                return;
+            }
+
             closeSnapshotModal();
+            alert('Creating snapshot... This takes 2-3 minutes.');
 
             try {
                 const response = await fetch(`/api/instance/${currentInstanceId}/snapshot`, {
