@@ -197,8 +197,12 @@ class HetznerManager:
         return None
 
 
-def generate_cloud_init_script(anthropic_api_key: str) -> str:
+def generate_cloud_init_script(anthropic_api_key: str, hetzner_api_token: str = None) -> str:
     """Generate cloud-init script for instance setup"""
+
+    # Use environment variable if not provided
+    if not hetzner_api_token:
+        hetzner_api_token = os.environ.get('HETZNER_API_TOKEN', '')
 
     return f"""#!/bin/bash
 set -e
@@ -215,12 +219,12 @@ rm get-docker.sh
 # Install Docker Compose and git
 apt-get install -y docker-compose-plugin git
 
-# Clone the repo
+# Clone the optimized repo with Chrome and fixes
 cd /opt
-git clone https://github.com/anthropics/anthropic-quickstarts.git
-cd anthropic-quickstarts/computer-use-demo
+git clone https://github.com/Consultant-AI/proto-multi.git
+cd proto-multi/computer-use-demo
 
-# Build the Docker image for x86_64
+# Build the Docker image for x86_64 (with Chrome, Openbox, fixed port 8080)
 docker build --platform linux/amd64 -t computer-use-demo:local .
 
 # Create docker-compose.yml
@@ -265,6 +269,32 @@ IP=$(curl -s http://169.254.169.254/hetzner/v1/metadata/public-ipv4)
 echo "Chat Interface: http://$IP:8501" | tee -a /root/setup-complete.txt
 echo "Chrome Desktop: http://$IP:8080" | tee -a /root/setup-complete.txt
 echo "=================================" | tee -a /root/setup-complete.txt
+
+# Setup automatic daily snapshots
+echo "Setting up automatic snapshots..."
+mkdir -p /opt/auto-snapshot
+cd /opt/auto-snapshot
+
+# Download snapshot scripts from GitHub
+curl -sL -o auto_snapshot.py https://raw.githubusercontent.com/Consultant-AI/proto-multi/main/computer-use-demo/hetzner-deploy/auto_snapshot.py
+curl -sL -o hetzner_manager.py https://raw.githubusercontent.com/Consultant-AI/proto-multi/main/computer-use-demo/hetzner-deploy/hetzner_manager.py
+chmod +x auto_snapshot.py
+
+# Get instance ID from metadata
+INSTANCE_ID=$(curl -s http://169.254.169.254/hetzner/v1/metadata/instance-id)
+
+# Create cron job for daily snapshots at 3 AM (keeps last 7 days)
+cat > /etc/cron.d/auto-snapshot <<EOFCRON
+# Automatic daily snapshots at 3 AM - keeps last 7 snapshots
+0 3 * * * root HETZNER_API_TOKEN="{hetzner_api_token}" HETZNER_INSTANCE_ID="$INSTANCE_ID" /usr/bin/python3 /opt/auto-snapshot/auto_snapshot.py --keep-last 7 >> /var/log/auto-snapshot.log 2>&1
+EOFCRON
+
+chmod 644 /etc/cron.d/auto-snapshot
+
+echo "✅ Automatic snapshots enabled!" | tee -a /root/setup-complete.txt
+echo "   Schedule: Daily at 3 AM UTC" | tee -a /root/setup-complete.txt
+echo "   Retention: Last 7 days" | tee -a /root/setup-complete.txt
+echo "   Logs: /var/log/auto-snapshot.log" | tee -a /root/setup-complete.txt
 """
 
 
@@ -325,7 +355,7 @@ if __name__ == "__main__":
                 print("Error: ANTHROPIC_API_KEY required")
                 sys.exit(1)
 
-            user_data = generate_cloud_init_script(api_key)
+            user_data = generate_cloud_init_script(api_key, manager.api_token)
             server = manager.create_instance(
                 name=args.name,
                 user_data=user_data,
