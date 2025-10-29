@@ -70,7 +70,7 @@ def list_snapshots():
                 'description': snap['description'],
                 'created': snap['created'],
                 'size_gb': snap['image_size'],
-                'cost_per_month': round(snap['image_size'] * 0.0119, 2)
+                'cost_per_month': round(snap['image_size'] * 0.01, 2)
             })
 
         return jsonify({'snapshots': formatted})
