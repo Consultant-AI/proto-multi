@@ -6,14 +6,14 @@ ENV DEBIAN_PRIORITY=high
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get -y install --no-install-recommends \
-    # UI Requirements (minimal)
+    # UI Requirements
     xvfb \
     xterm \
     xdotool \
     scrot \
     imagemagick \
     sudo \
-    openbox \
+    mutter \
     x11vnc \
     # Python/pyenv reqs
     build-essential \
