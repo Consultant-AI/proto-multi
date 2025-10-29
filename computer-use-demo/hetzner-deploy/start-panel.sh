@@ -37,7 +37,7 @@ python3 -c "import flask" 2>/dev/null || {
 
 echo -e "${GREEN}Starting control panel...${NC}"
 echo ""
-echo -e "${GREEN}Access at: http://localhost:5000${NC}"
+echo -e "${GREEN}Access at: http://localhost:5500${NC}"
 echo ""
 echo "Press Ctrl+C to stop"
 echo ""

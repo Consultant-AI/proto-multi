@@ -1,7 +1,14 @@
-# Anthropic Computer Use Demo
+# Anthropic Computer Use Demo - Enhanced Edition
 
 > [!NOTE]
-> Now featuring support for the new Claude 4 models! The latest Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) is now the default model, with Claude Sonnet 4 (claude-sonnet-4-20250514), Claude Opus 4 (claude-opus-4-20250514), and the new Claude Haiku 4.5 (claude-haiku-4-5-20251001) also available. These models bring next-generation capabilities with the updated str_replace_based_edit_tool that replaces the previous str_replace_editor tool. The undo_edit command has been removed in this latest version for a more streamlined experience.
+> **Enhanced with modern productivity tools!** This version runs on Ubuntu 24.04 LTS with a modern desktop environment featuring:
+> - **Chromium Browser** (works on both Intel and ARM architectures)
+> - **Firefox** for alternative web browsing
+> - **Visual Studio Code** for development
+> - **LibreOffice Suite** for documents, spreadsheets, and presentations
+> - **Modern UI/UX** with Arc-Dark theme and Papirus icons
+>
+> Now featuring support for the new Claude 4 models! The latest Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) is now the default model, with Claude Sonnet 4 (claude-sonnet-4-20250514), Claude Opus 4 (claude-opus-4-20250514), and the new Claude Haiku 4.5 (claude-haiku-4-5-20251001) also available. These models bring next-generation capabilities with the updated str_replace_based_edit_tool that replaces the previous str_replace_editor tool.
 
 > [!CAUTION]
 > Computer use is a beta feature. Please be aware that computer use poses unique risks that are distinct from standard API features or chat interfaces. These risks are heightened when using computer use to interact with the internet. To minimize risks, consider taking precautions such as:
@@ -30,7 +37,36 @@ Please use [this form](https://forms.gle/BT1hpBrqDPDUrCqo7) to provide feedback 
 > [!IMPORTANT]
 > The components are weakly separated: the agent loop runs in the container being controlled by Claude, can only be used by one session at a time, and must be restarted or reset between sessions if necessary.
 
+## Features
+
+This enhanced version includes:
+
+- **Ubuntu 24.04 LTS** base system with latest security updates
+- **Modern Applications**:
+  - Chromium browser (multi-architecture support)
+  - Firefox web browser
+  - Visual Studio Code IDE
+  - LibreOffice Suite (Writer, Calc, Impress, Draw)
+  - File manager, text editor, calculator, and more
+- **Enhanced UI/UX**:
+  - Arc-Dark GTK theme
+  - Papirus icon theme
+  - Modern taskbar with application launcher
+  - Clean, professional appearance
+- **Full Claude Computer Use capabilities** with vision and control
+
 ## Quickstart: running the Docker container
+
+### Quick Start (Recommended)
+
+```bash
+# Build the image
+./build-and-run.sh
+
+# Run the container (after setting your API key)
+export ANTHROPIC_API_KEY=your_api_key
+./run.sh
+```
 
 ### Claude API
 
@@ -181,3 +217,35 @@ docker run \
 ```
 
 The docker run command above mounts the repo inside the docker image, such that you can edit files from the host. Streamlit is already configured with auto reloading.
+
+## Architecture Documentation
+
+For a comprehensive understanding of the system architecture, components, and data flow, see [ARCHITECTURE.md](ARCHITECTURE.md). This document includes:
+
+- Detailed system architecture diagrams
+- Component breakdowns and interactions
+- Security considerations
+- Configuration options
+- Troubleshooting guide
+- Development workflow
+
+## What's New in This Enhanced Version
+
+### Applications Added
+- **Chromium** - Modern web browser with full JavaScript support (ARM64 compatible)
+- **Visual Studio Code** - Full-featured IDE with extension support
+- **LibreOffice** - Complete office suite for productivity tasks
+
+### UI/UX Improvements
+- Upgraded to **Ubuntu 24.04 LTS** (Noble Numbat)
+- **Arc-Dark theme** for a modern, professional look
+- **Papirus icon theme** with comprehensive icon coverage
+- **Noto Sans fonts** for better readability
+- Redesigned taskbar with larger icons and better organization
+- Transparency effects and modern color scheme
+
+### Technical Improvements
+- Multi-architecture support (AMD64 and ARM64)
+- Updated to time64 (t64) libraries for future compatibility
+- Better container isolation with proper sandbox flags
+- Comprehensive architecture documentation
