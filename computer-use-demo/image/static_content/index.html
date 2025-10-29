@@ -29,13 +29,14 @@
     <body>
         <div class="container">
             <iframe
-                src="http://localhost:8501"
+                id="streamlit"
+                src=""
                 class="left"
                 allow="fullscreen"
             ></iframe>
             <iframe
                 id="vnc"
-                src="http://127.0.0.1:6080/vnc.html?&resize=scale&autoconnect=1&view_only=1&reconnect=1&reconnect_delay=2000"
+                src=""
                 class="right"
                 allow="fullscreen"
             ></iframe>
@@ -46,6 +47,18 @@
                 Toggle Screen Control (Off)
             </button>
             <script>
+                // Detect ports dynamically based on current page
+                var currentPort = window.location.port || 8080;
+                var streamlitPort = currentPort == 9080 ? 9501 : 8501;
+                var vncPort = currentPort == 9080 ? 9060 : 6080;
+
+                // Use current hostname instead of localhost
+                var hostname = window.location.hostname;
+
+                // Set iframe sources
+                document.getElementById("streamlit").src = "http://" + hostname + ":" + streamlitPort;
+                document.getElementById("vnc").src = "http://" + hostname + ":" + vncPort + "/vnc.html?&resize=scale&autoconnect=1&view_only=1&reconnect=1&reconnect_delay=2000";
+
                 document
                     .getElementById("toggleViewOnly")
                     .addEventListener("click", function () {

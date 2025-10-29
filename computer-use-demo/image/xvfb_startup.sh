@@ -17,14 +17,19 @@ check_xvfb_running() {
 wait_for_xvfb() {
     local timeout=10
     local start_time=$(date +%s)
-    while ! xdpyinfo >/dev/null 2>&1; do
+    # Check if X server is responding by checking if lock file exists and process is running
+    while true; do
         if [ $(($(date +%s) - start_time)) -gt $timeout ]; then
             echo "Xvfb failed to start within $timeout seconds" >&2
             return 1
         fi
+        if [ -e /tmp/.X${DISPLAY_NUM}-lock ] && kill -0 $XVFB_PID 2>/dev/null; then
+            # Give it a moment to fully initialize
+            sleep 0.5
+            return 0
+        fi
         sleep 0.1
     done
-    return 0
 }
 
 # Check if Xvfb is already running

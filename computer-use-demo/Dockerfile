@@ -1,19 +1,19 @@
-FROM docker.io/ubuntu:22.04
+FROM docker.io/ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBIAN_PRIORITY=high
 
 RUN apt-get update && \
     apt-get -y upgrade && \
-    apt-get -y install \
-    # UI Requirements
+    apt-get -y install --no-install-recommends \
+    # UI Requirements (minimal)
     xvfb \
     xterm \
     xdotool \
     scrot \
     imagemagick \
     sudo \
-    mutter \
+    openbox \
     x11vnc \
     # Python/pyenv reqs
     build-essential \
@@ -33,23 +33,59 @@ RUN apt-get update && \
     liblzma-dev \
     # Network tools
     net-tools \
-    netcat \
-    # PPA req
-    software-properties-common && \
-    # Userland apps
-    sudo add-apt-repository ppa:mozillateam/ppa && \
-    sudo apt-get install -y --no-install-recommends \
-    libreoffice \
-    firefox-esr \
-    x11-apps \
-    xpdf \
-    gedit \
-    xpaint \
+    netcat-traditional \
+    # Dependencies for Chrome
+    wget \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libasound2t64 \
+    libatk-bridge2.0-0t64 \
+    libatk1.0-0t64 \
+    libatspi2.0-0 \
+    libcups2t64 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0t64 \
+    libnspr4 \
+    libnss3 \
+    libwayland-client0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils \
+    libu2f-udev \
+    libvulkan1 \
+    # Dependencies for VSCode
+    libx11-xcb1 \
+    libxcb-dri3-0 \
+    libxshmfence1 \
+    libglu1-mesa \
+    # Minimal UI packages
     tint2 \
-    galculator \
     pcmanfm \
+    fonts-noto-core && \
+    # Install Google Chrome x86_64 with optimizations
+    wget -q -O /tmp/google-chrome-stable_current_amd64.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt-get install -y /tmp/google-chrome-stable_current_amd64.deb && \
+    rm /tmp/google-chrome-stable_current_amd64.deb && \
+    # Install VSCode
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg && \
+    install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
+    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
+    rm -f /tmp/packages.microsoft.gpg && \
+    apt-get update && \
+    apt-get install -y code && \
+    # Minimal additional apps only
+    apt-get install -y --no-install-recommends \
+    gedit \
     unzip && \
-    apt-get clean
+    # Clean up to reduce image size
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install noVNC
 RUN git clone --branch v1.5.0 https://github.com/novnc/noVNC.git /opt/noVNC && \
@@ -95,8 +131,8 @@ COPY --chown=$USERNAME:$USERNAME image/ $HOME
 COPY --chown=$USERNAME:$USERNAME computer_use_demo/ $HOME/computer_use_demo/
 
 ARG DISPLAY_NUM=1
-ARG HEIGHT=768
-ARG WIDTH=1024
+ARG HEIGHT=1080
+ARG WIDTH=1920
 ENV DISPLAY_NUM=$DISPLAY_NUM
 ENV HEIGHT=$HEIGHT
 ENV WIDTH=$WIDTH
