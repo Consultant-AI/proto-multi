@@ -750,17 +750,10 @@
                             </span>
                         </div>
                         ${inst.status === 'running' ? `
-                        <div style="margin-bottom: 10px;">
-                            <span style="font-size: 12px; color: ${inst.services_ready ? '#22543d' : '#c05621'}; font-weight: 600;">
-                                ${inst.services_ready ? '✅ Services Ready' : '⚠️ Services Starting...'}
-                            </span>
-                        </div>
-                        ${inst.services_ready ? `
                         <div class="instance-links">
                             <a href="${inst.urls.chat}" target="_blank" class="link-btn">💬 Chat</a>
                             <a href="${inst.urls.desktop}" target="_blank" class="link-btn">🖥️ Desktop</a>
                         </div>
-                        ` : '<div style="font-size: 13px; color: #718096; margin-bottom: 10px;">Wait 1-2 minutes for services to start...</div>'}
                         ` : ''}
                         <div class="instance-details">
                             <div class="detail-item">
@@ -866,9 +859,7 @@
             }
 
             closeCreateModal();
-
-            const duration = snapshotId ? '~2 minutes' : '~10-15 minutes';
-            const toastId = showToast('Creating Instance', `Building new instance... This takes ${duration}`, 'loading', 0);
+            alert('Creating instance... This takes 10-15 minutes. Check back soon!');
 
             try {
                 const response = await fetch('/api/instance/create', {
@@ -879,13 +870,13 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Instance Created!', `${data.instance.name} is ready! IP: ${data.instance.ip}`, 'success');
+                    alert(`✅ Instance created!\nName: ${data.instance.name}\nIP: ${data.instance.ip}`);
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 
@@ -899,7 +890,7 @@
             }
 
             closeSnapshotModal();
-            const toastId = showToast('Creating Snapshot', 'Capturing instance state... This takes ~2-3 minutes', 'loading', 0);
+            alert('Creating snapshot... This takes 2-3 minutes.');
 
             try {
                 const response = await fetch(`/api/instance/${currentInstanceId}/snapshot`, {
@@ -910,70 +901,64 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Snapshot Created!', `${data.snapshot.description} saved successfully`, 'success');
+                    alert(`✅ Snapshot created: ${data.snapshot.description}`);
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 
         async function startInstance(id) {
             if (!confirm('Start this instance? Billing will resume.')) return;
 
-            const toastId = showToast('Starting Instance', 'Powering on instance... This takes ~10-15 seconds', 'loading', 0);
-
             try {
                 const response = await fetch(`/api/instance/${id}/start`, { method: 'POST' });
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Instance Started!', `Billing resumed at €0.007/hr. IP: ${data.ip}`, 'success');
+                    alert(`✅ Instance started!\nIP: ${data.ip}`);
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 
         async function stopInstance(id) {
             if (!confirm('Pause this instance? You can start it again later.')) return;
 
-            const toastId = showToast('Pausing Instance', 'Stopping instance... This takes ~30 seconds', 'loading', 0);
-
             try {
                 const response = await fetch(`/api/instance/${id}/stop`, { method: 'POST' });
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Instance Paused!', 'Hourly billing stopped. Instance is now offline.', 'success');
+                    alert('✅ Instance paused! Hourly billing stopped.');
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 
         async function deleteInstance(id, name) {
             if (!confirm(`⚠️ Permanently delete "${name}"?\n\nThis cannot be undone!\nCreate a snapshot first if you want to keep the data.`)) return;
 
-            const toastId = showToast('Deleting Instance', `Removing ${name}... This takes ~10 seconds`, 'loading', 0);
-
             try {
                 const response = await fetch(`/api/instance/${id}/delete`, { method: 'DELETE' });
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Instance Deleted!', `${name} has been permanently removed`, 'success');
+                    alert('✅ Instance deleted!');
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 
@@ -981,7 +966,7 @@
             const name = prompt(`Clone from "${description}"?\n\nEnter new instance name:`, `cloned-${Date.now()}`);
             if (!name) return;
 
-            const toastId = showToast('Cloning Instance', 'Creating instance from snapshot... This takes ~2 minutes', 'loading', 0);
+            alert('Creating instance from snapshot... This takes ~2 minutes.');
 
             try {
                 const response = await fetch('/api/instance/create', {
@@ -992,32 +977,30 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Instance Cloned!', `${data.instance.name} is ready! IP: ${data.instance.ip}`, 'success');
+                    alert(`✅ Instance cloned!\nName: ${data.instance.name}\nIP: ${data.instance.ip}`);
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 
         async function deleteSnapshot(id, description) {
             if (!confirm(`Delete snapshot "${description}"?\n\nThis cannot be undone!`)) return;
 
-            const toastId = showToast('Deleting Snapshot', `Removing ${description}... This takes ~5 seconds`, 'loading', 0);
-
             try {
                 const response = await fetch(`/api/snapshot/${id}/delete`, { method: 'DELETE' });
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Snapshot Deleted!', `${description} has been removed. Storage costs freed.`, 'success');
+                    alert('✅ Snapshot deleted!');
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+                alert(`❌ Error: ${error.message}`);
             }
         }
 

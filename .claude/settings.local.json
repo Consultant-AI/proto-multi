@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(export HETZNER_API_TOKEN=$HETZNER_API_TOKEN)",
+      "Bash(export ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY)",
+      "Bash(lsof:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

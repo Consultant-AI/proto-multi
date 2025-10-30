@@ -5,6 +5,7 @@ Access at http://localhost:5000
 """
 
 import os
+import socket
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from hetzner_manager import HetznerManager, generate_cloud_init_script
 from datetime import datetime
@@ -19,6 +20,18 @@ def get_manager():
     if manager is None:
         manager = HetznerManager()
     return manager
+
+
+def check_port(host, port, timeout=2):
+    """Check if a port is open on a host"""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
 
 
 @app.route('/')
@@ -37,17 +50,27 @@ def list_instances():
         # Format instance data
         formatted = []
         for inst in instances:
+            ip = inst['public_net']['ipv4']['ip']
+
+            # Check service health if instance is running
+            services_ready = False
+            if inst['status'] == 'running':
+                port_8080 = check_port(ip, 8080, timeout=1)
+                port_8501 = check_port(ip, 8501, timeout=1)
+                services_ready = port_8080 and port_8501
+
             formatted.append({
                 'id': inst['id'],
                 'name': inst['name'],
                 'status': inst['status'],
-                'ip': inst['public_net']['ipv4']['ip'],
+                'services_ready': services_ready,
+                'ip': ip,
                 'created': inst['created'],
                 'server_type': inst['server_type']['name'],
                 'cost_per_hour': 0.007,  # CX22 pricing
                 'urls': {
-                    'chat': f"http://{inst['public_net']['ipv4']['ip']}:8501",
-                    'desktop': f"http://{inst['public_net']['ipv4']['ip']}:8080"
+                    'chat': f"http://{ip}:8501",
+                    'desktop': f"http://{ip}:8080"
                 }
             })
 

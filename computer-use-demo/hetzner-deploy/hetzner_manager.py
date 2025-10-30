@@ -198,7 +198,19 @@ class HetznerManager:
 
 
 def generate_cloud_init_script(anthropic_api_key: str, hetzner_api_token: str = None) -> str:
-    """Generate cloud-init script for instance setup"""
+    """
+    Generate cloud-init script for instance setup
+
+    ⚠️ IMPORTANT: This ALWAYS builds from Consultant-AI/proto-multi repo
+
+    WHY? The official Anthropic image has a bug in index.html:
+    - Uses "localhost" instead of "window.location.hostname"
+    - This breaks port 8080 when accessed remotely
+    - Our repo has the FIXED index.html
+
+    DO NOT change this to use ghcr.io/anthropics/anthropic-quickstarts!
+    That image will NOT work correctly on Hetzner Cloud.
+    """
 
     # Use environment variable if not provided
     if not hetzner_api_token:
@@ -221,11 +233,27 @@ apt-get install -y docker-compose-plugin git
 
 # Clone the optimized repo with Chrome and fixes
 cd /opt
-git clone https://github.com/Consultant-AI/proto-multi.git
+git clone --depth 1 https://github.com/Consultant-AI/proto-multi.git
 cd proto-multi/computer-use-demo
 
-# Build the Docker image for x86_64 (with Chrome, Openbox, fixed port 8080)
-docker build --platform linux/amd64 -t computer-use-demo:local .
+# Build the Docker image for x86_64 with proper settings
+# Use BuildKit for better performance and increase timeout
+export DOCKER_BUILDKIT=1
+export BUILDKIT_STEP_LOG_MAX_SIZE=50000000
+docker build \\
+    --platform linux/amd64 \\
+    --progress=plain \\
+    --no-cache \\
+    -t computer-use-demo:local \\
+    . 2>&1 | tee /var/log/docker-build.log
+
+# Check if build succeeded
+if [ $? -ne 0 ]; then
+    echo "ERROR: Docker build failed!" | tee -a /var/log/docker-build.log
+    exit 1
+fi
+
+echo "✅ Docker build completed successfully"
 
 # Create docker-compose.yml
 cat > docker-compose.yml <<'EOFCOMPOSE'
@@ -252,12 +280,33 @@ volumes:
     driver: local
 EOFCOMPOSE
 
-# Start containers
-docker compose up -d
+# Create systemd service for auto-start on boot
+cat > /etc/systemd/system/computer-use-demo.service <<'EOFSYSTEMD'
+[Unit]
+Description=Computer Use Demo Docker Compose
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/proto-multi/computer-use-demo
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+EOFSYSTEMD
+
+# Enable and start the service
+systemctl daemon-reload
+systemctl enable computer-use-demo.service
+systemctl start computer-use-demo.service
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
-sleep 20
+sleep 30
 
 # Show status
 docker compose ps
