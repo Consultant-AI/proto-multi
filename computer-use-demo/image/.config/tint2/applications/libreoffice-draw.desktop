@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LibreOffice Draw
+Comment=Drawing Application
+Exec=libreoffice --draw %U
+Icon=libreoffice-draw
+Terminal=false
+Categories=Office;Graphics;
+MimeType=application/vnd.oasis.opendocument.graphics;

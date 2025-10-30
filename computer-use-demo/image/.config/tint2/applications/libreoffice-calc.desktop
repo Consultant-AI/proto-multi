@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LibreOffice Calc
+Comment=Spreadsheet
+Exec=libreoffice --calc %U
+Icon=libreoffice-calc
+Terminal=false
+Categories=Office;Spreadsheet;
+MimeType=application/vnd.oasis.opendocument.spreadsheet;

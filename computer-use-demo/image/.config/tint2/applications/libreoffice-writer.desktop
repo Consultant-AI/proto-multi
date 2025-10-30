@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LibreOffice Writer
+Comment=Word Processor
+Exec=libreoffice --writer %U
+Icon=libreoffice-writer
+Terminal=false
+Categories=Office;WordProcessor;
+MimeType=application/vnd.oasis.opendocument.text;

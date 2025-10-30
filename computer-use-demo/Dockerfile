@@ -79,10 +79,25 @@ RUN apt-get update && \
     rm -f /tmp/packages.microsoft.gpg && \
     apt-get update && \
     apt-get install -y code && \
-    # Minimal additional apps only
+    # Additional applications
     apt-get install -y --no-install-recommends \
     gedit \
-    unzip && \
+    unzip \
+    # LibreOffice suite
+    libreoffice-writer \
+    libreoffice-calc \
+    libreoffice-impress \
+    libreoffice-draw \
+    # Docker (will be installed via script below)
+    apt-transport-https \
+    software-properties-common && \
+    # Install Node.js 20.x LTS
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    # Install Docker
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh && \
+    sh /tmp/get-docker.sh && \
+    rm /tmp/get-docker.sh && \
     # Clean up to reduce image size
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -95,10 +110,14 @@ RUN git clone --branch v1.5.0 https://github.com/novnc/noVNC.git /opt/noVNC && \
 # setup user
 ENV USERNAME=computeruse
 ENV HOME=/home/$USERNAME
-RUN useradd -m -s /bin/bash -d $HOME $USERNAME
-RUN echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN useradd -m -s /bin/bash -d $HOME $USERNAME && \
+    usermod -aG docker $USERNAME && \
+    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 USER computeruse
 WORKDIR $HOME
+
+# Install Claude Code CLI
+RUN curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/install.sh | bash
 
 # setup python
 RUN git clone https://github.com/pyenv/pyenv.git ~/.pyenv && \
