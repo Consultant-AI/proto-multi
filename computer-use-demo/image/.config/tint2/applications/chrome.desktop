@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Google Chrome
 Comment=Access the Internet
-Exec=google-chrome --no-sandbox --disable-dev-shm-usage --disable-setuid-sandbox
+Exec=google-chrome --no-sandbox --disable-dev-shm-usage
 Icon=google-chrome
 Terminal=false
 Type=Application
