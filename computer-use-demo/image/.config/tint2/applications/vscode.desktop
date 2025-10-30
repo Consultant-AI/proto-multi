@@ -2,7 +2,7 @@
 Name=Visual Studio Code
 Comment=Code Editing. Redefined.
 Exec=code --no-sandbox --user-data-dir=/home/computeruse/.vscode
-Icon=code
+Icon=vscode
 Terminal=false
 Type=Application
 Categories=Development;IDE;
