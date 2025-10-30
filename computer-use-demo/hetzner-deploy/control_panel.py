@@ -113,6 +113,7 @@ def create_instance():
 
         if snapshot_id:
             # Clone from snapshot
+            print(f"Cloning from snapshot ID: {snapshot_id} (type: {type(snapshot_id)})")
             server = m.clone_from_snapshot(
                 snapshot_id=int(snapshot_id),
                 name=name
@@ -139,7 +140,14 @@ def create_instance():
             }
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"ERROR in create_instance: {e}")
+        import traceback
+        traceback.print_exc()
+        error_msg = str(e)
+        # Make server limit error more user-friendly
+        if 'server_limit' in error_msg or 'resource_limit_exceeded' in error_msg:
+            error_msg = "Server limit reached! Delete an existing instance first."
+        return jsonify({'error': error_msg}), 500
 
 
 @app.route('/api/instance/<int:instance_id>/start', methods=['POST'])

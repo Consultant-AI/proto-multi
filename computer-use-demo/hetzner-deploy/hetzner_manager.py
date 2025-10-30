@@ -175,7 +175,7 @@ class HetznerManager:
         snapshot_id: int,
         name: str,
         server_type: str = "cx22",
-        location: str = "ash"
+        location: str = "nbg1"  # Nuremberg, Germany
     ) -> Dict:
         """Create new instance from snapshot"""
         print(f"Cloning instance from snapshot {snapshot_id}...")

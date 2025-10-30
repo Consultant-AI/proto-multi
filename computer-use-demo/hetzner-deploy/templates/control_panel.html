@@ -569,14 +569,14 @@
                 <input type="text" id="instanceName" placeholder="my-instance">
             </div>
             <div class="form-group">
-                <label for="fromSnapshot">From Snapshot (Optional)</label>
-                <select id="fromSnapshot">
-                    <option value="">Fresh Instance</option>
+                <label for="fromSnapshot">Source</label>
+                <select id="fromSnapshot" onchange="updateCreateTimeEstimate()">
+                    <option value="">Fresh Build (10-15 min)</option>
                 </select>
             </div>
             <div class="cost-info">
                 💰 Cost: <span class="cost-highlight">€0.007/hour</span> (~€5/month if running 24/7)
-                <br>⏱️ Build time: ~10-15 minutes
+                <br><span id="createTimeEstimate">⏱️ Build time: ~10-15 minutes</span>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
@@ -590,11 +590,12 @@
         <div class="modal-content">
             <h3>Create Snapshot</h3>
             <div class="form-group">
-                <label for="snapshotDescription">Description</label>
-                <input type="text" id="snapshotDescription" placeholder="my-snapshot">
+                <label for="snapshotDescription">Description (optional)</label>
+                <input type="text" id="snapshotDescription" placeholder="Leave empty for auto: snapshot-2025-10-30_14-30-00">
             </div>
             <div class="cost-info">
-                💰 Cost: <span class="cost-highlight">€0.01/GB/month</span> (~€0.30-0.40 for 40GB compressed)
+                💰 Cost: <span class="cost-highlight">€0.01/GB/month</span> (~€0.30-0.40 for 40GB compressed)<br>
+                ⏱️ Auto-named with date/time if left empty
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeSnapshotModal()">Cancel</button>
@@ -808,10 +809,13 @@
 
                 // Also update snapshot selector in create modal
                 const select = document.getElementById('fromSnapshot');
-                select.innerHTML = '<option value="">Fresh Instance</option>' +
-                    data.snapshots.map(snap =>
-                        `<option value="${snap.id}">${snap.description}</option>`
-                    ).join('');
+                const snapshotOptions = data.snapshots.map((snap, index) =>
+                    `<option value="${snap.id}" ${index === 0 ? 'selected' : ''}>${snap.description} (1-2 min)</option>`
+                ).join('');
+                select.innerHTML = snapshotOptions + '<option value="">Fresh Build (10-15 min)</option>';
+
+                // Update time estimate to show snapshot time if selected
+                updateCreateTimeEstimate();
 
                 if (data.snapshots.length === 0) {
                     container.innerHTML = '<div class="empty-state">No snapshots yet</div>';
@@ -824,7 +828,14 @@
                             <div class="snapshot-name">${snap.description}</div>
                         </div>
                         <div class="snapshot-details">
-                            📅 ${new Date(snap.created).toLocaleDateString()}<br>
+                            📅 ${new Date(snap.created).toLocaleString('en-US', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            })}<br>
                             💾 ${snap.size_gb} GB • €${snap.cost_per_month}/month
                         </div>
                         <div class="snapshot-actions">
@@ -890,7 +901,11 @@
         }
 
         async function createSnapshotConfirm() {
-            const description = document.getElementById('snapshotDescription').value || `snapshot-${Date.now()}`;
+            // Generate default name with date and time if empty
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
+            const defaultName = `snapshot-${dateStr}`;
+            const description = document.getElementById('snapshotDescription').value || defaultName;
 
             if (!currentInstanceId) {
                 alert('❌ Error: No instance selected');
@@ -1018,6 +1033,17 @@
                 }
             } catch (error) {
                 updateToast(toastId, 'Error', error.message, 'error');
+            }
+        }
+
+        function updateCreateTimeEstimate() {
+            const select = document.getElementById('fromSnapshot');
+            const estimate = document.getElementById('createTimeEstimate');
+
+            if (select.value === '') {
+                estimate.textContent = '⏱️ Build time: ~10-15 minutes';
+            } else {
+                estimate.textContent = '⏱️ Build time: ~1-2 minutes';
             }
         }
 
