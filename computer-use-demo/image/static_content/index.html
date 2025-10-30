@@ -3,83 +3,303 @@
     <head>
         <title>Computer Use Demo</title>
         <meta name="permissions-policy" content="fullscreen=*" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <style>
-            body {
+            * {
                 margin: 0;
                 padding: 0;
-                overflow: hidden;
+                box-sizing: border-box;
             }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                overflow: hidden;
+                background: #1a1a2e;
+            }
+
             .container {
                 display: flex;
                 height: 100vh;
                 width: 100vw;
+                position: relative;
             }
+
+            .panel {
+                height: 100vh;
+                border: none;
+                transition: all 0.3s ease;
+            }
+
             .left {
                 flex: 1;
-                border: none;
-                height: 100vh;
+                min-width: 0;
             }
+
             .right {
                 flex: 2;
-                border: none;
-                height: 100vh;
+                min-width: 0;
+            }
+
+            .panel.hidden {
+                flex: 0;
+                min-width: 0;
+                width: 0;
+                overflow: hidden;
+            }
+
+            .resizer {
+                width: 4px;
+                cursor: col-resize;
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                position: relative;
+                transition: width 0.2s;
+            }
+
+            .resizer:hover {
+                width: 8px;
+                background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+            }
+
+            .resizer.hidden {
+                display: none;
+            }
+
+            .controls {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                background: rgba(26, 26, 46, 0.95);
+                padding: 12px 16px;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .icon-btn {
+                background: rgba(102, 126, 234, 0.1);
+                border: 1px solid rgba(102, 126, 234, 0.3);
+                color: #667eea;
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+                font-size: 18px;
+            }
+
+            .icon-btn:hover {
+                background: rgba(102, 126, 234, 0.2);
+                border-color: #667eea;
+                transform: translateY(-2px);
+            }
+
+            .icon-btn.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-color: #667eea;
+                color: white;
+            }
+
+            .divider {
+                width: 1px;
+                height: 30px;
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .toggle-switch {
+                position: relative;
+                width: 56px;
+                height: 28px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 14px;
+                cursor: pointer;
+                transition: all 0.3s;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .toggle-switch.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-color: #667eea;
+            }
+
+            .toggle-slider {
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 20px;
+                height: 20px;
+                background: white;
+                border-radius: 50%;
+                transition: all 0.3s;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .toggle-switch.active .toggle-slider {
+                transform: translateX(28px);
+            }
+
+            .label {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 13px;
+                font-weight: 500;
+                white-space: nowrap;
+            }
+
+            .tooltip {
+                position: absolute;
+                bottom: -35px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+                white-space: nowrap;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s;
+            }
+
+            .icon-btn:hover .tooltip {
+                opacity: 1;
             }
         </style>
     </head>
     <body>
+        <div class="controls">
+            <button class="icon-btn active" id="toggleChat" title="Toggle Chat">
+                💬
+                <span class="tooltip">Toggle Chat</span>
+            </button>
+            <button class="icon-btn active" id="toggleDesktop" title="Toggle Desktop">
+                🖥️
+                <span class="tooltip">Toggle Desktop</span>
+            </button>
+            <div class="divider"></div>
+            <span class="label">Screen Control</span>
+            <div class="toggle-switch" id="toggleControl" title="Toggle Screen Control">
+                <div class="toggle-slider"></div>
+            </div>
+        </div>
+
         <div class="container">
             <iframe
                 id="streamlit"
                 src=""
-                class="left"
+                class="panel left"
                 allow="fullscreen"
             ></iframe>
+            <div class="resizer" id="resizer"></div>
             <iframe
                 id="vnc"
                 src=""
-                class="right"
+                class="panel right"
                 allow="fullscreen"
             ></iframe>
-            <button
-                id="toggleViewOnly"
-                style="position: absolute; top: 10px; right: 10px; z-index: 1000"
-            >
-                Toggle Screen Control (Off)
-            </button>
-            <script>
-                // Detect ports dynamically based on current page
-                var currentPort = window.location.port || 8080;
-                var streamlitPort = currentPort == 9080 ? 9501 : 8501;
-                var vncPort = currentPort == 9080 ? 9060 : 6080;
-
-                // Use current hostname instead of localhost
-                var hostname = window.location.hostname;
-
-                // Set iframe sources
-                document.getElementById("streamlit").src = "http://" + hostname + ":" + streamlitPort;
-                document.getElementById("vnc").src = "http://" + hostname + ":" + vncPort + "/vnc.html?&resize=scale&autoconnect=1&view_only=1&reconnect=1&reconnect_delay=2000";
-
-                document
-                    .getElementById("toggleViewOnly")
-                    .addEventListener("click", function () {
-                        var vncIframe = document.getElementById("vnc");
-                        var button = document.getElementById("toggleViewOnly");
-                        var currentSrc = vncIframe.src;
-                        if (currentSrc.includes("view_only=1")) {
-                            vncIframe.src = currentSrc.replace(
-                                "view_only=1",
-                                "view_only=0",
-                            );
-                            button.innerText = "Toggle Screen Control (On)";
-                        } else {
-                            vncIframe.src = currentSrc.replace(
-                                "view_only=0",
-                                "view_only=1",
-                            );
-                            button.innerText = "Toggle Screen Control (Off)";
-                        }
-                    });
-            </script>
         </div>
+
+        <script>
+            // Detect ports dynamically based on current page
+            var currentPort = window.location.port || 8080;
+            var streamlitPort = currentPort == 9080 ? 9501 : 8501;
+            var vncPort = currentPort == 9080 ? 9060 : 6080;
+
+            // Use current hostname instead of localhost
+            var hostname = window.location.hostname;
+
+            // Set iframe sources
+            document.getElementById("streamlit").src = "http://" + hostname + ":" + streamlitPort;
+            document.getElementById("vnc").src = "http://" + hostname + ":" + vncPort + "/vnc.html?&resize=scale&autoconnect=1&view_only=1&reconnect=1&reconnect_delay=2000";
+
+            // Toggle Chat
+            document.getElementById("toggleChat").addEventListener("click", function() {
+                var streamlit = document.getElementById("streamlit");
+                var resizer = document.getElementById("resizer");
+                this.classList.toggle("active");
+                streamlit.classList.toggle("hidden");
+
+                if (streamlit.classList.contains("hidden") &&
+                    document.getElementById("vnc").classList.contains("hidden")) {
+                    resizer.classList.add("hidden");
+                } else if (!streamlit.classList.contains("hidden") &&
+                           !document.getElementById("vnc").classList.contains("hidden")) {
+                    resizer.classList.remove("hidden");
+                } else {
+                    resizer.classList.add("hidden");
+                }
+            });
+
+            // Toggle Desktop
+            document.getElementById("toggleDesktop").addEventListener("click", function() {
+                var vnc = document.getElementById("vnc");
+                var resizer = document.getElementById("resizer");
+                this.classList.toggle("active");
+                vnc.classList.toggle("hidden");
+
+                if (document.getElementById("streamlit").classList.contains("hidden") &&
+                    vnc.classList.contains("hidden")) {
+                    resizer.classList.add("hidden");
+                } else if (!document.getElementById("streamlit").classList.contains("hidden") &&
+                           !vnc.classList.contains("hidden")) {
+                    resizer.classList.remove("hidden");
+                } else {
+                    resizer.classList.add("hidden");
+                }
+            });
+
+            // Toggle Screen Control
+            document.getElementById("toggleControl").addEventListener("click", function() {
+                var vncIframe = document.getElementById("vnc");
+                var toggle = this;
+                var currentSrc = vncIframe.src;
+
+                toggle.classList.toggle("active");
+
+                if (currentSrc.includes("view_only=1")) {
+                    vncIframe.src = currentSrc.replace("view_only=1", "view_only=0");
+                } else {
+                    vncIframe.src = currentSrc.replace("view_only=0", "view_only=1");
+                }
+            });
+
+            // Resizable panels
+            var resizer = document.getElementById("resizer");
+            var leftPanel = document.getElementById("streamlit");
+            var rightPanel = document.getElementById("vnc");
+            var isResizing = false;
+
+            resizer.addEventListener("mousedown", function(e) {
+                isResizing = true;
+                document.body.style.cursor = "col-resize";
+                e.preventDefault();
+            });
+
+            document.addEventListener("mousemove", function(e) {
+                if (!isResizing) return;
+
+                var containerWidth = document.querySelector(".container").offsetWidth;
+                var leftWidth = e.clientX;
+                var leftFlex = leftWidth / containerWidth;
+                var rightFlex = 1 - leftFlex;
+
+                if (leftFlex > 0.1 && rightFlex > 0.1) {
+                    leftPanel.style.flex = leftFlex;
+                    rightPanel.style.flex = rightFlex;
+                }
+            });
+
+            document.addEventListener("mouseup", function() {
+                isResizing = false;
+                document.body.style.cursor = "default";
+            });
+        </script>
     </body>
 </html>
