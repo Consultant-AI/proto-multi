@@ -311,6 +311,51 @@ netfilter-persistent save
 
 echo "✅ Firewall configured - VNC scanning blocked, all other traffic allowed"
 
+# ========================================
+# AUTHENTICATION SETUP
+# ========================================
+echo "🔐 Setting up authentication..."
+
+# Install nginx and apache2-utils
+apt-get install -y nginx apache2-utils
+
+# Create password file (username: demo, password: computerusedemo2024)
+echo 'computerusedemo2024' | htpasswd -ci /etc/nginx/.htpasswd demo
+
+# Create nginx authentication config
+cat > /etc/nginx/sites-available/computer-use-auth <<'EOFNGINX'
+server {{
+    listen 80;
+    server_name _;
+
+    # Basic authentication
+    auth_basic "Computer Use Demo - Authentication Required";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    location / {{
+        proxy_pass http://localhost:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }}
+}}
+EOFNGINX
+
+# Enable the site
+ln -sf /etc/nginx/sites-available/computer-use-auth /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+
+# Restart nginx
+systemctl restart nginx
+systemctl enable nginx
+
+echo "✅ Authentication configured - Username: demo, Password: computerusedemo2024"
+
 # Create docker-compose.yml
 cat > docker-compose.yml <<'EOFCOMPOSE'
 version: '3.8'
