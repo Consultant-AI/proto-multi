@@ -268,10 +268,10 @@ apt-get install -y iptables-persistent
 iptables -F
 iptables -X
 
-# Default policies
+# Default policies - ALLOW outbound by default, but block specific dangerous ports
 iptables -P INPUT ACCEPT
 iptables -P FORWARD DROP
-iptables -P OUTPUT DROP
+iptables -P OUTPUT ACCEPT
 
 # Allow loopback
 iptables -A OUTPUT -o lo -j ACCEPT
@@ -290,37 +290,23 @@ iptables -A INPUT -p tcp --dport 8501 -j ACCEPT
 iptables -A INPUT -p tcp --dport 6080 -j ACCEPT
 iptables -A INPUT -p tcp --dport 5900 -j ACCEPT
 
-# Allow DNS queries
-iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+# BLOCK ALL VNC SCANNING PORTS (5900-5909) - CRITICAL FOR ABUSE PREVENTION!
+iptables -I OUTPUT 1 -p tcp --dport 5900:5909 -m conntrack --ctstate NEW -j REJECT --reject-with tcp-reset
+iptables -I OUTPUT 1 -p udp --dport 5900:5909 -j REJECT
 
-# Allow HTTP/HTTPS for package downloads
-iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
-iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
-
-# Allow NTP (time sync)
-iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
-
-# BLOCK ALL VNC SCANNING PORTS (5900-5909) - CRITICAL!
-iptables -A OUTPUT -p tcp --dport 5900:5909 -m conntrack --ctstate NEW -j REJECT --reject-with tcp-reset
-iptables -A OUTPUT -p udp --dport 5900:5909 -j REJECT
-
-# Block common attack/scanning ports
+# Block common attack/scanning ports OUTBOUND
 iptables -A OUTPUT -p tcp --dport 23 -j REJECT       # Telnet
 iptables -A OUTPUT -p tcp --dport 445 -j REJECT      # SMB
 iptables -A OUTPUT -p tcp --dport 139 -j REJECT      # NetBIOS
 iptables -A OUTPUT -p tcp --dport 3389 -j REJECT     # RDP
-iptables -A OUTPUT -p tcp --dport 1433 -j REJECT     # MSSQL
-iptables -A OUTPUT -p tcp --dport 3306 -j REJECT     # MySQL
-iptables -A OUTPUT -p tcp --dport 5432 -j REJECT     # PostgreSQL
 
-# Log dropped outbound connections (for monitoring)
-iptables -A OUTPUT -m limit --limit 5/min -j LOG --log-prefix "BLOCKED-OUT: " --log-level 4
+# Log blocked VNC connection attempts (for monitoring abuse prevention)
+iptables -A OUTPUT -p tcp --dport 5900:5909 -m limit --limit 5/min -j LOG --log-prefix "BLOCKED-VNC-SCAN: " --log-level 4
 
 # Save firewall rules
 netfilter-persistent save
 
-echo "✅ Firewall configured - VNC scanning blocked"
+echo "✅ Firewall configured - VNC scanning blocked, all other traffic allowed"
 
 # Create docker-compose.yml
 cat > docker-compose.yml <<'EOFCOMPOSE'
