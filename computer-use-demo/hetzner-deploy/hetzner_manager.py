@@ -255,6 +255,73 @@ fi
 
 echo "✅ Docker build completed successfully"
 
+# ========================================
+# SECURITY SETUP
+# ========================================
+echo "🔒 Setting up security measures..."
+
+# Setup firewall to prevent network scanning
+echo "Setting up firewall rules..."
+apt-get install -y iptables-persistent
+
+# Flush existing rules
+iptables -F
+iptables -X
+
+# Default policies
+iptables -P INPUT ACCEPT
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+
+# Allow loopback
+iptables -A OUTPUT -o lo -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+
+# Allow established connections
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow incoming SSH (port 22)
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# Allow incoming HTTP services (8080, 8501, 6080)
+iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
+iptables -A INPUT -p tcp --dport 8501 -j ACCEPT
+iptables -A INPUT -p tcp --dport 6080 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5900 -j ACCEPT
+
+# Allow DNS queries
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+
+# Allow HTTP/HTTPS for package downloads
+iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+
+# Allow NTP (time sync)
+iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+
+# BLOCK ALL VNC SCANNING PORTS (5900-5909) - CRITICAL!
+iptables -A OUTPUT -p tcp --dport 5900:5909 -m conntrack --ctstate NEW -j REJECT --reject-with tcp-reset
+iptables -A OUTPUT -p udp --dport 5900:5909 -j REJECT
+
+# Block common attack/scanning ports
+iptables -A OUTPUT -p tcp --dport 23 -j REJECT       # Telnet
+iptables -A OUTPUT -p tcp --dport 445 -j REJECT      # SMB
+iptables -A OUTPUT -p tcp --dport 139 -j REJECT      # NetBIOS
+iptables -A OUTPUT -p tcp --dport 3389 -j REJECT     # RDP
+iptables -A OUTPUT -p tcp --dport 1433 -j REJECT     # MSSQL
+iptables -A OUTPUT -p tcp --dport 3306 -j REJECT     # MySQL
+iptables -A OUTPUT -p tcp --dport 5432 -j REJECT     # PostgreSQL
+
+# Log dropped outbound connections (for monitoring)
+iptables -A OUTPUT -m limit --limit 5/min -j LOG --log-prefix "BLOCKED-OUT: " --log-level 4
+
+# Save firewall rules
+netfilter-persistent save
+
+echo "✅ Firewall configured - VNC scanning blocked"
+
 # Create docker-compose.yml
 cat > docker-compose.yml <<'EOFCOMPOSE'
 version: '3.8'

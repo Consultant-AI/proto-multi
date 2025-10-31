@@ -34,6 +34,11 @@ RUN apt-get update && \
     # Network tools
     net-tools \
     netcat-traditional \
+    # Security tools
+    nginx \
+    apache2-utils \
+    iptables \
+    iptables-persistent \
     # Dependencies for Chrome
     wget \
     gnupg \
