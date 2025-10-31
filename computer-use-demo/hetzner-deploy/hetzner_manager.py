@@ -262,7 +262,10 @@ echo "🔒 Setting up security measures..."
 
 # Setup firewall to prevent network scanning
 echo "Setting up firewall rules..."
-apt-get install -y iptables-persistent
+# Pre-answer debconf prompts for iptables-persistent
+echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
+echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
+DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
 
 # Flush existing rules
 iptables -F
