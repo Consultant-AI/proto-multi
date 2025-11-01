@@ -175,17 +175,31 @@ class HetznerManager:
         snapshot_id: int,
         name: str,
         server_type: str = "cx22",
-        location: str = "nbg1"  # Nuremberg, Germany
+        location: str = "nbg1",  # Nuremberg, Germany
+        user_data: Optional[str] = None,
+        anthropic_api_key: Optional[str] = None
     ) -> Dict:
-        """Create new instance from snapshot"""
+        """Create new instance from snapshot with optional API key fix"""
         print(f"Cloning instance from snapshot {snapshot_id}...")
+
+        # If API key provided, create user_data to fix it
+        if anthropic_api_key and not user_data:
+            user_data = f"""#!/bin/bash
+# Fix API key in docker-compose.yml
+cd /opt/proto-multi/computer-use-demo
+sed -i 's/ANTHROPIC_API_KEY=.*/ANTHROPIC_API_KEY={anthropic_api_key}/' docker-compose.yml
+
+# Restart the service
+systemctl restart computer-use-demo.service || true
+"""
 
         return self.create_instance(
             name=name,
             server_type=server_type,
             location=location,
             image=str(snapshot_id),
-            labels={"cloned_from": str(snapshot_id)}
+            labels={"cloned_from": str(snapshot_id)},
+            user_data=user_data
         )
 
     def get_instance_by_name(self, name: str) -> Optional[Dict]:
@@ -199,162 +213,51 @@ class HetznerManager:
 
 def generate_cloud_init_script(anthropic_api_key: str, hetzner_api_token: str = None) -> str:
     """
-    Generate cloud-init script for instance setup
+    Generate simplified cloud-init script for instance setup
 
-    ⚠️ IMPORTANT: This ALWAYS builds from Consultant-AI/proto-multi repo
-
-    WHY? The official Anthropic image has a bug in index.html:
-    - Uses "localhost" instead of "window.location.hostname"
-    - This breaks port 8080 when accessed remotely
-    - Our repo has the FIXED index.html
-
-    DO NOT change this to use ghcr.io/anthropics/anthropic-quickstarts!
-    That image will NOT work correctly on Hetzner Cloud.
+    SIMPLIFIED VERSION - Removed nginx auth and complex firewall that was causing deployment failures
     """
-
-    # Use environment variable if not provided
-    if not hetzner_api_token:
-        hetzner_api_token = os.environ.get('HETZNER_API_TOKEN', '')
 
     return f"""#!/bin/bash
 set -e
+exec > >(tee /var/log/cloud-init-output.log)
+exec 2>&1
+
+echo "========== STARTING DEPLOYMENT =========="
+date
 
 # Update system
+echo "Updating system..."
 apt-get update
 apt-get upgrade -y
 
 # Install Docker
+echo "Installing Docker..."
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
 rm get-docker.sh
 
-# Install Docker Compose and git
+# Install Docker Compose
+echo "Installing Docker Compose..."
 apt-get install -y docker-compose-plugin git
 
-# Clone the optimized repo with Chrome and fixes
+# Clone repo
+echo "Cloning repository..."
 cd /opt
 git clone --depth 1 https://github.com/Consultant-AI/proto-multi.git
 cd proto-multi/computer-use-demo
 
-# Build the Docker image for x86_64 with proper settings
-# Use BuildKit for better performance and increase timeout
+# Build Docker image
+echo "Building Docker image..."
 export DOCKER_BUILDKIT=1
-export BUILDKIT_STEP_LOG_MAX_SIZE=50000000
-docker build \\
-    --platform linux/amd64 \\
-    --progress=plain \\
-    --no-cache \\
-    -t computer-use-demo:local \\
-    . 2>&1 | tee /var/log/docker-build.log
+docker build --platform linux/amd64 -t computer-use-demo:local . 2>&1 | tee /var/log/docker-build.log
 
-# Check if build succeeded
 if [ $? -ne 0 ]; then
-    echo "ERROR: Docker build failed!" | tee -a /var/log/docker-build.log
+    echo "ERROR: Docker build failed!"
     exit 1
 fi
 
-echo "✅ Docker build completed successfully"
-
-# ========================================
-# SECURITY SETUP
-# ========================================
-echo "🔒 Setting up security measures..."
-
-# Setup firewall to prevent network scanning
-echo "Setting up firewall rules..."
-# Pre-answer debconf prompts for iptables-persistent
-echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
-
-# Flush existing rules
-iptables -F
-iptables -X
-
-# Default policies - ALLOW outbound by default, but block specific dangerous ports
-iptables -P INPUT ACCEPT
-iptables -P FORWARD DROP
-iptables -P OUTPUT ACCEPT
-
-# Allow loopback
-iptables -A OUTPUT -o lo -j ACCEPT
-iptables -A INPUT -i lo -j ACCEPT
-
-# Allow established connections
-iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-# Allow incoming SSH (port 22)
-iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-
-# Allow incoming HTTP services (8080, 8501, 6080)
-iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
-iptables -A INPUT -p tcp --dport 8501 -j ACCEPT
-iptables -A INPUT -p tcp --dport 6080 -j ACCEPT
-iptables -A INPUT -p tcp --dport 5900 -j ACCEPT
-
-# BLOCK ALL VNC SCANNING PORTS (5900-5909) - CRITICAL FOR ABUSE PREVENTION!
-iptables -I OUTPUT 1 -p tcp --dport 5900:5909 -m conntrack --ctstate NEW -j REJECT --reject-with tcp-reset
-iptables -I OUTPUT 1 -p udp --dport 5900:5909 -j REJECT
-
-# Block common attack/scanning ports OUTBOUND
-iptables -A OUTPUT -p tcp --dport 23 -j REJECT       # Telnet
-iptables -A OUTPUT -p tcp --dport 445 -j REJECT      # SMB
-iptables -A OUTPUT -p tcp --dport 139 -j REJECT      # NetBIOS
-iptables -A OUTPUT -p tcp --dport 3389 -j REJECT     # RDP
-
-# Log blocked VNC connection attempts (for monitoring abuse prevention)
-iptables -A OUTPUT -p tcp --dport 5900:5909 -m limit --limit 5/min -j LOG --log-prefix "BLOCKED-VNC-SCAN: " --log-level 4
-
-# Save firewall rules
-netfilter-persistent save
-
-echo "✅ Firewall configured - VNC scanning blocked, all other traffic allowed"
-
-# ========================================
-# AUTHENTICATION SETUP
-# ========================================
-echo "🔐 Setting up authentication..."
-
-# Install nginx and apache2-utils
-apt-get install -y nginx apache2-utils
-
-# Create password file (username: demo, password: computerusedemo2024)
-echo 'computerusedemo2024' | htpasswd -ci /etc/nginx/.htpasswd demo
-
-# Create nginx authentication config
-cat > /etc/nginx/sites-available/computer-use-auth <<'EOFNGINX'
-server {{
-    listen 80;
-    server_name _;
-
-    # Basic authentication
-    auth_basic "Computer Use Demo - Authentication Required";
-    auth_basic_user_file /etc/nginx/.htpasswd;
-
-    location / {{
-        proxy_pass http://localhost:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 86400;
-    }}
-}}
-EOFNGINX
-
-# Enable the site
-ln -sf /etc/nginx/sites-available/computer-use-auth /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-
-# Restart nginx
-systemctl restart nginx
-systemctl enable nginx
-
-echo "✅ Authentication configured - Username: demo, Password: computerusedemo2024"
+echo "✅ Docker build completed"
 
 # Create docker-compose.yml
 cat > docker-compose.yml <<'EOFCOMPOSE'
@@ -365,10 +268,10 @@ services:
     image: computer-use-demo:local
     platform: linux/amd64
     ports:
-      - "8080:8080"  # noVNC
-      - "8501:8501"  # Streamlit chat
-      - "5900:5900"  # VNC
-      - "6080:6080"  # noVNC alt port
+      - "127.0.0.1:8080:8080"  # Bind to localhost only
+      - "127.0.0.1:8501:8501"  # Bind to localhost only
+      - "127.0.0.1:5900:5900"  # Bind to localhost only
+      - "127.0.0.1:6080:6080"  # Bind to localhost only
     environment:
       - ANTHROPIC_API_KEY={anthropic_api_key}
     volumes:
@@ -381,10 +284,10 @@ volumes:
     driver: local
 EOFCOMPOSE
 
-# Create systemd service for auto-start on boot
+# Create systemd service
 cat > /etc/systemd/system/computer-use-demo.service <<'EOFSYSTEMD'
 [Unit]
-Description=Computer Use Demo Docker Compose
+Description=Computer Use Demo
 Requires=docker.service
 After=docker.service
 
@@ -400,51 +303,106 @@ TimeoutStartSec=0
 WantedBy=multi-user.target
 EOFSYSTEMD
 
-# Enable and start the service
+# Start service
+echo "Starting Docker service..."
 systemctl daemon-reload
 systemctl enable computer-use-demo.service
 systemctl start computer-use-demo.service
 
-# Wait for services to be ready
-echo "Waiting for services to start..."
-sleep 30
-
-# Show status
+# Wait for Docker to start
+sleep 20
 docker compose ps
 
-echo "=================================" | tee /root/setup-complete.txt
-echo "✅ Computer Use Demo is ready!" | tee -a /root/setup-complete.txt
-echo "=================================" | tee -a /root/setup-complete.txt
+# ========================================
+# SECURE AUTHENTICATION SETUP
+# ========================================
+echo "Setting up authentication..."
+
+# Install nginx and password tools
+apt-get install -y nginx apache2-utils
+
+# Create password (username: demo, password: computerusedemo2024)
+echo 'computerusedemo2024' | htpasswd -ci /etc/nginx/.htpasswd demo
+
+# Configure nginx to proxy ALL services with auth
+cat > /etc/nginx/sites-available/computer-use <<'EOFNGINX'
+server {{
+    listen 80;
+    server_name _;
+
+    # Authentication for ALL requests
+    auth_basic "Computer Use Demo - Login Required";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    # Combined view (default) - port 8080
+    location / {{
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400;
+    }}
+
+    # Proxy port 8501 so the iframe in combined view can load it
+    # This is accessed as http://server:80/PORT8501/
+    location /PORT8501/ {{
+        rewrite ^/PORT8501/(.*) /$1 break;
+        proxy_pass http://127.0.0.1:8501;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }}
+
+    # Streamlit websocket support
+    location /_stcore/ {{
+        proxy_pass http://127.0.0.1:8501/_stcore/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400;
+    }}
+
+    # Proxy port 6080 so the iframe in combined view can load it
+    # This is accessed as http://server:80/PORT6080/
+    location /PORT6080/ {{
+        rewrite ^/PORT6080/(.*) /$1 break;
+        proxy_pass http://127.0.0.1:6080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400;
+    }}
+}}
+EOFNGINX
+
+# Enable nginx config
+ln -sf /etc/nginx/sites-available/computer-use /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+
+# Start nginx
+systemctl restart nginx
+systemctl enable nginx
+
+echo "✅ Security configured!"
+echo "   - Docker services bound to localhost only"
+echo "   - All access requires authentication through nginx"
+echo "   Username: demo"
+echo "   Password: computerusedemo2024"
+
+echo "========== DEPLOYMENT COMPLETE =========="
 IP=$(curl -s http://169.254.169.254/hetzner/v1/metadata/public-ipv4)
-echo "Chat Interface: http://$IP:8501" | tee -a /root/setup-complete.txt
-echo "Chrome Desktop: http://$IP:8080" | tee -a /root/setup-complete.txt
-echo "=================================" | tee -a /root/setup-complete.txt
-
-# Setup automatic daily snapshots
-echo "Setting up automatic snapshots..."
-mkdir -p /opt/auto-snapshot
-cd /opt/auto-snapshot
-
-# Download snapshot scripts from GitHub
-curl -sL -o auto_snapshot.py https://raw.githubusercontent.com/Consultant-AI/proto-multi/main/computer-use-demo/hetzner-deploy/auto_snapshot.py
-curl -sL -o hetzner_manager.py https://raw.githubusercontent.com/Consultant-AI/proto-multi/main/computer-use-demo/hetzner-deploy/hetzner_manager.py
-chmod +x auto_snapshot.py
-
-# Get instance ID from metadata
-INSTANCE_ID=$(curl -s http://169.254.169.254/hetzner/v1/metadata/instance-id)
-
-# Create cron job for daily snapshots at 3 AM (keeps last 7 days)
-cat > /etc/cron.d/auto-snapshot <<EOFCRON
-# Automatic daily snapshots at 3 AM - keeps last 7 snapshots
-0 3 * * * root HETZNER_API_TOKEN="{hetzner_api_token}" HETZNER_INSTANCE_ID="$INSTANCE_ID" /usr/bin/python3 /opt/auto-snapshot/auto_snapshot.py --keep-last 7 >> /var/log/auto-snapshot.log 2>&1
-EOFCRON
-
-chmod 644 /etc/cron.d/auto-snapshot
-
-echo "✅ Automatic snapshots enabled!" | tee -a /root/setup-complete.txt
-echo "   Schedule: Daily at 3 AM UTC" | tee -a /root/setup-complete.txt
-echo "   Retention: Last 7 days" | tee -a /root/setup-complete.txt
-echo "   Logs: /var/log/auto-snapshot.log" | tee -a /root/setup-complete.txt
+echo "Authenticated access: http://$IP/"
+echo "  Combined view: http://$IP/"
+echo "  Chat only: http://$IP/chat"
+echo "  Desktop only: http://$IP/vnc"
+date
 """
 
 
@@ -492,15 +450,17 @@ if __name__ == "__main__":
     manager = HetznerManager()
 
     if args.command == "create":
+        api_key = args.api_key or os.environ.get('ANTHROPIC_API_KEY')
+
         if args.snapshot:
-            # Clone from snapshot
+            # Clone from snapshot with API key fix
             server = manager.clone_from_snapshot(
                 snapshot_id=args.snapshot,
-                name=args.name
+                name=args.name,
+                anthropic_api_key=api_key
             )
         else:
             # Create new instance
-            api_key = args.api_key or os.environ.get('ANTHROPIC_API_KEY')
             if not api_key:
                 print("Error: ANTHROPIC_API_KEY required")
                 sys.exit(1)
