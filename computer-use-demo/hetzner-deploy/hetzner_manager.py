@@ -268,10 +268,10 @@ services:
     image: computer-use-demo:local
     platform: linux/amd64
     ports:
-      - "127.0.0.1:8080:8080"  # Bind to localhost only
-      - "127.0.0.1:8501:8501"  # Bind to localhost only
-      - "127.0.0.1:5900:5900"  # Bind to localhost only
-      - "127.0.0.1:6080:6080"  # Bind to localhost only
+      - "127.0.0.1:8080:8080"  # Combined view - accessible via nginx only
+      - "127.0.0.1:8501:8501"  # Streamlit - accessible via nginx proxy only
+      - "127.0.0.1:5900:5900"  # VNC - localhost only
+      - "127.0.0.1:6080:6080"  # noVNC - accessible via nginx proxy only
     environment:
       - ANTHROPIC_API_KEY={anthropic_api_key}
     volumes:
