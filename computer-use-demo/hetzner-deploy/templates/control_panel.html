@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hetzner Control Panel</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Hetzner Control Panel v2.0</title>
     <style>
         * {
             margin: 0;
@@ -595,7 +598,13 @@
             </div>
             <div class="cost-info">
                 💰 Cost: <span class="cost-highlight">€0.01/GB/month</span> (~€0.30-0.40 for 40GB compressed)<br>
-                ⏱️ Auto-named with date/time if left empty
+                ⏱️ Auto-named with date/time if left empty<br>
+                <br>
+                <strong>⚡ For Fast Restore:</strong><br>
+                ✅ Wait for "Services Ready" status before snapshotting<br>
+                ✅ Ensures Docker images are built and saved<br>
+                ✅ Restored instances boot in ~1-2 minutes<br>
+                ❌ If services not ready, restore will rebuild (~10-15 min)
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeSnapshotModal()">Cancel</button>
@@ -752,16 +761,16 @@
                         </div>
                         ${inst.status === 'running' ? `
                         <div style="margin-bottom: 10px;">
-                            <span style="font-size: 12px; color: ${inst.services_ready ? '#22543d' : '#c05621'}; font-weight: 600;">
-                                ${inst.services_ready ? '✅ Services Ready' : '⚠️ Services Starting...'}
+                            <span style="font-size: 12px; color: ${inst.app_status === 'ready' ? '#22543d' : inst.app_status === 'starting' ? '#c05621' : '#742a2a'}; font-weight: 600;">
+                                ${inst.app_status === 'ready' ? '✅ Services Ready' : inst.app_status === 'starting' ? '⏳ Docker Starting (502 error - wait 1-2 min)' : inst.app_status === 'offline' ? '❌ Offline' : '⚠️ Unknown Status'}
                             </span>
                         </div>
-                        ${inst.services_ready ? `
+                        ${inst.app_status === 'ready' ? `
                         <div class="instance-links">
                             <a href="${inst.urls.chat}" target="_blank" class="link-btn">💬 Chat</a>
                             <a href="${inst.urls.desktop}" target="_blank" class="link-btn">🖥️ Desktop</a>
                         </div>
-                        ` : '<div style="font-size: 13px; color: #718096; margin-bottom: 10px;">Wait 1-2 minutes for services to start...</div>'}
+                        ` : '<div style="font-size: 13px; color: #718096; margin-bottom: 10px;">Wait for Docker containers to start (~2-3 min for snapshots)...</div>'}
                         ` : ''}
                         <div class="instance-details">
                             <div class="detail-item">
@@ -782,12 +791,8 @@
                             </div>
                         </div>
                         <div class="instance-actions">
-                            ${inst.status === 'running' ? `
-                                <button class="btn btn-success btn-small" onclick="openSnapshotModal(${inst.id})">💾 Snapshot</button>
-                                <button class="btn btn-warning btn-small" onclick="stopInstance(${inst.id})">⏸️ Pause</button>
-                            ` : `
-                                <button class="btn btn-primary btn-small" onclick="startInstance(${inst.id})">▶️ Start</button>
-                            `}
+                            <button class="btn btn-success btn-small" onclick="quickSnapshot(${inst.id}, '${inst.name}')">💾 Snapshot</button>
+                            <button class="btn btn-warning btn-small" onclick="snapshotAndDelete(${inst.id}, '${inst.name}')">💾🗑️ Snapshot + Delete</button>
                             <button class="btn btn-danger btn-small" onclick="deleteInstance(${inst.id}, '${inst.name}')">🗑️ Delete</button>
                         </div>
                     </div>
@@ -805,11 +810,16 @@
                 const response = await fetch('/api/snapshots');
                 const data = await response.json();
 
-                cachedSnapshots = data.snapshots;
+                // Sort snapshots by date (newest first)
+                const sortedSnapshots = data.snapshots.sort((a, b) =>
+                    new Date(b.created) - new Date(a.created)
+                );
+
+                cachedSnapshots = sortedSnapshots;
 
                 // Also update snapshot selector in create modal
                 const select = document.getElementById('fromSnapshot');
-                const snapshotOptions = data.snapshots.map((snap, index) =>
+                const snapshotOptions = sortedSnapshots.map((snap, index) =>
                     `<option value="${snap.id}" ${index === 0 ? 'selected' : ''}>${snap.description} (1-2 min)</option>`
                 ).join('');
                 select.innerHTML = snapshotOptions + '<option value="">Fresh Build (10-15 min)</option>';
@@ -817,12 +827,12 @@
                 // Update time estimate to show snapshot time if selected
                 updateCreateTimeEstimate();
 
-                if (data.snapshots.length === 0) {
+                if (sortedSnapshots.length === 0) {
                     container.innerHTML = '<div class="empty-state">No snapshots yet</div>';
                     return;
                 }
 
-                container.innerHTML = data.snapshots.map(snap => `
+                container.innerHTML = sortedSnapshots.map(snap => `
                     <div class="snapshot">
                         <div class="snapshot-header">
                             <div class="snapshot-name">${snap.description}</div>
@@ -858,6 +868,11 @@
         }
 
         function openSnapshotModal(instanceId) {
+            console.log('openSnapshotModal called with:', instanceId);
+            if (!instanceId || instanceId === 'null' || instanceId === null) {
+                alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
+                return;
+            }
             currentInstanceId = instanceId;
             document.getElementById('snapshotModal').classList.add('active');
         }
@@ -888,12 +903,25 @@
                     body: JSON.stringify(payload)
                 });
 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage = `HTTP ${response.status}`;
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        // If not JSON, use the text
+                        errorMessage = errorText.substring(0, 100);
+                    }
+                    throw new Error(errorMessage);
+                }
+
                 const data = await response.json();
                 if (data.success) {
                     updateToast(toastId, 'Instance Created!', `${data.instance.name} is ready! IP: ${data.instance.ip}`, 'success');
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    updateToast(toastId, 'Error', data.error || 'Unknown error occurred', 'error');
                 }
             } catch (error) {
                 updateToast(toastId, 'Error', error.message, 'error');
@@ -923,9 +951,17 @@
                     body: JSON.stringify({ description })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
                 if (data.success) {
-                    updateToast(toastId, 'Snapshot Created!', `${data.snapshot.description} saved successfully`, 'success');
+                    let message = `${data.snapshot.description} saved successfully`;
+                    if (data.warning) {
+                        message += `\n\n⚠️ ${data.warning}`;
+                    }
+                    updateToast(toastId, 'Snapshot Created!', message, data.warning ? 'warning' : 'success');
                     loadData();
                 } else {
                     updateToast(toastId, 'Error', data.error, 'error');
@@ -935,38 +971,48 @@
             }
         }
 
-        async function startInstance(id) {
-            if (!confirm('Start this instance? Billing will resume.')) return;
-
-            const toastId = showToast('Starting Instance', 'Powering on instance... This takes ~10-15 seconds', 'loading', 0);
-
-            try {
-                const response = await fetch(`/api/instance/${id}/start`, { method: 'POST' });
-                const data = await response.json();
-                if (data.success) {
-                    updateToast(toastId, 'Instance Started!', `Billing resumed at €0.007/hr. IP: ${data.ip}`, 'success');
-                    loadData();
-                } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
-                }
-            } catch (error) {
-                updateToast(toastId, 'Error', error.message, 'error');
+        async function snapshotAndDelete(id, name) {
+            if (!id || id === 'null' || id === null) {
+                alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
+                return;
             }
-        }
 
-        async function stopInstance(id) {
-            if (!confirm('Pause this instance? You can start it again later.')) return;
+            if (!confirm(`💾 Snapshot + Delete "${name}"?\n\n✅ Creates snapshot (~30 sec)\n✅ Deletes instance (stops all billing)\n✅ Can restore later from snapshot\n\nSnapshot cost: ~€0.10-0.20/month\nSavings: ~€7/month`)) return;
 
-            const toastId = showToast('Pausing Instance', 'Stopping instance... This takes ~30 seconds', 'loading', 0);
+            const toastId = showToast('Snapshot + Delete', 'Creating snapshot... (~30 seconds)', 'loading', 0);
 
             try {
-                const response = await fetch(`/api/instance/${id}/stop`, { method: 'POST' });
-                const data = await response.json();
-                if (data.success) {
-                    updateToast(toastId, 'Instance Paused!', 'Hourly billing stopped. Instance is now offline.', 'success');
+                // First create snapshot
+                const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+                const snapshotResponse = await fetch(`/api/instance/${id}/snapshot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: `${name} - ${timestamp}` })
+                });
+
+                if (!snapshotResponse.ok) {
+                    throw new Error(`Snapshot failed: HTTP ${snapshotResponse.status}`);
+                }
+
+                const snapshotData = await snapshotResponse.json();
+
+                if (!snapshotData.success) {
+                    updateToast(toastId, 'Snapshot Failed', snapshotData.error || 'Unknown error', 'error');
+                    return;
+                }
+
+                updateToast(toastId, 'Snapshot Created!', 'Now deleting instance...', 'loading');
+
+                // Then delete the instance
+                const deleteResponse = await fetch(`/api/instance/${id}/delete`, { method: 'DELETE' });
+                const deleteData = await deleteResponse.json();
+
+                if (deleteData.success) {
+                    updateToast(toastId, 'Done!', `✅ Snapshot created\n✅ Instance deleted\n💰 Saving ~€7/month`, 'success');
                     loadData();
                 } else {
-                    updateToast(toastId, 'Error', data.error, 'error');
+                    updateToast(toastId, 'Delete Failed', `Snapshot created but delete failed: ${deleteData.error}`, 'error');
+                    loadData();
                 }
             } catch (error) {
                 updateToast(toastId, 'Error', error.message, 'error');
@@ -974,12 +1020,22 @@
         }
 
         async function deleteInstance(id, name) {
+            if (!id || id === 'null' || id === null) {
+                alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
+                return;
+            }
+
             if (!confirm(`⚠️ Permanently delete "${name}"?\n\nThis cannot be undone!\nCreate a snapshot first if you want to keep the data.`)) return;
 
             const toastId = showToast('Deleting Instance', `Removing ${name}... This takes ~10 seconds`, 'loading', 0);
 
             try {
                 const response = await fetch(`/api/instance/${id}/delete`, { method: 'DELETE' });
+
+                if (!response.ok) {
+                    throw new Error(`Delete failed: HTTP ${response.status}`);
+                }
+
                 const data = await response.json();
                 if (data.success) {
                     updateToast(toastId, 'Instance Deleted!', `${name} has been permanently removed`, 'success');
@@ -1047,6 +1103,50 @@
             }
         }
 
+        // Quick snapshot - no modal, direct creation
+        async function quickSnapshot(instanceId, instanceName) {
+            if (!instanceId || instanceId === 'null') {
+                alert('❌ Error: Invalid instance ID');
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
+            const defaultName = `snapshot-${dateStr}`;
+
+            const description = prompt(`Create snapshot of "${instanceName}"?\n\nEnter description (or leave empty for auto-name):`, defaultName);
+
+            if (description === null) return; // User cancelled
+
+            const finalDescription = description.trim() || defaultName;
+            const toastId = showToast('Creating Snapshot', 'Capturing instance state... This takes ~2-3 minutes', 'loading', 0);
+
+            try {
+                const response = await fetch(`/api/instance/${instanceId}/snapshot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: finalDescription })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    let message = `${data.snapshot.description} saved successfully`;
+                    if (data.warning) {
+                        message += `\n\n⚠️ ${data.warning}`;
+                    }
+                    updateToast(toastId, 'Snapshot Created!', message, data.warning ? 'warning' : 'success');
+                    loadData();
+                } else {
+                    updateToast(toastId, 'Error', data.error, 'error');
+                }
+            } catch (error) {
+                updateToast(toastId, 'Error', error.message, 'error');
+            }
+        }
         // Load data on page load
         loadData();
 

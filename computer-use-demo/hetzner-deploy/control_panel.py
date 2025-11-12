@@ -1,17 +1,33 @@
 #!/usr/bin/env python3
 """
 Web-based control panel for managing Hetzner instances
-Access at http://localhost:5000
+Access at http://localhost:5500
+Requires authentication: admin / anthropic2024
 """
 
 import os
 import socket
 from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask_httpauth import HTTPBasicAuth
+from werkzeug.security import generate_password_hash, check_password_hash
 from hetzner_manager import HetznerManager, generate_cloud_init_script
 from datetime import datetime
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
 manager = None
+
+# Authentication credentials
+users = {
+    "admin": generate_password_hash("anthropic2024")
+}
+
+@auth.verify_password
+def verify_password(username, password):
+    """Verify username and password"""
+    if username in users and check_password_hash(users.get(username), password):
+        return username
+    return None
 
 
 def get_manager():
@@ -34,43 +50,71 @@ def check_port(host, port, timeout=2):
         return False
 
 
+def check_app_health(host, timeout=3):
+    """Check if the application is actually working (not just nginx)"""
+    try:
+        import requests
+        from requests.auth import HTTPBasicAuth
+
+        url = f"http://{host}/"
+        response = requests.get(
+            url,
+            auth=HTTPBasicAuth('admin', 'anthropic2024'),
+            timeout=timeout,
+            allow_redirects=True
+        )
+
+        # Check if we get a real response (not 502)
+        if response.status_code == 200 and 'Computer Use Demo' in response.text:
+            return 'ready'
+        elif response.status_code == 502:
+            return 'starting'
+        else:
+            return 'unknown'
+    except Exception:
+        return 'offline'
+
+
 @app.route('/')
+@auth.login_required
 def index():
     """Serve control panel UI"""
     return render_template('control_panel.html')
 
 
 @app.route('/api/instances', methods=['GET'])
+@auth.login_required
 def list_instances():
     """List all instances"""
     try:
         m = get_manager()
-        instances = m.list_instances(label_selector="app=computer-use-demo")
+        instances = m.list_instances()  # Show ALL instances, not just labeled ones
 
         # Format instance data
         formatted = []
         for inst in instances:
             ip = inst['public_net']['ipv4']['ip']
 
-            # Check service health if instance is running
+            # Check actual application health if instance is running
+            app_status = 'offline'
             services_ready = False
             if inst['status'] == 'running':
-                port_8080 = check_port(ip, 8080, timeout=1)
-                port_8501 = check_port(ip, 8501, timeout=1)
-                services_ready = port_8080 and port_8501
+                app_status = check_app_health(ip, timeout=2)
+                services_ready = (app_status == 'ready')
 
             formatted.append({
                 'id': inst['id'],
                 'name': inst['name'],
                 'status': inst['status'],
                 'services_ready': services_ready,
+                'app_status': app_status,  # ready, starting, offline, unknown
                 'ip': ip,
                 'created': inst['created'],
                 'server_type': inst['server_type']['name'],
-                'cost_per_hour': 0.007,  # CX22 pricing
+                'cost_per_hour': 0.0096,  # CPX22 pricing
                 'urls': {
-                    'chat': f"http://{ip}:8501",
-                    'desktop': f"http://{ip}:8080"
+                    'chat': f"http://{ip}/",
+                    'desktop': f"http://{ip}/"
                 }
             })
 
@@ -80,6 +124,7 @@ def list_instances():
 
 
 @app.route('/api/snapshots', methods=['GET'])
+@auth.login_required
 def list_snapshots():
     """List all snapshots"""
     try:
@@ -88,12 +133,13 @@ def list_snapshots():
 
         formatted = []
         for snap in snapshots:
+            size_gb = snap.get('image_size') or 0
             formatted.append({
                 'id': snap['id'],
                 'description': snap['description'],
                 'created': snap['created'],
-                'size_gb': snap['image_size'],
-                'cost_per_month': round(snap['image_size'] * 0.01, 2)
+                'size_gb': size_gb,
+                'cost_per_month': round(size_gb * 0.01, 2)
             })
 
         return jsonify({'snapshots': formatted})
@@ -102,6 +148,7 @@ def list_snapshots():
 
 
 @app.route('/api/instance/create', methods=['POST'])
+@auth.login_required
 def create_instance():
     """Create new instance"""
     try:
@@ -151,6 +198,7 @@ def create_instance():
 
 
 @app.route('/api/instance/<int:instance_id>/start', methods=['POST'])
+@auth.login_required
 def start_instance(instance_id):
     """Start a stopped instance"""
     try:
@@ -166,6 +214,7 @@ def start_instance(instance_id):
 
 
 @app.route('/api/instance/<int:instance_id>/stop', methods=['POST'])
+@auth.login_required
 def stop_instance(instance_id):
     """Stop a running instance"""
     try:
@@ -178,6 +227,7 @@ def stop_instance(instance_id):
 
 
 @app.route('/api/instance/<int:instance_id>/delete', methods=['DELETE'])
+@auth.login_required
 def delete_instance(instance_id):
     """Delete an instance"""
     try:
@@ -190,6 +240,7 @@ def delete_instance(instance_id):
 
 
 @app.route('/api/instance/<int:instance_id>/snapshot', methods=['POST'])
+@auth.login_required
 def create_snapshot(instance_id):
     """Create snapshot of instance"""
     try:
@@ -197,6 +248,17 @@ def create_snapshot(instance_id):
         description = data.get('description', f"snapshot-{datetime.now().strftime('%Y-%m-%d-%H%M')}")
 
         m = get_manager()
+
+        # Check if instance is ready for snapshotting (services running)
+        instance = m.get_instance(instance_id)
+        ip = instance['public_net']['ipv4']['ip']
+
+        # Only warn, don't block - user might know what they're doing
+        services_ready = check_port(ip, 80, timeout=2)
+        if not services_ready:
+            print(f"⚠️  WARNING: Snapshotting instance {instance_id} but services not ready yet")
+            print(f"⚠️  Docker may still be building - restored instances will be slow")
+
         snapshot = m.create_snapshot(instance_id, description)
 
         return jsonify({
@@ -204,13 +266,15 @@ def create_snapshot(instance_id):
             'snapshot': {
                 'id': snapshot['id'],
                 'description': snapshot['description']
-            }
+            },
+            'warning': None if services_ready else 'Services not ready - snapshot may require rebuild on restore'
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/snapshot/<int:snapshot_id>/delete', methods=['DELETE'])
+@auth.login_required
 def delete_snapshot(snapshot_id):
     """Delete a snapshot"""
     try:

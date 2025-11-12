@@ -33,13 +33,18 @@ class HetznerManager:
         except requests.exceptions.HTTPError as e:
             print(f"API Error: {response.text}")
             raise
+
+        # DELETE requests return empty responses (204 No Content)
+        if response.status_code == 204 or not response.content:
+            return {}
+
         return response.json()
 
     def create_instance(
         self,
         name: str,
-        server_type: str = "cx22",  # 2 vCPU, 4GB RAM, €4.49/month
-        location: str = "nbg1",  # Nuremberg, Germany - use 'hel1' for Finland, 'fsn1' for Germany
+        server_type: str = "cpx22",  # 2 vCPU, 4GB RAM, 80GB disk, $0.0096/hour (replaces deprecated cx22)
+        location: str = "nbg1",  # Nuremberg, Germany - use 'hel1' for Finland, 'fsn1' for Germany, 'ash' for US
         image: str = "ubuntu-24.04",
         ssh_keys: Optional[List[str]] = None,
         user_data: Optional[str] = None,
@@ -174,7 +179,7 @@ class HetznerManager:
         self,
         snapshot_id: int,
         name: str,
-        server_type: str = "cx22",
+        server_type: str = "cpx22",  # 2 vCPU, 4GB RAM, 80GB disk (replaces deprecated cx22)
         location: str = "nbg1",  # Nuremberg, Germany
         user_data: Optional[str] = None,
         anthropic_api_key: Optional[str] = None
@@ -182,15 +187,62 @@ class HetznerManager:
         """Create new instance from snapshot with optional API key fix"""
         print(f"Cloning instance from snapshot {snapshot_id}...")
 
-        # If API key provided, create user_data to fix it
-        if anthropic_api_key and not user_data:
-            user_data = f"""#!/bin/bash
-# Fix API key in docker-compose.yml
+        # Always provide user_data to ensure Docker starts on snapshot restore
+        if not user_data:
+            if anthropic_api_key:
+                # If API key provided, update it and restart
+                user_data = f"""#!/bin/bash
+set -e
+exec > >(tee /var/log/snapshot-restore.log)
+exec 2>&1
+
+echo "========== SNAPSHOT RESTORE INITIALIZATION =========="
+date
+
+# Ensure Docker service is running
+systemctl start docker
+sleep 5
+
+# Update API key and restart service
 cd /opt/proto-multi/computer-use-demo
 sed -i 's/ANTHROPIC_API_KEY=.*/ANTHROPIC_API_KEY={anthropic_api_key}/' docker-compose.yml
 
-# Restart the service
-systemctl restart computer-use-demo.service || true
+# Restart the systemd service
+systemctl daemon-reload
+systemctl restart computer-use-demo.service
+
+# Wait for containers to start
+sleep 10
+docker compose ps
+
+echo "✅ Snapshot restore complete"
+date
+"""
+            else:
+                # No API key provided, just ensure Docker is running
+                user_data = """#!/bin/bash
+set -e
+exec > >(tee /var/log/snapshot-restore.log)
+exec 2>&1
+
+echo "========== SNAPSHOT RESTORE INITIALIZATION =========="
+date
+
+# Ensure Docker service is running
+systemctl start docker
+sleep 5
+
+# Restart the systemd service to bring up containers
+cd /opt/proto-multi/computer-use-demo
+systemctl daemon-reload
+systemctl restart computer-use-demo.service
+
+# Wait for containers to start
+sleep 10
+docker compose ps
+
+echo "✅ Snapshot restore complete"
+date
 """
 
         return self.create_instance(
@@ -247,6 +299,31 @@ cd /opt
 git clone --depth 1 https://github.com/Consultant-AI/proto-multi.git
 cd proto-multi/computer-use-demo
 
+# Fix IPv6->IPv4 bug in http_server.py
+echo "Patching http_server.py for IPv4 compatibility..."
+cat > image/http_server.py <<'EOFHTTPSERVER'
+import os
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+
+def run_server():
+    os.chdir(os.path.dirname(__file__) + "/static_content")
+    server_address = ("0.0.0.0", 8080)  # IPv4 binding for nginx compatibility
+    httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
+    print("Starting HTTP server on port 8080...")  # noqa: T201
+    httpd.serve_forever()
+
+
+if __name__ == "__main__":
+    run_server()
+EOFHTTPSERVER
+
+# Patch index.html iframe URLs to use proxy paths instead of direct ports
+echo "Patching index.html to use nginx proxy paths for iframes..."
+# Simple replacement: change iframe src lines to use proxy paths
+sed -i 's|document.getElementById("streamlit").src = .*|document.getElementById("streamlit").src = "/PORT8501/";|' image/static_content/index.html
+sed -i 's|document.getElementById("vnc").src = .*|document.getElementById("vnc").src = "/PORT6080/vnc.html?\\&resize=scale\\&autoconnect=1\\&view_only=1\\&reconnect=1\\&reconnect_delay=2000";|' image/static_content/index.html
+
 # Build Docker image
 echo "Building Docker image..."
 export DOCKER_BUILDKIT=1
@@ -258,6 +335,8 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✅ Docker build completed"
+
+# Chrome should be installed via Dockerfile - skip verification to avoid hanging
 
 # Create docker-compose.yml
 cat > docker-compose.yml <<'EOFCOMPOSE'
@@ -321,8 +400,8 @@ echo "Setting up authentication..."
 # Install nginx and password tools
 apt-get install -y nginx apache2-utils
 
-# Create password (username: demo, password: computerusedemo2024)
-echo 'computerusedemo2024' | htpasswd -ci /etc/nginx/.htpasswd demo
+# Create password (username: admin, password: anthropic2024)
+echo 'anthropic2024' | htpasswd -ci /etc/nginx/.htpasswd admin
 
 # Configure nginx to proxy services with smart auth
 # Main page requires auth, but iframes don't (they're protected by localhost binding)
@@ -423,8 +502,8 @@ systemctl enable nginx
 echo "✅ Security configured!"
 echo "   - Docker services bound to localhost only"
 echo "   - All access requires authentication through nginx"
-echo "   Username: demo"
-echo "   Password: computerusedemo2024"
+echo "   Username: admin"
+echo "   Password: anthropic2024"
 
 echo "========== DEPLOYMENT COMPLETE =========="
 IP=$(curl -s http://169.254.169.254/hetzner/v1/metadata/public-ipv4)
