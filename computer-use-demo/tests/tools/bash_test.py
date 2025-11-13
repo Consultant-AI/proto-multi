@@ -55,7 +55,7 @@ async def test_bash_tool_session_error(bash_tool):
 
 @pytest.mark.asyncio
 async def test_bash_tool_non_zero_exit(bash_tool):
-    result = await bash_tool(command="bash -c 'exit 1'")
+    result = await bash_tool(command="/bin/bash -c 'exit 1'")
     assert result.error.strip() == ""
     assert result.output.strip() == ""
 

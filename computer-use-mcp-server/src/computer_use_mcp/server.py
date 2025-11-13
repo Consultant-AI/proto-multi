@@ -12,6 +12,7 @@ Works on macOS, Linux, and Windows with platform-specific implementations.
 
 import asyncio
 import base64
+import hashlib
 import os
 import platform
 import subprocess
@@ -21,6 +22,7 @@ from pathlib import Path
 from typing import Literal
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ImageContent, TextContent
 from PIL import Image
 
 # Initialize FastMCP server
@@ -31,6 +33,12 @@ SYSTEM = platform.system().lower()
 IS_MAC = SYSTEM == "darwin"
 IS_LINUX = SYSTEM == "linux"
 IS_WINDOWS = SYSTEM == "win32" or SYSTEM == "windows"
+
+# Global variables for screen dimensions and scaling
+_ACTUAL_WIDTH = None
+_ACTUAL_HEIGHT = None
+_DISPLAY_WIDTH = 1024
+_DISPLAY_HEIGHT = 768
 
 
 async def run_command(cmd: str) -> tuple[str, str, int]:
@@ -48,11 +56,89 @@ async def run_command(cmd: str) -> tuple[str, str, int]:
     )
 
 
-async def take_screenshot_base64() -> str:
-    """Take a screenshot and return as base64-encoded JPEG.
+async def get_screen_size() -> tuple[int, int]:
+    """Get the actual screen dimensions.
 
-    This is a helper function used internally to capture screenshots after actions.
-    Returns the base64 string without the data URI prefix.
+    Returns:
+        Tuple of (width, height) in pixels
+    """
+    global _ACTUAL_WIDTH, _ACTUAL_HEIGHT
+
+    if _ACTUAL_WIDTH is not None and _ACTUAL_HEIGHT is not None:
+        return _ACTUAL_WIDTH, _ACTUAL_HEIGHT
+
+    try:
+        if IS_MAC:
+            # Use system_profiler to get display info
+            cmd = "system_profiler SPDisplaysDataType | grep Resolution"
+            stdout, stderr, code = await run_command(cmd)
+            if code == 0 and stdout:
+                # Parse output like "Resolution: 2560 x 1600"
+                import re
+                match = re.search(r'(\d+) x (\d+)', stdout)
+                if match:
+                    _ACTUAL_WIDTH = int(match.group(1))
+                    _ACTUAL_HEIGHT = int(match.group(2))
+                    return _ACTUAL_WIDTH, _ACTUAL_HEIGHT
+
+        elif IS_LINUX:
+            # Use xrandr to get screen info
+            cmd = "xrandr | grep '*' | head -1"
+            stdout, stderr, code = await run_command(cmd)
+            if code == 0 and stdout:
+                import re
+                match = re.search(r'(\d+)x(\d+)', stdout)
+                if match:
+                    _ACTUAL_WIDTH = int(match.group(1))
+                    _ACTUAL_HEIGHT = int(match.group(2))
+                    return _ACTUAL_WIDTH, _ACTUAL_HEIGHT
+
+        elif IS_WINDOWS:
+            # Use PowerShell to get screen dimensions
+            ps_script = """
+            Add-Type -AssemblyName System.Windows.Forms
+            $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            Write-Output "$($screen.Width)x$($screen.Height)"
+            """
+            cmd = f'powershell -Command "{ps_script}"'
+            stdout, stderr, code = await run_command(cmd)
+            if code == 0 and stdout:
+                width, height = stdout.strip().split('x')
+                _ACTUAL_WIDTH = int(width)
+                _ACTUAL_HEIGHT = int(height)
+                return _ACTUAL_WIDTH, _ACTUAL_HEIGHT
+    except:
+        pass
+
+    # Fallback to common resolutions
+    _ACTUAL_WIDTH = 1920
+    _ACTUAL_HEIGHT = 1080
+    return _ACTUAL_WIDTH, _ACTUAL_HEIGHT
+
+
+async def scale_coordinates(x: int, y: int) -> tuple[int, int]:
+    """Scale coordinates from display size to actual screen size.
+
+    Args:
+        x: X coordinate from the resized screenshot
+        y: Y coordinate from the resized screenshot
+
+    Returns:
+        Tuple of (scaled_x, scaled_y) for actual screen
+    """
+    actual_width, actual_height = await get_screen_size()
+
+    scaled_x = int(x * actual_width / _DISPLAY_WIDTH)
+    scaled_y = int(y * actual_height / _DISPLAY_HEIGHT)
+
+    return scaled_x, scaled_y
+
+
+async def take_screenshot_hash() -> str:
+    """Take a screenshot and return a hash for comparison purposes.
+
+    This is a helper function used internally for detecting screen changes.
+    Returns a hash of the screenshot for comparison.
     """
     # Create temporary file for screenshot
     temp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
@@ -89,25 +175,26 @@ async def take_screenshot_base64() -> str:
         if not os.path.exists(temp_path):
             return ""
 
-        # Encode and return
-        base64_image = encode_image_to_base64(temp_path)
-        return base64_image
+        # Read file and compute hash for comparison
+        with open(temp_path, "rb") as f:
+            file_data = f.read()
+            return hashlib.md5(file_data).hexdigest()
     finally:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
 
 
-def encode_image_to_base64(image_path: str, target_width: int = 512, target_height: int = 384, quality: int = 55) -> str:
+def encode_image_to_base64(image_path: str, target_width: int = 1024, target_height: int = 768, quality: int = 35) -> str:
     """Read an image file, resize it, and encode it as base64 JPEG.
 
-    Uses JPEG compression to stay under MCP's 25K token limit per response.
-    At 512x384 with quality=55, screenshots are ~20-21K tokens.
+    Uses JPEG compression with lower quality to reduce token usage while maintaining coordinate mapping.
+    At 1024x768 with quality=35, provides adequate detail for computer use with smaller file size.
 
     Args:
         image_path: Path to the image file
-        target_width: Target width for resizing (default: 512)
-        target_height: Target height for resizing (default: 384)
-        quality: JPEG quality 0-100 (default: 55)
+        target_width: Target width for resizing (default: 1024)
+        target_height: Target height for resizing (default: 768)
+        quality: JPEG quality 0-100 (default: 35)
 
     Returns:
         Base64-encoded JPEG image
@@ -136,7 +223,7 @@ def encode_image_to_base64(image_path: str, target_width: int = 512, target_heig
 # Screenshot Tools
 
 @mcp.tool()
-async def screenshot() -> str:
+async def screenshot() -> list[ImageContent | TextContent]:
     """Take a screenshot of the entire screen and return it as base64-encoded PNG.
 
     Returns:
@@ -153,7 +240,7 @@ async def screenshot() -> str:
             cmd = f"screencapture -x {temp_path}"
             stdout, stderr, code = await run_command(cmd)
             if code != 0:
-                return f"Error taking screenshot: {stderr}"
+                return [TextContent(type="text", text=f"Error taking screenshot: {stderr}")]
 
         elif IS_LINUX:
             # Linux: try multiple tools
@@ -164,11 +251,11 @@ async def screenshot() -> str:
             elif subprocess.run(["which", "import"], capture_output=True).returncode == 0:
                 cmd = f"import -window root {temp_path}"
             else:
-                return "Error: No screenshot tool found. Install gnome-screenshot, scrot, or imagemagick."
+                return [TextContent(type="text", text="Error: No screenshot tool found. Install gnome-screenshot, scrot, or imagemagick.")]
 
             stdout, stderr, code = await run_command(cmd)
             if code != 0:
-                return f"Error taking screenshot: {stderr}"
+                return [TextContent(type="text", text=f"Error taking screenshot: {stderr}")]
 
         elif IS_WINDOWS:
             # Windows: use PowerShell
@@ -184,17 +271,26 @@ async def screenshot() -> str:
             cmd = f'powershell -Command "{ps_script}"'
             stdout, stderr, code = await run_command(cmd)
             if code != 0:
-                return f"Error taking screenshot: {stderr}"
+                return [TextContent(type="text", text=f"Error taking screenshot: {stderr}")]
         else:
-            return f"Unsupported platform: {SYSTEM}"
+            return [TextContent(type="text", text=f"Unsupported platform: {SYSTEM}")]
 
         # Check if file was created
         if not os.path.exists(temp_path):
-            return "Error: Screenshot file was not created"
+            return [TextContent(type="text", text="Error: Screenshot file was not created")]
 
-        # Encode and return (resize to 512x384 JPEG to stay under MCP 25K token limit)
+        # Get actual screen size before encoding
+        await get_screen_size()
+
+        # Read the image file and return as proper ImageContent
         base64_image = encode_image_to_base64(temp_path)
-        return f"data:image/jpeg;base64,{base64_image}"
+        return [
+            ImageContent(
+                type="image",
+                data=base64_image,
+                mimeType="image/jpeg"
+            )
+        ]
 
     finally:
         # Clean up temp file
@@ -216,6 +312,9 @@ async def mouse_move(x: int, y: int) -> str:
         Success or error message
     """
     try:
+        # Scale coordinates if needed
+        x, y = await scale_coordinates(x, y)
+
         if IS_MAC:
             # macOS: use cliclick
             cmd = f"cliclick m:{x},{y}"
@@ -253,6 +352,8 @@ async def mouse_move(x: int, y: int) -> str:
 async def left_click(x: int | None = None, y: int | None = None) -> str:
     """Perform a left mouse click at the current cursor position or specified coordinates.
 
+    NOTE: For better reliability, consider using click_with_retry() which verifies the click succeeded.
+
     Args:
         x: Optional x-coordinate to click at
         y: Optional y-coordinate to click at
@@ -261,6 +362,10 @@ async def left_click(x: int | None = None, y: int | None = None) -> str:
         Success or error message with screenshot
     """
     try:
+        # Scale coordinates if needed
+        if x is not None and y is not None:
+            x, y = await scale_coordinates(x, y)
+
         if IS_MAC:
             if x is not None and y is not None:
                 # Click at specific coordinates (combines move + click in one command)
@@ -272,12 +377,9 @@ async def left_click(x: int | None = None, y: int | None = None) -> str:
             if code != 0:
                 return f"Error: {stderr}. You may need to install cliclick: brew install cliclick"
 
-            # IMPORTANT: Ensure the clicked window gets keyboard focus
-            # On macOS, clicking doesn't always transfer keyboard focus
-            # We need to wait a moment and then click again to ensure focus
-            await asyncio.sleep(0.2)
-            # Second click to ensure focus (common pattern for macOS)
-            await run_command(cmd)
+            # For macOS, ensure proper focus and interaction
+            # Brief delay to let the click register
+            await asyncio.sleep(0.1)
 
         elif IS_LINUX:
             if x is not None and y is not None:
@@ -316,19 +418,10 @@ async def left_click(x: int | None = None, y: int | None = None) -> str:
         # Wait for UI to settle (like reference implementation)
         await asyncio.sleep(2.0)
 
-        # Take screenshot after action (like reference implementation)
-        screenshot_base64 = await take_screenshot_base64()
-
         if x is not None and y is not None:
-            result = f"Left click performed at ({x}, {y})"
+            return f"Left click performed at ({x}, {y})"
         else:
-            result = "Left click performed at current position"
-
-        # Return result with screenshot
-        if screenshot_base64:
-            return f"{result}\n\nScreenshot after action:\ndata:image/jpeg;base64,{screenshot_base64}"
-        else:
-            return result
+            return "Left click performed at current position"
 
     except Exception as e:
         return f"Error performing left click: {str(e)}"
@@ -390,6 +483,10 @@ async def double_click(x: int | None = None, y: int | None = None) -> str:
         Success or error message with screenshot
     """
     try:
+        # Scale coordinates if needed
+        if x is not None and y is not None:
+            x, y = await scale_coordinates(x, y)
+
         if IS_MAC:
             if x is not None and y is not None:
                 # Double click at specific coordinates
@@ -423,19 +520,10 @@ async def double_click(x: int | None = None, y: int | None = None) -> str:
         # Wait for UI to settle (like reference implementation)
         await asyncio.sleep(2.0)
 
-        # Take screenshot after action (like reference implementation)
-        screenshot_base64 = await take_screenshot_base64()
-
         if x is not None and y is not None:
-            result = f"Double click performed at ({x}, {y})"
+            return f"Double click performed at ({x}, {y})"
         else:
-            result = "Double click performed at current position"
-
-        # Return result with screenshot
-        if screenshot_base64:
-            return f"{result}\n\nScreenshot after action:\ndata:image/jpeg;base64,{screenshot_base64}"
-        else:
-            return result
+            return "Double click performed at current position"
 
     except Exception as e:
         return f"Error performing double click: {str(e)}"
@@ -455,6 +543,10 @@ async def mouse_drag(start_x: int, start_y: int, end_x: int, end_y: int) -> str:
         Success or error message
     """
     try:
+        # Scale coordinates
+        start_x, start_y = await scale_coordinates(start_x, start_y)
+        end_x, end_y = await scale_coordinates(end_x, end_y)
+
         if IS_MAC:
             cmd = f"cliclick m:{start_x},{start_y} dd:{start_x},{start_y} m:{end_x},{end_y} du:{end_x},{end_y}"
             stdout, stderr, code = await run_command(cmd)
@@ -580,6 +672,8 @@ async def scroll(direction: Literal["up", "down", "left", "right"], amount: int 
 async def type_text(text: str, delay_ms: int = 50) -> str:
     """Type the specified text using the keyboard.
 
+    NOTE: For better reliability, consider using type_with_verification() which verifies the text appeared.
+
     Args:
         text: The text to type
         delay_ms: Delay between keystrokes in milliseconds (default: 50)
@@ -635,16 +729,7 @@ async def type_text(text: str, delay_ms: int = 50) -> str:
         # Wait for UI to settle (like reference implementation)
         await asyncio.sleep(2.0)
 
-        # Take screenshot after action (like reference implementation)
-        screenshot_base64 = await take_screenshot_base64()
-
-        result = f"Typed text: {text[:50]}{'...' if len(text) > 50 else ''}"
-
-        # Return result with screenshot
-        if screenshot_base64:
-            return f"{result}\n\nScreenshot after action:\ndata:image/jpeg;base64,{screenshot_base64}"
-        else:
-            return result
+        return f"Typed text: {text[:50]}{'...' if len(text) > 50 else ''}"
 
     except Exception as e:
         return f"Error typing text: {str(e)}"
@@ -670,32 +755,32 @@ async def press_key(key: str, modifiers: str = "") -> str:
     try:
         if IS_MAC:
             # Use AppleScript for more reliable key presses
-            # Map key names to AppleScript key codes
+            # Map key names to AppleScript key commands
             key_map = {
-                "Return": "return",
-                "Enter": "return",
-                "Tab": "tab",
-                "Space": "space",
-                "Escape": "escape",
-                "Backspace": "delete",
-                "Delete": "forward delete",
-                "Up": "up arrow",
-                "Down": "down arrow",
-                "Left": "left arrow",
-                "Right": "right arrow",
+                "Return": "key code 36",  # Return key
+                "Enter": "key code 36",   # Return key
+                "Tab": "key code 48",     # Tab key
+                "Space": "key code 49",   # Space key
+                "Escape": "key code 53",  # Escape key
+                "Backspace": "key code 51",  # Delete key
+                "Delete": "key code 117", # Forward delete key
+                "Up": "key code 126",     # Up arrow
+                "Down": "key code 125",   # Down arrow
+                "Left": "key code 123",   # Left arrow
+                "Right": "key code 124",  # Right arrow
             }
 
             # For single character keys, use keystroke; for special keys, use key code
             if key in key_map:
-                key_name = key_map[key]
-                key_cmd = f'key code {{key code for "{key_name}"}}'
+                key_cmd = key_map[key]
             elif len(key) == 1:
                 # Single character - use keystroke
                 escaped_key = key.replace('\\', '\\\\').replace('"', '\\"')
                 key_cmd = f'keystroke "{escaped_key}"'
             else:
-                # Try as-is
-                key_cmd = f'keystroke "{key}"'
+                # Try as-is with keystroke
+                escaped_key = key.replace('\\', '\\\\').replace('"', '\\"')
+                key_cmd = f'keystroke "{escaped_key}"'
 
             # Build AppleScript with modifiers
             if modifiers:
@@ -787,17 +872,8 @@ async def press_key(key: str, modifiers: str = "") -> str:
         # Wait for UI to settle (like reference implementation)
         await asyncio.sleep(2.0)
 
-        # Take screenshot after action (like reference implementation)
-        screenshot_base64 = await take_screenshot_base64()
-
         mod_text = f"{modifiers}+" if modifiers else ""
-        result = f"Pressed key: {mod_text}{key}"
-
-        # Return result with screenshot
-        if screenshot_base64:
-            return f"{result}\n\nScreenshot after action:\ndata:image/jpeg;base64,{screenshot_base64}"
-        else:
-            return result
+        return f"Pressed key: {mod_text}{key}"
 
     except Exception as e:
         return f"Error pressing key: {str(e)}"
@@ -859,11 +935,11 @@ async def get_cursor_position() -> str:
 # High-level tools with verification and retry logic
 
 @mcp.tool()
-async def click_with_retry(x: int, y: int, max_retries: int = 3, verify_delay: float = 0.5) -> str:
+async def click_with_retry(x: int, y: int, max_retries: int = 3, verify_delay: float = 0.5) -> list[ImageContent | TextContent]:
     """Move mouse to coordinates and click with automatic verification.
 
-    Takes a screenshot before and after the click to verify the action succeeded.
-    Retries if the action appears to have failed.
+    Takes a screenshot before and after the click. Retries if screen doesn't change.
+    Returns the final screenshot for Claude to analyze what actually happened.
 
     Args:
         x: X-coordinate to click
@@ -872,42 +948,70 @@ async def click_with_retry(x: int, y: int, max_retries: int = 3, verify_delay: f
         verify_delay: Delay in seconds before taking verification screenshot (default: 0.5)
 
     Returns:
-        Status message with before/after screenshots
+        Screenshot after clicking - Claude should analyze to verify the intended outcome
     """
     try:
-        # Take before screenshot
-        before_screenshot = await screenshot()
+        # Take before screenshot hash
+        before_hash = await take_screenshot_hash()
+
+        # Scale coordinates to actual screen resolution
+        actual_x, actual_y = await scale_coordinates(x, y)
 
         for attempt in range(max_retries):
             # Click at coordinates (combines move + click in one command for better reliability)
-            await left_click(x, y)
+            await left_click(x, y)  # Use original coordinates as left_click handles scaling
 
             # Wait for UI to update
             await asyncio.sleep(verify_delay)
 
-            # Take after screenshot
-            after_screenshot = await screenshot()
+            # Take after screenshot hash
+            after_hash = await take_screenshot_hash()
+
+            # Take final screenshot to return for analysis
+            final_screenshot = await screenshot()
 
             # Check if screenshots are different (action had an effect)
-            if before_screenshot != after_screenshot:
-                return f"Click at ({x}, {y}) succeeded on attempt {attempt + 1}\n\nBefore: {before_screenshot}\n\nAfter: {after_screenshot}"
+            if before_hash != after_hash:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"Clicked at display coordinates ({x}, {y}) -> actual coordinates ({actual_x}, {actual_y}) on attempt {attempt + 1}. Screen changed successfully."
+                    ),
+                    *final_screenshot
+                ]
 
             # If we're not on the last attempt, wait before retrying
             if attempt < max_retries - 1:
                 await asyncio.sleep(0.5)
 
-        return f"Click at ({x}, {y}) completed {max_retries} attempts but screen did not change\n\nFinal state: {after_screenshot}"
+        # Return final screenshot even if no change detected
+        final_screenshot = await screenshot()
+        return [
+            TextContent(
+                type="text",
+                text=f"Clicked at display coordinates ({x}, {y}) -> actual coordinates ({actual_x}, {actual_y}) {max_retries} times but screen did not change. Please analyze the screenshot to verify if the click target is correct."
+            ),
+            *final_screenshot
+        ]
 
     except Exception as e:
-        return f"Error in click_with_retry: {str(e)}"
+        # Return error screenshot if possible
+        try:
+            error_screenshot = await screenshot()
+            return [
+                TextContent(type="text", text=f"Error in click_with_retry: {str(e)}"),
+                *error_screenshot
+            ]
+        except:
+            return [TextContent(type="text", text=f"Error in click_with_retry: {str(e)}")]
 
 
 @mcp.tool()
-async def type_with_verification(text: str, max_retries: int = 3, verify_delay: float = 1.0) -> str:
-    """Type text with automatic verification that it appeared on screen.
+async def type_with_verification(text: str, max_retries: int = 3, verify_delay: float = 1.0) -> list[ImageContent | TextContent]:
+    """Type text with automatic verification.
 
-    Takes screenshots before and after typing to verify the text was entered.
-    Retries if the text doesn't appear.
+    Takes screenshots before and after typing. Retries if screen doesn't change.
+    Returns the final screenshot for Claude to analyze what actually happened.
 
     Args:
         text: The text to type
@@ -915,25 +1019,34 @@ async def type_with_verification(text: str, max_retries: int = 3, verify_delay: 
         verify_delay: Delay in seconds before taking verification screenshot (default: 1.0)
 
     Returns:
-        Status message with before/after screenshots
+        Screenshot after typing - Claude should analyze to verify the text appeared correctly
     """
     try:
-        # Take before screenshot
-        before_screenshot = await screenshot()
+        # Take before screenshot hash
+        before_hash = await take_screenshot_hash()
 
         for attempt in range(max_retries):
             # Type the text
-            result = await type_text(text)
+            await type_text(text)
 
             # Wait for UI to process input
             await asyncio.sleep(verify_delay)
 
-            # Take after screenshot
-            after_screenshot = await screenshot()
+            # Take after screenshot hash
+            after_hash = await take_screenshot_hash()
+
+            # Take final screenshot to return for analysis
+            final_screenshot = await screenshot()
 
             # Check if screenshots are different (text was typed)
-            if before_screenshot != after_screenshot:
-                return f"Text typed successfully on attempt {attempt + 1}: '{text[:50]}{'...' if len(text) > 50 else ''}'\n\nBefore: {before_screenshot}\n\nAfter: {after_screenshot}"
+            if before_hash != after_hash:
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"Typed '{text[:50]}{'...' if len(text) > 50 else ''}' on attempt {attempt + 1}. Screen changed successfully."
+                    ),
+                    *final_screenshot
+                ]
 
             # If we're not on the last attempt, wait before retrying
             if attempt < max_retries - 1:
@@ -942,18 +1055,34 @@ async def type_with_verification(text: str, max_retries: int = 3, verify_delay: 
                 await press_key("Backspace")
                 await asyncio.sleep(0.5)
 
-        return f"Text typing completed {max_retries} attempts but screen did not change: '{text[:50]}{'...' if len(text) > 50 else ''}'\n\nFinal state: {after_screenshot}"
+        # Return final screenshot even if no change detected
+        final_screenshot = await screenshot()
+        return [
+            TextContent(
+                type="text",
+                text=f"Typed '{text[:50]}{'...' if len(text) > 50 else ''}' {max_retries} times but screen did not change. Please analyze the screenshot to verify if typing succeeded."
+            ),
+            *final_screenshot
+        ]
 
     except Exception as e:
-        return f"Error in type_with_verification: {str(e)}"
+        # Return error screenshot if possible
+        try:
+            error_screenshot = await screenshot()
+            return [
+                TextContent(type="text", text=f"Error in type_with_verification: {str(e)}"),
+                *error_screenshot
+            ]
+        except:
+            return [TextContent(type="text", text=f"Error in type_with_verification: {str(e)}")]
 
 
 @mcp.tool()
-async def press_key_with_verification(key: str, modifiers: str = "", max_retries: int = 3, verify_delay: float = 0.5) -> str:
-    """Press a key with automatic verification that it had an effect.
+async def press_key_with_verification(key: str, modifiers: str = "", max_retries: int = 3, verify_delay: float = 0.5) -> list[ImageContent | TextContent]:
+    """Press a key with automatic verification.
 
-    Takes screenshots before and after pressing the key to verify the action succeeded.
-    Retries if the action appears to have failed.
+    Takes screenshots before and after pressing the key. Retries if screen doesn't change.
+    Returns the final screenshot for Claude to analyze what actually happened.
 
     Args:
         key: The key to press
@@ -962,11 +1091,11 @@ async def press_key_with_verification(key: str, modifiers: str = "", max_retries
         verify_delay: Delay in seconds before taking verification screenshot (default: 0.5)
 
     Returns:
-        Status message with before/after screenshots
+        Screenshot after key press - Claude should analyze to verify the intended outcome
     """
     try:
-        # Take before screenshot
-        before_screenshot = await screenshot()
+        # Take before screenshot hash
+        before_hash = await take_screenshot_hash()
 
         for attempt in range(max_retries):
             # Press the key
@@ -975,27 +1104,52 @@ async def press_key_with_verification(key: str, modifiers: str = "", max_retries
             # Wait for UI to update
             await asyncio.sleep(verify_delay)
 
-            # Take after screenshot
-            after_screenshot = await screenshot()
+            # Take after screenshot hash
+            after_hash = await take_screenshot_hash()
+
+            # Take final screenshot to return for analysis
+            final_screenshot = await screenshot()
 
             # Check if screenshots are different (key press had an effect)
-            if before_screenshot != after_screenshot:
+            if before_hash != after_hash:
                 mod_text = f"{modifiers}+" if modifiers else ""
-                return f"Key press succeeded on attempt {attempt + 1}: {mod_text}{key}\n\nBefore: {before_screenshot}\n\nAfter: {after_screenshot}"
+                return [
+                    TextContent(
+                        type="text",
+                        text=f"Pressed {mod_text}{key} on attempt {attempt + 1}. Screen changed successfully."
+                    ),
+                    *final_screenshot
+                ]
 
             # If we're not on the last attempt, wait before retrying
             if attempt < max_retries - 1:
                 await asyncio.sleep(0.5)
 
+        # Return final screenshot even if no change detected
+        final_screenshot = await screenshot()
         mod_text = f"{modifiers}+" if modifiers else ""
-        return f"Key press completed {max_retries} attempts but screen did not change: {mod_text}{key}\n\nFinal state: {after_screenshot}"
+        return [
+            TextContent(
+                type="text",
+                text=f"Pressed {mod_text}{key} {max_retries} times but screen did not change. Please analyze the screenshot to verify if the key press had the intended effect."
+            ),
+            *final_screenshot
+        ]
 
     except Exception as e:
-        return f"Error in press_key_with_verification: {str(e)}"
+        # Return error screenshot if possible
+        try:
+            error_screenshot = await screenshot()
+            return [
+                TextContent(type="text", text=f"Error in press_key_with_verification: {str(e)}"),
+                *error_screenshot
+            ]
+        except:
+            return [TextContent(type="text", text=f"Error in press_key_with_verification: {str(e)}")]
 
 
 @mcp.tool()
-async def execute_task_with_vision(task_description: str) -> str:
+async def execute_task_with_vision(task_description: str) -> list[ImageContent | TextContent]:
     """Execute a high-level task using a vision-action-verification loop.
 
     This is a meta-tool that helps with complex tasks by providing continuous
@@ -1019,10 +1173,16 @@ async def execute_task_with_vision(task_description: str) -> str:
         # Take screenshot to show current state
         current_screenshot = await screenshot()
 
-        return f"Current state for task: {task_description}\n\nScreenshot: {current_screenshot}\n\nAnalyze this screenshot and decide what action to take next. Use the verification tools (click_with_retry, type_with_verification, press_key_with_verification) to ensure your actions succeed."
+        return [
+            TextContent(
+                type="text",
+                text=f"Current state for task: {task_description}\n\nUse the verification tools (click_with_retry, type_with_verification, press_key_with_verification) to ensure your actions succeed. Analyze this screenshot to plan your next action."
+            ),
+            *current_screenshot
+        ]
 
     except Exception as e:
-        return f"Error in execute_task_with_vision: {str(e)}"
+        return [TextContent(type="text", text=f"Error in execute_task_with_vision: {str(e)}")]
 
 
 def main():

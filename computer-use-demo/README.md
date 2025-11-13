@@ -87,6 +87,29 @@ docker run \
 
 Once the container is running, see the [Accessing the demo app](#accessing-the-demo-app) section below for instructions on how to connect to the interface.
 
+## Host CLI (no Docker or Streamlit)
+
+Prefer to give Claude control of the computer you are sitting at? Run the new CLI instead of the Dockerized desktop. It uses the `computer_use_local` tool group, which is backed by a `pyautogui`-powered driver that sends keyboard/mouse events to your real OS while streaming screenshots from your monitors.
+
+1. Install the Python dependencies (a virtual environment is recommended):
+   ```bash
+   cd computer-use-demo
+   python -m pip install -r computer_use_demo/requirements.txt
+   ```
+   - **macOS**: allow the terminal app (and Python) under *System Settings → Privacy & Security → Accessibility*.\
+   - **Linux**: ensure `python3-tk`, `python3-dev`, and a screenshot backend such as `scrot` are installed.\
+   - **Windows**: run the terminal as an administrator the first time to grant UI automation permissions.
+2. Provide an Anthropic API key via `ANTHROPIC_API_KEY`, `~/.anthropic/api_key`, or pass `--api-key`.
+3. Launch the CLI:
+   ```bash
+   python -m computer_use_demo.cli \
+     --model claude-sonnet-4-5-20250929 \
+     --tool-version computer_use_local
+   ```
+4. Type natural-language instructions at the `you>` prompt. Every message, tool call, and screenshot is written to `~/.computer-use-cli/session-*/`.
+
+Because this mode is operating directly on your desktop, **double-check sensitive data and windows before running it**. By default only the `computer` tool is enabled (no bash/edit tools), but you can still opt into the other tool groups by passing `--tool-version computer_use_20250124` if you want to run the legacy Docker workflow from this CLI.
+
 ### Bedrock
 
 > [!TIP]
