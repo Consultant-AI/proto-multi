@@ -1,0 +1,6 @@
+# Local Claude overrides
+.claude/settings.local.local.json
+
+# Secrets / developer environment files
+computer-use-demo/hetzner-deploy/.env
+*.env.local

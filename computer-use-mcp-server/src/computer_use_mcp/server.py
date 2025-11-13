@@ -272,6 +272,13 @@ async def left_click(x: int | None = None, y: int | None = None) -> str:
             if code != 0:
                 return f"Error: {stderr}. You may need to install cliclick: brew install cliclick"
 
+            # IMPORTANT: Ensure the clicked window gets keyboard focus
+            # On macOS, clicking doesn't always transfer keyboard focus
+            # We need to wait a moment and then click again to ensure focus
+            await asyncio.sleep(0.2)
+            # Second click to ensure focus (common pattern for macOS)
+            await run_command(cmd)
+
         elif IS_LINUX:
             if x is not None and y is not None:
                 # Move mouse and click in single command (like reference implementation)
