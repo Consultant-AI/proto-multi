@@ -236,6 +236,31 @@ The MCP server supports these environment variables:
 
 ---
 
+## Cleanup Orphaned Processes
+
+If Claude Code is force-quit or crashes, it may leave orphaned computer-use CLI processes running.
+
+### Quick Fix
+
+```bash
+cd computer-use-mcp-server
+./cleanup_orphans.sh
+```
+
+### Manual Cleanup
+
+```bash
+# Find orphaned processes
+ps aux | grep computer_use_demo.cli
+
+# Kill them
+kill -9 [PID]
+```
+
+The latest version uses process groups to minimize this issue, but force-quits can still leave orphans.
+
+---
+
 ## Troubleshooting for End Users
 
 ### "command not found: computer-use-mcp"

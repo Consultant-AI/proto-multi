@@ -83,6 +83,8 @@ async def _ensure_cli_running():
         if not python_cmd:
             raise RuntimeError("Python executable not found in PATH")
 
+        # Create process in new process group for better cleanup
+        # This ensures child processes are killed when parent dies
         _cli_process = await asyncio.create_subprocess_exec(
             python_cmd,
             "-m",
@@ -96,6 +98,7 @@ async def _ensure_cli_running():
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             env={**os.environ, "ANTHROPIC_API_KEY": api_key},
+            start_new_session=True,  # Create new process group
         )
 
         # Start background task to read output
@@ -277,7 +280,7 @@ def _cleanup_cli_process():
 
     if _cli_process and _cli_process.returncode is None:
         try:
-            # Send quit command first
+            # Send quit command first for graceful shutdown
             if _cli_process.stdin and not _cli_process.stdin.is_closing():
                 try:
                     _cli_process.stdin.write(b":quit\n")
@@ -285,16 +288,28 @@ def _cleanup_cli_process():
                 except:
                     pass
 
-            # Force terminate
-            _cli_process.terminate()
-
-            # Give it a moment to terminate gracefully
+            # Kill the entire process group (handles orphaned children)
             import time
-            time.sleep(0.5)
+            pid = _cli_process.pid
+            if pid:
+                try:
+                    # Kill process group (negative PID kills the group)
+                    os.killpg(os.getpgid(pid), signal.SIGTERM)
+                    time.sleep(0.5)
 
-            # Force kill if still alive
-            if _cli_process.returncode is None:
-                _cli_process.kill()
+                    # Force kill if still alive
+                    try:
+                        os.killpg(os.getpgid(pid), signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass  # Already dead
+                except (ProcessLookupError, OSError):
+                    # Process or group doesn't exist, try direct kill
+                    try:
+                        _cli_process.terminate()
+                        time.sleep(0.5)
+                        _cli_process.kill()
+                    except:
+                        pass
 
         except Exception:
             pass  # Process may already be dead
