@@ -1,6 +1,23 @@
 # Local Claude overrides
 .claude/settings.local.local.json
+.claude/settings.local.json
 
 # Secrets / developer environment files
 computer-use-demo/hetzner-deploy/.env
 *.env.local
+*.env
+.anthropic/
+*api_key*
+
+# Test files
+test_mcp_*.py
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# Logs
+.computer-use-cli/
