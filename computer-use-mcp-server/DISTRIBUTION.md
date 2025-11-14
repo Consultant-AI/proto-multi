@@ -236,19 +236,26 @@ The MCP server supports these environment variables:
 
 ---
 
-## Cleanup Orphaned Processes
+## Process Management & Cleanup
 
-If Claude Code is force-quit or crashes, it may leave orphaned computer-use CLI processes running.
+### Automatic Cleanup
 
-### Quick Fix
+The MCP bridge automatically handles subprocess cleanup:
+
+- **On tool interruption**: When you interrupt a computer-use request, the CLI subprocess is automatically stopped
+- **On Claude Code exit**: Cleanup handlers stop the subprocess when Claude Code closes
+- **On force-quit**: Process groups minimize orphans, but some may remain
+
+### Manual Cleanup
+
+If Claude Code is force-quit and leaves orphaned processes:
 
 ```bash
 cd computer-use-mcp-server
 ./cleanup_orphans.sh
 ```
 
-### Manual Cleanup
-
+Or manually:
 ```bash
 # Find orphaned processes
 ps aux | grep computer_use_demo.cli
@@ -257,7 +264,7 @@ ps aux | grep computer_use_demo.cli
 kill -9 [PID]
 ```
 
-The latest version uses process groups to minimize this issue, but force-quits can still leave orphans.
+You can also use the `stop_computer_use()` MCP tool to manually stop the agent.
 
 ---
 
