@@ -110,6 +110,19 @@ Prefer to give Claude control of the computer you are sitting at? Run the new CL
 
 Because this mode is operating directly on your desktop, **double-check sensitive data and windows before running it**. By default only the `computer` tool is enabled (no bash/edit tools), but you can still opt into the other tool groups by passing `--tool-version computer_use_20250124` if you want to run the legacy Docker workflow from this CLI.
 
+### Local Web UI (dark mode)
+
+Prefer a browser-based experience that looks closer to ChatGPT? Launch the new FastAPI-powered interface:
+
+1. Ensure dependencies are installed (same as above) and that `ANTHROPIC_API_KEY` is set or saved in `~/.anthropic/api_key`.
+2. Start the server:
+   ```bash
+   cd computer-use-demo
+   source .venv/bin/activate  # optional but recommended
+   python -m computer_use_demo.webui
+   ```
+3. Visit [http://localhost:8000](http://localhost:8000) to chat. The UI is a single-page dark theme that streams the conversation history, tool outputs, and screenshots inline. Use the text area at the bottom to describe the task (“Open VS Code and check the README”, etc.). The send button is disabled while Claude is working to prevent overlapping runs. On macOS, the server automatically opens a chromeless Chrome window for you; set `WEBUI_AUTO_OPEN=0` if you prefer to open it manually.
+
 ### Bedrock
 
 > [!TIP]

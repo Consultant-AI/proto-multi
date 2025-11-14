@@ -5,3 +5,5 @@ boto3>=1.28.57
 google-auth<3,>=2
 pyautogui>=0.9.54
 Pillow>=10.0.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
