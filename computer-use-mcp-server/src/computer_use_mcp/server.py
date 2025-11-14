@@ -186,6 +186,8 @@ async def computer_use(prompt: str) -> list[TextContent]:
         - computer_use("open the calculator app and calculate 123 * 456")
         - computer_use("open chrome and navigate to github.com")
     """
+    global _cli_process, _cli_reader_task, _cli_logs
+
     try:
         # Ensure CLI is running
         await _ensure_cli_running()
@@ -194,6 +196,40 @@ async def computer_use(prompt: str) -> list[TextContent]:
         response = await _send_to_cli(prompt)
 
         return [TextContent(type="text", text=response)]
+
+    except asyncio.CancelledError:
+        # Tool was interrupted - stop the CLI subprocess
+        if _cli_process and _cli_process.returncode is None:
+            try:
+                # Send quit command
+                if _cli_process.stdin and not _cli_process.stdin.is_closing():
+                    _cli_process.stdin.write(b":quit\n")
+                    _cli_process.stdin.close()
+
+                # Kill process group
+                pid = _cli_process.pid
+                if pid:
+                    try:
+                        os.killpg(os.getpgid(pid), signal.SIGTERM)
+                        await asyncio.sleep(0.3)
+                        os.killpg(os.getpgid(pid), signal.SIGKILL)
+                    except (ProcessLookupError, OSError):
+                        _cli_process.terminate()
+                        _cli_process.kill()
+            except:
+                pass
+
+            # Cancel reader task
+            if _cli_reader_task:
+                _cli_reader_task.cancel()
+
+            # Reset globals
+            _cli_process = None
+            _cli_reader_task = None
+            _cli_logs.clear()
+
+        # Re-raise so the tool properly reports cancellation
+        raise
 
     except Exception as e:
         error_msg = f"Error in computer_use: {str(e)}"
