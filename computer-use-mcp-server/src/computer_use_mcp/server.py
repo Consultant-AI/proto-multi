@@ -148,7 +148,7 @@ async def _send_to_cli(prompt: str) -> str:
 
         # Check timeout
         if asyncio.get_event_loop().time() - start_time > timeout:
-            return "\n".join(_cli_logs) + "\n\n[TIMEOUT] Response took longer than 5 minutes."
+            return "\n".join(_cli_logs[start_log_count:]) + "\n\n[TIMEOUT] Response took longer than 5 minutes."
 
         # Check if we have logs
         if len(_cli_logs) > start_log_count:
@@ -156,14 +156,16 @@ async def _send_to_cli(prompt: str) -> str:
 
             # Look for the prompt indicating Claude is done
             if last_line.startswith("you>") or "you>" in last_line:
-                # Return all logs except the last "you>" line
-                return "\n".join(_cli_logs[:-1])
+                # Return all NEW logs (excluding startup and the final "you>" prompt)
+                new_logs = _cli_logs[start_log_count:-1]
+                return "\n".join(new_logs) if new_logs else "Task completed (no additional output)"
 
         # Check if process died
         if _cli_process.returncode is not None:
             error_msg = f"CLI process exited with code {_cli_process.returncode}"
-            if _cli_logs:
-                error_msg += f"\n\nLogs:\n" + "\n".join(_cli_logs)
+            new_logs = _cli_logs[start_log_count:]
+            if new_logs:
+                error_msg += f"\n\nLogs:\n" + "\n".join(new_logs)
             raise RuntimeError(error_msg)
 
 
@@ -198,6 +200,8 @@ async def computer_use(prompt: str) -> list[TextContent]:
         return [TextContent(type="text", text=response)]
 
     except asyncio.CancelledError:
+        # NOTE: This exception is rarely raised by MCP interruptions
+        # Use the stop_computer_use tool to manually stop the CLI if needed
         # Tool was interrupted - stop the CLI subprocess
         if _cli_process and _cli_process.returncode is None:
             try:
