@@ -1,0 +1,65 @@
+{
+  "agent_sdk": {
+    "enabled": true,
+    "session_persistence": true,
+    "auto_verification": false,
+    "subagents_enabled": false,
+    "max_concurrent_subagents": 3
+  },
+  "verification": {
+    "visual_verification": false,
+    "structural_verification": false,
+    "auto_retry_on_failure": false,
+    "max_retries": 1,
+    "screenshot_comparison": false
+  },
+  "context_management": {
+    "max_images": 3,
+    "min_removal_threshold": 2,
+    "auto_compaction": true
+  },
+  "tools": {
+    "computer": {
+      "enabled": true,
+      "display_number": 1,
+      "width": 1024,
+      "height": 768,
+      "scaling_enabled": true
+    },
+    "bash": {
+      "enabled": true,
+      "persistent_session": true,
+      "timeout_seconds": 120
+    },
+    "edit": {
+      "enabled": true,
+      "backup_on_edit": false
+    }
+  },
+  "feedback_loop": {
+    "enabled": false,
+    "phases": ["take_action"],
+    "verification_after_gui_actions": false,
+    "verification_after_commands": false,
+    "verification_after_file_edits": false
+  },
+  "session": {
+    "auto_save": true,
+    "save_interval_actions": 1,
+    "session_directory": "~/.claude/projects",
+    "cleanup_old_sessions_days": 30
+  },
+  "error_recovery": {
+    "enabled": false,
+    "retry_on_tool_error": false,
+    "retry_on_visual_error": false,
+    "max_retry_attempts": 1,
+    "retry_delay_seconds": 1
+  },
+  "logging": {
+    "level": "INFO",
+    "log_tool_executions": true,
+    "log_verifications": false,
+    "log_session_updates": false
+  }
+}

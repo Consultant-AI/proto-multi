@@ -203,8 +203,26 @@ date
 systemctl start docker
 sleep 5
 
-# Update API key and restart service
+# Check for backed-up Docker image
 cd /opt/proto-multi/computer-use-demo
+echo "Checking for Docker image backup..."
+
+# First try to load from backed-up tar file (created by prepare-snapshot)
+if [ -f /var/lib/docker-image-backup.tar ]; then
+    echo "✅ Found Docker image backup! Loading preserved state..."
+    docker load -i /var/lib/docker-image-backup.tar
+    echo "✅ Docker state restored from snapshot (all software and data preserved)"
+elif docker images | grep -q computer-use-demo:local; then
+    echo "✅ Docker image 'computer-use-demo:local' found in snapshot"
+else
+    echo "⚠️  WARNING: No Docker backup found! Rebuilding from scratch..."
+    echo "   This means the instance was NOT properly prepared for snapshot."
+    echo "   Use 'Prepare for Snapshot' button before creating snapshots."
+    export DOCKER_BUILDKIT=1
+    docker build --platform linux/amd64 -t computer-use-demo:local . 2>&1 | tee /var/log/docker-rebuild.log
+fi
+
+# Update API key and restart service
 sed -i 's/ANTHROPIC_API_KEY=.*/ANTHROPIC_API_KEY={anthropic_api_key}/' docker-compose.yml
 
 # Restart the systemd service
@@ -232,8 +250,26 @@ date
 systemctl start docker
 sleep 5
 
-# Restart the systemd service to bring up containers
+# Check for backed-up Docker image
 cd /opt/proto-multi/computer-use-demo
+echo "Checking for Docker image backup..."
+
+# First try to load from backed-up tar file (created by prepare-snapshot)
+if [ -f /var/lib/docker-image-backup.tar ]; then
+    echo "✅ Found Docker image backup! Loading preserved state..."
+    docker load -i /var/lib/docker-image-backup.tar
+    echo "✅ Docker state restored from snapshot (all software and data preserved)"
+elif docker images | grep -q computer-use-demo:local; then
+    echo "✅ Docker image 'computer-use-demo:local' found in snapshot"
+else
+    echo "⚠️  WARNING: No Docker backup found! Rebuilding from scratch..."
+    echo "   This means the instance was NOT properly prepared for snapshot."
+    echo "   Use 'Prepare for Snapshot' button before creating snapshots."
+    export DOCKER_BUILDKIT=1
+    docker build --platform linux/amd64 -t computer-use-demo:local . 2>&1 | tee /var/log/docker-rebuild.log
+fi
+
+# Restart the systemd service to bring up containers
 systemctl daemon-reload
 systemctl restart computer-use-demo.service
 
@@ -261,6 +297,58 @@ date
             if instance["name"] == name:
                 return instance
         return None
+
+    def prepare_docker_for_snapshot(self, instance_id: int) -> Dict:
+        """
+        Prepare Docker container for snapshot by committing state to image on disk
+
+        This calls the Docker commit API endpoint on the instance to preserve state.
+        """
+        print(f"Preparing instance {instance_id} for snapshot...")
+
+        # Get instance details
+        instance = self.get_instance(instance_id)
+        ip = instance['public_net']['ipv4']['ip']
+
+        # Call the commit API endpoint on the instance
+        url = f"http://{ip}/api/commit-docker"
+        auth = ('admin', 'anthropic2024')
+
+        try:
+            print(f"Calling Docker commit API at {url}...")
+            response = requests.post(url, auth=auth, timeout=300)
+            result = response.json()
+
+            if result.get('success'):
+                print("✅ Docker state committed successfully")
+                return {
+                    'status': 'success',
+                    'message': 'Docker state committed to disk. Instance ready for snapshot.',
+                    'output': result.get('output', ''),
+                    'instance_ip': ip
+                }
+            else:
+                print(f"❌ Docker commit failed: {result.get('error')}")
+                return {
+                    'status': 'error',
+                    'message': 'Docker commit failed',
+                    'error': result.get('error', 'Unknown error'),
+                    'output': result.get('output', ''),
+                    'instance_ip': ip
+                }
+        except requests.exceptions.Timeout:
+            return {
+                'status': 'error',
+                'message': 'Request timed out. The commit may still be running.',
+                'instance_ip': ip
+            }
+        except Exception as e:
+            print(f"❌ Error calling commit API: {e}")
+            return {
+                'status': 'error',
+                'message': f'Failed to connect to instance: {str(e)}',
+                'instance_ip': ip
+            }
 
 
 def generate_cloud_init_script(anthropic_api_key: str, hetzner_api_token: str = None) -> str:
@@ -336,6 +424,11 @@ fi
 
 echo "✅ Docker build completed"
 
+# Save Docker image to persistent location for snapshot preservation
+echo "Saving Docker image for snapshot preservation..."
+docker save computer-use-demo:local -o /var/lib/docker-image-backup.tar
+echo "✅ Docker image backed up to /var/lib/docker-image-backup.tar"
+
 # Chrome should be installed via Dockerfile - skip verification to avoid hanging
 
 # Create docker-compose.yml
@@ -381,6 +474,117 @@ TimeoutStartSec=0
 [Install]
 WantedBy=multi-user.target
 EOFSYSTEMD
+
+# Create Docker commit helper script
+cat > /usr/local/bin/commit-docker-state.sh <<'EOFCOMMIT'
+#!/bin/bash
+set -e
+exec > >(tee -a /var/log/docker-commit.log)
+exec 2>&1
+
+echo "========== COMMITTING DOCKER STATE =========="
+date
+
+cd /opt/proto-multi/computer-use-demo
+
+# Get the running container ID
+CONTAINER_ID=$(docker compose ps -q computer-use 2>/dev/null || echo "")
+
+if [ -z "$CONTAINER_ID" ]; then
+    echo "ERROR: No running container found"
+    exit 1
+fi
+
+echo "Container ID: $CONTAINER_ID"
+
+# Commit the running container to preserve all state
+echo "Committing container state to image..."
+docker commit $CONTAINER_ID computer-use-demo:local
+
+# Save to persistent backup location
+echo "Saving Docker image to backup file..."
+docker save computer-use-demo:local -o /var/lib/docker-image-backup.tar
+
+# Verify
+if [ -f /var/lib/docker-image-backup.tar ]; then
+    SIZE=$(du -h /var/lib/docker-image-backup.tar | cut -f1)
+    echo "✅ Docker state committed and saved ($SIZE)"
+    echo "   Backup: /var/lib/docker-image-backup.tar"
+else
+    echo "ERROR: Backup file not created"
+    exit 1
+fi
+
+date
+echo "=========================================="
+EOFCOMMIT
+
+chmod +x /usr/local/bin/commit-docker-state.sh
+
+# Create API endpoint script for triggering Docker commit via HTTP
+cat > /usr/local/bin/docker-commit-api.py <<'EOFAPI'
+#!/usr/bin/env python3
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import subprocess
+import json
+
+class CommitHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        if self.path == '/commit':
+            try:
+                # Run the commit script
+                result = subprocess.run(
+                    ['/usr/local/bin/commit-docker-state.sh'],
+                    capture_output=True,
+                    text=True,
+                    timeout=300
+                )
+
+                response = {
+                    'success': result.returncode == 0,
+                    'output': result.stdout,
+                    'error': result.stderr
+                }
+
+                self.send_response(200 if result.returncode == 0 else 500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'error': str(e)}).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+if __name__ == '__main__':
+    server = HTTPServer(('127.0.0.1', 9999), CommitHandler)
+    print('Docker commit API listening on port 9999')
+    server.serve_forever()
+EOFAPI
+
+chmod +x /usr/local/bin/docker-commit-api.py
+
+# Create systemd service for the commit API
+cat > /etc/systemd/system/docker-commit-api.service <<'EOFAPISVC'
+[Unit]
+Description=Docker Commit API
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/docker-commit-api.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOFAPISVC
+
+systemctl daemon-reload
+systemctl enable docker-commit-api.service
+systemctl start docker-commit-api.service
 
 # Start service
 echo "Starting Docker service..."
@@ -487,6 +691,17 @@ server {{
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_read_timeout 86400;
+    }}
+
+    # Docker commit API - REQUIRES AUTH (management endpoint)
+    location /api/commit-docker {{
+        auth_basic "Computer Use Demo - Management API";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+
+        proxy_pass http://127.0.0.1:9999/commit;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_read_timeout 300;
     }}
 }}
 EOFNGINX

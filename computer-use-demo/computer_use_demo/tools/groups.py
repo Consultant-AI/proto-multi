@@ -43,7 +43,7 @@ TOOL_GROUPS: list[ToolGroup] = [
     ),
     ToolGroup(
         version="computer_use_local",
-        tools=[LocalComputerTool],
+        tools=[LocalComputerTool, EditTool20250728, BashTool20250124],
         beta_flag="computer-use-2025-01-24",
     ),
 ]

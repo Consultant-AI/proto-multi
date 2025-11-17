@@ -572,13 +572,24 @@
                 <input type="text" id="instanceName" placeholder="my-instance">
             </div>
             <div class="form-group">
+                <label for="serverType">Server Type</label>
+                <select id="serverType" onchange="updateCostEstimate()">
+                    <option value="cpx11" data-cpu="2" data-ram="2" data-disk="40" data-cost="0.0052">CPX11 - 2 vCPU, 2GB RAM, 40GB Disk (€0.0052/hr)</option>
+                    <option value="cpx21" data-cpu="3" data-ram="4" data-disk="80" data-cost="0.0095">CPX21 - 3 vCPU, 4GB RAM, 80GB Disk (€0.0095/hr)</option>
+                    <option value="cpx22" data-cpu="2" data-ram="4" data-disk="80" data-cost="0.007" selected>CPX22 - 2 vCPU, 4GB RAM, 80GB Disk (€0.007/hr) - Recommended</option>
+                    <option value="cpx31" data-cpu="4" data-ram="8" data-disk="160" data-cost="0.0175">CPX31 - 4 vCPU, 8GB RAM, 160GB Disk (€0.0175/hr)</option>
+                    <option value="cpx41" data-cpu="8" data-ram="16" data-disk="240" data-cost="0.0345">CPX41 - 8 vCPU, 16GB RAM, 240GB Disk (€0.0345/hr)</option>
+                    <option value="cpx51" data-cpu="16" data-ram="32" data-disk="360" data-cost="0.0690">CPX51 - 16 vCPU, 32GB RAM, 360GB Disk (€0.0690/hr)</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="fromSnapshot">Source</label>
                 <select id="fromSnapshot" onchange="updateCreateTimeEstimate()">
                     <option value="">Fresh Build (10-15 min)</option>
                 </select>
             </div>
-            <div class="cost-info">
-                💰 Cost: <span class="cost-highlight">€0.007/hour</span> (~€5/month if running 24/7)
+            <div class="cost-info" id="costEstimate">
+                💰 Cost: <span class="cost-highlight">€0.007/hour</span> (~€5.04/month if running 24/7)
                 <br><span id="createTimeEstimate">⏱️ Build time: ~10-15 minutes</span>
             </div>
             <div class="modal-actions">
@@ -600,11 +611,12 @@
                 💰 Cost: <span class="cost-highlight">€0.01/GB/month</span> (~€0.30-0.40 for 40GB compressed)<br>
                 ⏱️ Auto-named with date/time if left empty<br>
                 <br>
-                <strong>⚡ For Fast Restore:</strong><br>
-                ✅ Wait for "Services Ready" status before snapshotting<br>
-                ✅ Ensures Docker images are built and saved<br>
-                ✅ Restored instances boot in ~1-2 minutes<br>
-                ❌ If services not ready, restore will rebuild (~10-15 min)
+                <strong>⚠️ IMPORTANT - Snapshot Limitations:</strong><br>
+                🔴 Hetzner snapshots do NOT preserve Docker images<br>
+                🔴 Restored instances will ALWAYS rebuild Chrome (~10-15 min)<br>
+                ✅ Wait for "Services Ready" before snapshotting to ensure configs are saved<br>
+                ✅ First restore is slow, but subsequent starts are fast<br>
+                💡 This is a known limitation - consider keeping one instance running instead
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeSnapshotModal()">Cancel</button>
@@ -670,26 +682,56 @@
             updateCostSummary();
         }
 
+        // Server type pricing lookup
+        const SERVER_PRICING = {
+            'cpx11': { cost: 0.0052, cpu: 2, ram: 2, disk: 40 },
+            'cpx21': { cost: 0.0095, cpu: 3, ram: 4, disk: 80 },
+            'cpx22': { cost: 0.007, cpu: 2, ram: 4, disk: 80 },
+            'cpx31': { cost: 0.0175, cpu: 4, ram: 8, disk: 160 },
+            'cpx41': { cost: 0.0345, cpu: 8, ram: 16, disk: 240 },
+            'cpx51': { cost: 0.0690, cpu: 16, ram: 32, disk: 360 }
+        };
+
         function updateCostSummary() {
             const container = document.getElementById('cost-summary');
 
-            // Calculate costs
+            // Calculate costs with actual server types
             const runningInstances = cachedInstances.filter(i => i.status === 'running');
             const stoppedInstances = cachedInstances.filter(i => i.status === 'off');
 
-            const hourlyRate = 0.007; // €0.007/hour per CX22 instance
-            const runningCost = runningInstances.length * hourlyRate;
+            // Calculate total hourly cost based on actual server types
+            const runningCost = runningInstances.reduce((sum, inst) => {
+                const pricing = SERVER_PRICING[inst.server_type] || SERVER_PRICING['cpx22'];
+                return sum + pricing.cost;
+            }, 0);
+
             const dailyCost = runningCost * 24;
             const monthlyCost = runningCost * 24 * 30;
 
             const snapshotCost = cachedSnapshots.reduce((sum, snap) => sum + snap.cost_per_month, 0);
             const totalMonthlyCost = monthlyCost + snapshotCost;
 
+            // Build detailed instance breakdown
+            let instanceBreakdown = '';
+            if (runningInstances.length > 0) {
+                instanceBreakdown = '<div class="pricing-table" style="margin-top: 15px;"><h3>🖥️ Running Instances Details</h3>';
+                runningInstances.forEach(inst => {
+                    const pricing = SERVER_PRICING[inst.server_type] || SERVER_PRICING['cpx22'];
+                    const instMonthlyCost = (pricing.cost * 24 * 30).toFixed(2);
+                    instanceBreakdown += `
+                        <div class="pricing-row">
+                            <span class="pricing-label">${inst.name} (${inst.server_type.toUpperCase()} - ${pricing.cpu}vCPU, ${pricing.ram}GB RAM)</span>
+                            <span class="pricing-value">€${pricing.cost}/hr (~€${instMonthlyCost}/mo)</span>
+                        </div>`;
+                });
+                instanceBreakdown += '</div>';
+            }
+
             container.innerHTML = `
                 <div class="cost-grid">
                     <div class="cost-item">
                         <div class="cost-label">Current Hourly</div>
-                        <div class="cost-value">€${runningCost.toFixed(3)}/hr</div>
+                        <div class="cost-value">€${runningCost.toFixed(4)}/hr</div>
                         <div class="cost-detail">${runningInstances.length} running instance(s)</div>
                     </div>
                     <div class="cost-item cost-item-alt">
@@ -704,15 +746,17 @@
                     </div>
                 </div>
 
-                <div class="pricing-table">
-                    <h3>📋 Cost Breakdown</h3>
+                ${instanceBreakdown}
+
+                <div class="pricing-table" style="margin-top: 15px;">
+                    <h3>📋 Total Cost Breakdown</h3>
                     <div class="pricing-row">
                         <span class="pricing-label">Running Instances (${runningInstances.length})</span>
                         <span class="pricing-value">€${monthlyCost.toFixed(2)}/month</span>
                     </div>
                     <div class="pricing-row">
                         <span class="pricing-label">Stopped Instances (${stoppedInstances.length})</span>
-                        <span class="pricing-value">€0.00/month</span>
+                        <span class="pricing-value">€0.00/month (billing paused)</span>
                     </div>
                     <div class="pricing-row">
                         <span class="pricing-label">Snapshots (${cachedSnapshots.length})</span>
@@ -724,14 +768,44 @@
                     </div>
                 </div>
 
+                <div class="pricing-table" style="margin-top: 15px;">
+                    <h3>💰 Server Type Pricing Guide</h3>
+                    <div class="pricing-row">
+                        <span class="pricing-label"><strong>CPX11</strong> - 2 vCPU, 2GB RAM, 40GB</span>
+                        <span class="pricing-value">€0.0052/hr (~€3.74/mo)</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label"><strong>CPX21</strong> - 3 vCPU, 4GB RAM, 80GB</span>
+                        <span class="pricing-value">€0.0095/hr (~€6.84/mo)</span>
+                    </div>
+                    <div class="pricing-row" style="background: #f0f4ff;">
+                        <span class="pricing-label"><strong>CPX22</strong> - 2 vCPU, 4GB RAM, 80GB ⭐ Recommended</span>
+                        <span class="pricing-value">€0.007/hr (~€5.04/mo)</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label"><strong>CPX31</strong> - 4 vCPU, 8GB RAM, 160GB</span>
+                        <span class="pricing-value">€0.0175/hr (~€12.60/mo)</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label"><strong>CPX41</strong> - 8 vCPU, 16GB RAM, 240GB</span>
+                        <span class="pricing-value">€0.0345/hr (~€24.84/mo)</span>
+                    </div>
+                    <div class="pricing-row">
+                        <span class="pricing-label"><strong>CPX51</strong> - 16 vCPU, 32GB RAM, 360GB</span>
+                        <span class="pricing-value">€0.0690/hr (~€49.68/mo)</span>
+                    </div>
+                </div>
+
                 <div class="cost-info" style="margin-top: 15px;">
-                    <strong>💡 Action Costs:</strong><br>
-                    • <strong>Create Instance:</strong> €0.007/hr (~€5/month 24/7)<br>
-                    • <strong>Pause Instance:</strong> Free! (stops billing immediately)<br>
-                    • <strong>Start Instance:</strong> Free (resumes €0.007/hr billing)<br>
-                    • <strong>Create Snapshot:</strong> €0.01/GB/month (~€0.30-0.40 per snapshot)<br>
-                    • <strong>Clone from Snapshot:</strong> €0.007/hr for new instance<br>
-                    • <strong>Delete Snapshot:</strong> Free (stops snapshot billing)
+                    <strong>💡 Cost-Saving Tips:</strong><br>
+                    • <strong>Stop Instances:</strong> Pauses billing immediately (€0/hr). Start anytime to resume.<br>
+                    • <strong>Snapshot + Delete:</strong> Save state to snapshot (~€0.30/mo), delete instance. Restore later in 2 min.<br>
+                    • <strong>Choose Right Size:</strong> CPX11 for light tasks, CPX22 for standard use, CPX31+ for heavy workloads.<br>
+                    • <strong>Auto-Stop:</strong> Stop instances when not in use - only pay for running time!<br>
+                    <br>
+                    <strong>📊 Example Savings:</strong><br>
+                    • Run CPX22 8hr/day instead of 24/7: €5.04/mo → €1.68/mo (save €3.36)<br>
+                    • Use snapshot storage: €5.04/mo → €0.30/mo (save €4.74 when not needed)
                 </div>
             `;
         }
@@ -791,9 +865,15 @@
                             </div>
                         </div>
                         <div class="instance-actions">
-                            <button class="btn btn-success btn-small" onclick="quickSnapshot(${inst.id}, '${inst.name}')">💾 Snapshot</button>
-                            <button class="btn btn-warning btn-small" onclick="snapshotAndDelete(${inst.id}, '${inst.name}')">💾🗑️ Snapshot + Delete</button>
-                            <button class="btn btn-danger btn-small" onclick="deleteInstance(${inst.id}, '${inst.name}')">🗑️ Delete</button>
+                            ${inst.status === 'running' ? `
+                                <button class="btn btn-success btn-small" onclick="quickSnapshot(${inst.id}, '${inst.name}')">💾 Snapshot</button>
+                                <button class="btn btn-secondary btn-small" onclick="stopInstance(${inst.id}, '${inst.name}')">⏸️ Stop (Pause Billing)</button>
+                                <button class="btn btn-warning btn-small" onclick="snapshotAndDelete(${inst.id}, '${inst.name}')">💾🗑️ Snapshot + Delete</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteInstance(${inst.id}, '${inst.name}')">🗑️ Delete</button>
+                            ` : `
+                                <button class="btn btn-success btn-small" onclick="startInstance(${inst.id}, '${inst.name}')">▶️ Start (Resume Billing)</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteInstance(${inst.id}, '${inst.name}')">🗑️ Delete</button>
+                            `}
                         </div>
                     </div>
                 `).join('');
@@ -885,10 +965,14 @@
         async function createInstance() {
             const name = document.getElementById('instanceName').value;
             const snapshotId = document.getElementById('fromSnapshot').value;
+            const serverType = document.getElementById('serverType').value;
 
             const payload = { name: name || undefined };
             if (snapshotId) {
                 payload.snapshot_id = snapshotId;
+            }
+            if (serverType) {
+                payload.server_type = serverType;
             }
 
             closeCreateModal();
@@ -971,18 +1055,65 @@
             }
         }
 
+        async function prepareForSnapshot(id, name) {
+            if (!id || id === 'null' || id === null) {
+                alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
+                return;
+            }
+
+            if (!confirm(`🔧 Prepare "${name}" for snapshot?\n\nThis will:\n✅ Commit running Docker container state to image\n✅ Save all installed software and data\n✅ Enable perfect state restoration from snapshots\n\nTime: ~30-60 seconds\n\n⚠️ IMPORTANT: Always do this BEFORE creating snapshots if you want to preserve exact container state!`)) return;
+
+            const toastId = showToast('Preparing for Snapshot', 'Committing Docker state... (~30-60 sec)', 'loading', 0);
+
+            try {
+                const response = await fetch(`/api/instance/${id}/prepare-snapshot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    updateToast(toastId, 'Ready for Snapshot!', `✅ Docker state committed\n✅ All software and data preserved\n\nYou can now create a snapshot.`, 'success');
+                } else {
+                    updateToast(toastId, 'Error', data.error || 'Failed to prepare instance', 'error');
+                }
+            } catch (error) {
+                updateToast(toastId, 'Error', error.message, 'error');
+            }
+        }
+
         async function snapshotAndDelete(id, name) {
             if (!id || id === 'null' || id === null) {
                 alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
                 return;
             }
 
-            if (!confirm(`💾 Snapshot + Delete "${name}"?\n\n✅ Creates snapshot (~30 sec)\n✅ Deletes instance (stops all billing)\n✅ Can restore later from snapshot\n\nSnapshot cost: ~€0.10-0.20/month\nSavings: ~€7/month`)) return;
+            if (!confirm(`💾 Snapshot + Delete "${name}"?\n\n✅ Commits Docker state (all software & data)\n✅ Creates snapshot\n✅ Deletes instance (stops all billing)\n✅ Can restore later with exact same state\n\nSnapshot cost: ~€0.10-0.20/month\nSavings: ~€7/month`)) return;
 
-            const toastId = showToast('Snapshot + Delete', 'Creating snapshot... (~30 seconds)', 'loading', 0);
+            const toastId = showToast('Snapshot + Delete', 'Step 1/3: Committing Docker state... (~30-60 sec)', 'loading', 0);
 
             try {
-                // First create snapshot
+                // Step 1: Prepare Docker state
+                const prepareResponse = await fetch(`/api/instance/${id}/prepare-snapshot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!prepareResponse.ok) {
+                    throw new Error(`Prepare failed: HTTP ${prepareResponse.status}`);
+                }
+
+                const prepareData = await prepareResponse.json();
+                if (!prepareData.success) {
+                    throw new Error(`Prepare failed: ${prepareData.error || 'Unknown error'}`);
+                }
+
+                // Step 2: Create snapshot
+                updateToast(toastId, 'Snapshot + Delete', 'Step 2/3: Creating snapshot... (~2-3 min)', 'loading');
                 const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
                 const snapshotResponse = await fetch(`/api/instance/${id}/snapshot`, {
                     method: 'POST',
@@ -1001,18 +1132,77 @@
                     return;
                 }
 
-                updateToast(toastId, 'Snapshot Created!', 'Now deleting instance...', 'loading');
+                // Step 3: Delete instance
+                updateToast(toastId, 'Snapshot + Delete', 'Step 3/3: Deleting instance...', 'loading');
 
                 // Then delete the instance
                 const deleteResponse = await fetch(`/api/instance/${id}/delete`, { method: 'DELETE' });
                 const deleteData = await deleteResponse.json();
 
                 if (deleteData.success) {
-                    updateToast(toastId, 'Done!', `✅ Snapshot created\n✅ Instance deleted\n💰 Saving ~€7/month`, 'success');
+                    updateToast(toastId, 'Done!', `✅ Docker state committed\n✅ Snapshot created\n✅ Instance deleted\n💰 Saving ~€7/month\n\n🚀 Restore from snapshot will have exact same state!`, 'success');
                     loadData();
                 } else {
                     updateToast(toastId, 'Delete Failed', `Snapshot created but delete failed: ${deleteData.error}`, 'error');
                     loadData();
+                }
+            } catch (error) {
+                updateToast(toastId, 'Error', error.message, 'error');
+            }
+        }
+
+        async function stopInstance(id, name) {
+            if (!id || id === 'null' || id === null) {
+                alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
+                return;
+            }
+
+            if (!confirm(`⏸️ Stop instance "${name}"?\n\n✅ Billing pauses immediately (€0/hr)\n✅ Data and Docker images preserved\n✅ Can restart anytime\n⏱️ Takes ~10 seconds`)) return;
+
+            const toastId = showToast('Stopping Instance', `Stopping ${name}... Billing will pause when complete`, 'loading', 0);
+
+            try {
+                const response = await fetch(`/api/instance/${id}/stop`, { method: 'POST' });
+
+                if (!response.ok) {
+                    throw new Error(`Stop failed: HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    updateToast(toastId, 'Instance Stopped!', `${name} is stopped. Billing paused. Start anytime to resume.`, 'success');
+                    loadData();
+                } else {
+                    updateToast(toastId, 'Error', data.error, 'error');
+                }
+            } catch (error) {
+                updateToast(toastId, 'Error', error.message, 'error');
+            }
+        }
+
+        async function startInstance(id, name) {
+            if (!id || id === 'null' || id === null) {
+                alert('❌ Error: Invalid instance ID. Please refresh the page and try again.');
+                return;
+            }
+
+            if (!confirm(`▶️ Start instance "${name}"?\n\n⏱️ Takes ~30 seconds to boot\n✅ Docker images preserved - no rebuild needed\n💰 Billing resumes when running`)) return;
+
+            const toastId = showToast('Starting Instance', `Starting ${name}... This takes ~30 seconds`, 'loading', 0);
+
+            try {
+                const response = await fetch(`/api/instance/${id}/start`, { method: 'POST' });
+
+                if (!response.ok) {
+                    throw new Error(`Start failed: HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    updateToast(toastId, 'Instance Started!', `${name} is running! Billing resumed. Wait ~1 min for services.`, 'success');
+                    loadData();
+                } else {
+                    updateToast(toastId, 'Error', data.error, 'error');
                 }
             } catch (error) {
                 updateToast(toastId, 'Error', error.message, 'error');
@@ -1092,6 +1282,19 @@
             }
         }
 
+        function updateCostEstimate() {
+            const serverTypeSelect = document.getElementById('serverType');
+            const selectedOption = serverTypeSelect.options[serverTypeSelect.selectedIndex];
+            const cost = parseFloat(selectedOption.getAttribute('data-cost'));
+            const monthlyCost = (cost * 24 * 30).toFixed(2);
+
+            const costEstimateDiv = document.getElementById('costEstimate');
+            const estimateSpan = document.getElementById('createTimeEstimate');
+
+            costEstimateDiv.innerHTML = `💰 Cost: <span class="cost-highlight">€${cost}/hour</span> (~€${monthlyCost}/month if running 24/7)
+                <br>${estimateSpan.outerHTML}`;
+        }
+
         function updateCreateTimeEstimate() {
             const select = document.getElementById('fromSnapshot');
             const estimate = document.getElementById('createTimeEstimate');
@@ -1103,7 +1306,7 @@
             }
         }
 
-        // Quick snapshot - no modal, direct creation
+        // Quick snapshot - automatically prepares Docker state first, then creates snapshot
         async function quickSnapshot(instanceId, instanceName) {
             if (!instanceId || instanceId === 'null') {
                 alert('❌ Error: Invalid instance ID');
@@ -1114,14 +1317,32 @@
             const dateStr = now.toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
             const defaultName = `snapshot-${dateStr}`;
 
-            const description = prompt(`Create snapshot of "${instanceName}"?\n\nEnter description (or leave empty for auto-name):`, defaultName);
+            const description = prompt(`Create snapshot of "${instanceName}"?\n\nThis will:\n✅ Commit Docker state (all software & data)\n✅ Create Hetzner snapshot\n✅ Restore with exact same state\n\nEnter description (or leave empty for auto-name):`, defaultName);
 
             if (description === null) return; // User cancelled
 
             const finalDescription = description.trim() || defaultName;
-            const toastId = showToast('Creating Snapshot', 'Capturing instance state... This takes ~2-3 minutes', 'loading', 0);
+            const toastId = showToast('Preparing Snapshot', 'Step 1/2: Committing Docker state... (~30-60 sec)', 'loading', 0);
 
             try {
+                // Step 1: Prepare Docker state
+                updateToast(toastId, 'Preparing Snapshot', 'Step 1/2: Committing Docker state... (~30-60 sec)', 'loading');
+                const prepareResponse = await fetch(`/api/instance/${instanceId}/prepare-snapshot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!prepareResponse.ok) {
+                    throw new Error(`Prepare failed: HTTP ${prepareResponse.status}`);
+                }
+
+                const prepareData = await prepareResponse.json();
+                if (!prepareData.success) {
+                    throw new Error(`Prepare failed: ${prepareData.error || 'Unknown error'}`);
+                }
+
+                // Step 2: Create snapshot
+                updateToast(toastId, 'Creating Snapshot', 'Step 2/2: Creating Hetzner snapshot... (~2-3 min)', 'loading');
                 const response = await fetch(`/api/instance/${instanceId}/snapshot`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1134,7 +1355,7 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    let message = `${data.snapshot.description} saved successfully`;
+                    let message = `${data.snapshot.description} saved successfully\n✅ Docker state preserved\n✅ Exact state will be restored`;
                     if (data.warning) {
                         message += `\n\n⚠️ ${data.warning}`;
                     }

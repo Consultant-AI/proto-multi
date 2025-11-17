@@ -32,7 +32,8 @@ import uvicorn
 
 from anthropic.types.beta import BetaContentBlockParam, BetaMessageParam
 
-from .loop import APIProvider, sampling_loop
+from .loop import APIProvider
+from .agent_loop import sampling_loop
 from .tools import ToolResult, ToolVersion
 
 DEFAULT_MODEL = os.getenv("COMPUTER_USE_MODEL", "claude-sonnet-4-5-20250929")
@@ -206,6 +207,10 @@ class ChatSession:
                 max_tokens=self.max_tokens,
                 tool_version=self.tool_version,
                 thinking_budget=self.thinking_budget,
+                # Agent SDK features
+                session_id=self.session_id,
+                enable_verification=self.enable_verification,
+                enable_subagents=self.enable_subagents,
             )
 
             self.messages = updated_messages
@@ -494,303 +499,227 @@ def _html_shell() -> str:
     """Single-page dark UI with vanilla JS for chat interactions."""
     css = """
     :root {
-        --bg-main: #111b21;
-        --bg-sidebar: #111b21;
-        --bg-chat: #0b141a;
-        --bg-panel-header: #202c33;
-        --bg-message-in: #202c33;
-        --bg-message-out: #005c4b;
-        --bg-input: #2a3942;
-        --text-primary: #e9edef;
-        --text-secondary: #8696a0;
-        --border: #2a3942;
-        --accent: #00a884;
-        --hover: #2a3942;
+        --bg: #0d1117;
+        --panel: #151b23;
+        --border: #2a3140;
+        --text: #f1f5f9;
+        --muted: #9ba7be;
+        --accent: #10a37f;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; }
     body {
-        font-family: 'Segoe UI', Helvetica Neue, Helvetica, Arial, sans-serif;
-        background: var(--bg-main);
-        color: var(--text-primary);
-        overflow: hidden;
+        margin: 0;
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        background: linear-gradient(180deg, #07090d, #0d1117);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 24px;
     }
-    #app { display: flex; height: 100vh; }
-
-    /* Sidebar Drawer */
-    #sidebar {
-        width: 400px;
-        background: var(--bg-sidebar);
-        border-right: 1px solid var(--border);
+    #app {
+        width: min(960px, 100%);
+        background: rgba(13, 17, 23, 0.85);
+        border: 1px solid var(--border);
+        border-radius: 24px;
         display: flex;
         flex-direction: column;
-        position: fixed;
-        left: -400px;
-        top: 0;
-        bottom: 0;
-        transition: left 0.3s ease;
-        z-index: 1000;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-    }
-    #sidebar.open {
-        left: 0;
-    }
-    #sidebar-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 999;
-    }
-    #sidebar-overlay.show {
-        display: block;
-    }
-    #sidebar-header {
-        background: var(--bg-panel-header);
-        padding: 10px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 60px;
-    }
-    #sidebar-header h1 { font-size: 16px; font-weight: 500; color: var(--text-primary); }
-    .header-icons { display: flex; gap: 20px; align-items: center; }
-    .icon-btn {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-    }
-    .icon-btn:hover { background: var(--hover); }
-    .icon-btn.new-chat { color: var(--text-primary); }
-    .icon-btn.stop-btn { color: #ea4335; }
-
-    /* Search */
-    #search-container { padding: 8px 12px; background: var(--bg-sidebar); }
-    #search-input {
-        width: 100%;
-        background: var(--bg-panel-header);
-        border: none;
-        border-radius: 8px;
-        padding: 8px 12px 8px 52px;
-        color: var(--text-primary);
-        font-size: 14px;
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%238696a0" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>');
-        background-repeat: no-repeat;
-        background-position: 12px center;
-        background-size: 20px;
-    }
-    #search-input::placeholder { color: var(--text-secondary); }
-
-    /* Sessions List */
-    #sessions-list { flex: 1; overflow-y: auto; background: var(--bg-sidebar); }
-    .session-item {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        transition: background 0.2s;
-    }
-    .session-item:hover { background: var(--hover); }
-    .session-item.active { background: var(--bg-panel-header); }
-    .session-avatar {
-        width: 49px;
-        height: 49px;
-        border-radius: 50%;
-        background: var(--accent);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 20px;
-        color: #fff;
-    }
-    .session-info { flex: 1; min-width: 0; }
-    .session-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
-    .session-name { font-size: 16px; color: var(--text-primary); font-weight: 400; }
-    .session-time { font-size: 12px; color: var(--text-secondary); }
-    .session-preview {
-        font-size: 14px;
-        color: var(--text-secondary);
-        white-space: nowrap;
+        box-shadow: 0 25px 65px rgba(0,0,0,0.35);
         overflow: hidden;
-        text-overflow: ellipsis;
     }
-
-    /* Chat Area */
-    #chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); }
-    #chat-header {
-        background: var(--bg-panel-header);
-        padding: 10px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 60px;
+    header {
+        padding: 24px;
         border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
-    .chat-title { display: flex; align-items: center; gap: 12px; }
-    #menu-toggle {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
+    header h1 {
+        font-size: 20px;
+        margin: 0;
+    }
+    .header-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+    .controls-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .session-select {
+        background: #080b11;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
         cursor: pointer;
-        padding: 8px;
-        border-radius: 50%;
+        min-width: 180px;
+    }
+    .session-select:hover {
+        border-color: var(--accent);
+    }
+    .icon-btn {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        color: #667eea;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background 0.2s;
+        transition: all 0.2s;
+        padding: 0;
     }
-    #menu-toggle:hover { background: var(--hover); }
-    .chat-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--accent);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        color: #fff;
+    .icon-btn:hover {
+        background: rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
     }
-    .chat-info h2 { font-size: 16px; font-weight: 400; color: var(--text-primary); }
-    .chat-status { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .icon-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .stop-btn {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+    .stop-btn:hover:not(:disabled) {
+        background: rgba(239, 68, 68, 0.2);
+    }
+    #status {
+        font-size: 14px;
+        color: var(--muted);
+    }
     .badge {
         font-size: 11px;
-        padding: 4px 8px;
-        border-radius: 4px;
-        background: rgba(0, 168, 132, 0.2);
+        padding: 4px 10px;
+        border-radius: 12px;
+        background: rgba(16, 163, 127, 0.15);
         color: var(--accent);
+        border: 1px solid rgba(16, 163, 127, 0.3);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
     }
-
-    /* Messages */
     #messages {
         flex: 1;
-        padding: 20px 8%;
+        padding: 24px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.03"><path fill="%23e9edef" d="M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z"/></svg>');
+        gap: 16px;
+        scroll-behavior: smooth;
+        scroll-padding-bottom: 24px;
     }
     .bubble {
-        max-width: 65%;
-        padding: 6px 7px 8px 9px;
-        border-radius: 7.5px;
-        position: relative;
-        word-wrap: break-word;
-        box-shadow: 0 1px 0.5px rgba(0,0,0,.13);
-    }
-    .bubble.user {
-        background: var(--bg-message-out);
-        align-self: flex-end;
-        margin-left: auto;
-    }
-    .bubble.assistant, .bubble.tool { background: var(--bg-message-in); align-self: flex-start; }
-    .bubble .label {
-        font-size: 12px;
-        color: rgba(233, 237, 239, 0.6);
-        margin-bottom: 4px;
-        font-weight: 500;
-    }
-    .bubble .text {
-        font-size: 14.2px;
-        line-height: 19px;
-        color: var(--text-primary);
+        border-radius: 18px;
+        padding: 18px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        line-height: 1.5;
         white-space: pre-wrap;
     }
-    .bubble .time {
-        font-size: 11px;
-        color: rgba(233, 237, 239, 0.45);
-        margin-top: 4px;
-        text-align: right;
+    .bubble.user { background: #1d2633; border-color: #293345; }
+    .bubble.assistant { background: #10151c; border-color: #1c2330; }
+    .bubble.tool { background: #0f1a1b; border-color: #183230; }
+    .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin-bottom: 6px;
     }
-    img.tool-screenshot { margin-top: 8px; border-radius: 6px; max-width: 100%; max-height: 400px; }
-
-    /* Typing Indicator */
+    #composer {
+        padding: 20px 24px;
+        border-top: 1px solid var(--border);
+        background: rgba(11, 15, 21, 0.9);
+    }
+    #prompt {
+        width: 100%;
+        min-height: 90px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: #080b11;
+        color: var(--text);
+        padding: 14px;
+        resize: vertical;
+        font-size: 15px;
+    }
+    #sendBtn {
+        margin-top: 12px;
+        background: var(--accent);
+        border: none;
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 999px;
+        font-size: 15px;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(16,163,127,0.35);
+    }
+    #sendBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    img.tool-screenshot {
+        margin-top: 12px;
+        border-radius: 12px;
+        max-width: 100%;
+        border: 1px solid #1f2937;
+    }
     .typing-indicator {
         display: none;
-        max-width: 65%;
-        padding: 12px 16px;
-        border-radius: 7.5px;
-        background: var(--bg-message-in);
-        align-self: flex-start;
-        box-shadow: 0 1px 0.5px rgba(0,0,0,.13);
+        border-radius: 18px;
+        padding: 18px;
+        background: #10151c;
+        border: 1px solid #1c2330;
+        line-height: 1.5;
     }
-    .typing-indicator.active { display: block; }
-    .typing-dots { display: flex; gap: 4px; align-items: center; }
+    .typing-indicator.active {
+        display: block;
+    }
+    .typing-indicator .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .typing-dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
     .typing-dots span {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: var(--text-secondary);
+        background: var(--accent);
         animation: typing-bounce 1.4s infinite ease-in-out;
     }
-    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    .typing-dots span:nth-child(1) {
+        animation-delay: -0.32s;
+    }
+    .typing-dots span:nth-child(2) {
+        animation-delay: -0.16s;
+    }
     @keyframes typing-bounce {
-        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-        40% { transform: scale(1); opacity: 1; }
+        0%, 80%, 100% {
+            transform: scale(0.8);
+            opacity: 0.5;
+        }
+        40% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
     }
-
-    /* Composer */
-    #composer { padding: 10px 16px 20px; background: var(--bg-panel-header); border-top: 1px solid var(--border); }
-    .composer-wrapper {
-        background: var(--bg-input);
-        border-radius: 8px;
-        display: flex;
-        align-items: flex-end;
-        padding: 5px 10px;
-        gap: 8px;
-    }
-    #prompt {
-        flex: 1;
-        background: none;
-        border: none;
-        color: var(--text-primary);
-        font-size: 15px;
-        padding: 10px;
-        resize: none;
-        max-height: 100px;
-        overflow-y: auto;
-        font-family: inherit;
-    }
-    #prompt::placeholder { color: var(--text-secondary); }
-    #sendBtn {
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        padding: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: background 0.2s;
-    }
-    #sendBtn:not(:disabled) { color: var(--accent); }
-    #sendBtn:not(:disabled):hover { background: rgba(0, 168, 132, 0.1); }
-    #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(134, 150, 160, 0.3); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(134, 150, 160, 0.5); }
     """
-
 
     js = """
     const messagesEl = document.getElementById('messages');
@@ -799,6 +728,7 @@ def _html_shell() -> str:
     const sendBtn = document.getElementById('sendBtn');
     const statusEl = document.getElementById('status');
     const stopBtn = document.getElementById('stopBtn');
+    const sessionSelect = document.getElementById('sessionSelect');
     const newSessionBtn = document.getElementById('newSessionBtn');
 
     let eventSource = null;
@@ -840,46 +770,39 @@ def _html_shell() -> str:
             const res = await fetch('/api/sessions');
             const sessions = await res.json();
 
-            const list = document.getElementById('sessions-list');
-            list.innerHTML = '';
+            sessionSelect.innerHTML = '';
 
             sessions.forEach(session => {
-                const div = document.createElement('div');
-                div.className = 'session-item' + (session.isCurrent ? ' active' : '');
-                div.dataset.sessionId = session.id;
-                div.innerHTML = `
-                    <div class="session-avatar">C</div>
-                    <div class="session-info">
-                        <div class="session-header">
-                            <div class="session-name">Session ${session.id.slice(-4)}</div>
-                            <div class="session-time">${formatDate(session.lastActive)}</div>
-                        </div>
-                        <div class="session-preview">${session.messageCount} messages</div>
-                    </div>
-                `;
-                div.addEventListener('click', async () => {
-                    if (session.id === currentSessionId) return;
-                    try {
-                        const res = await fetch(`/api/sessions/${session.id}/switch`, { method: 'POST' });
-                        const data = await res.json();
-                        renderMessages(data.messages, true);
-                        updateStatus(data.running);
-                        currentSessionId = session.id;
-                        await loadSessions(); // Refresh to update active state
-                    } catch (e) {
-                        console.error('Failed to switch session:', e);
-                        alert('Failed to switch session');
-                    }
-                });
+                const option = document.createElement('option');
+                option.value = session.id;
+                option.textContent = `${formatDate(session.lastActive)} (${session.messageCount} msgs)`;
                 if (session.isCurrent) {
+                    option.selected = true;
                     currentSessionId = session.id;
                 }
-                list.appendChild(div);
+                sessionSelect.appendChild(option);
             });
         } catch (e) {
             console.error('Failed to load sessions:', e);
         }
     }
+
+    // Switch session
+    sessionSelect.addEventListener('change', async (e) => {
+        const sessionId = e.target.value;
+        if (!sessionId || sessionId === currentSessionId) return;
+
+        try {
+            const res = await fetch(`/api/sessions/${sessionId}/switch`, { method: 'POST' });
+            const data = await res.json();
+            renderMessages(data.messages, true);
+            updateStatus(data.running);
+            currentSessionId = sessionId;
+        } catch (e) {
+            console.error('Failed to switch session:', e);
+            alert('Failed to switch session');
+        }
+    });
 
     // New session
     newSessionBtn.addEventListener('click', async () => {
@@ -951,7 +874,6 @@ def _html_shell() -> str:
             }
 
             const text = document.createElement('div');
-            text.className = 'text';
             text.textContent = msg.text;
             bubble.appendChild(text);
 
@@ -1043,19 +965,6 @@ def _html_shell() -> str:
 
     // Refresh sessions list every 5 seconds
     setInterval(loadSessions, 5000);
-
-    // Drawer toggle functionality
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-    function toggleDrawer() {
-        sidebar.classList.toggle('open');
-        sidebarOverlay.classList.toggle('show');
-    }
-
-    menuToggle.addEventListener('click', toggleDrawer);
-    sidebarOverlay.addEventListener('click', toggleDrawer);
     """
 
     return f"""
@@ -1069,65 +978,40 @@ def _html_shell() -> str:
     </head>
     <body>
         <div id="app">
-            <!-- Overlay for drawer -->
-            <div id="sidebar-overlay"></div>
+            <header>
+                <h1>Claude Computer Use</h1>
+                <div class="header-right">
+                    <div class="controls-row">
+                        <!-- Session selector -->
+                        <select id="sessionSelect" class="session-select">
+                            <option value="">Loading sessions...</option>
+                        </select>
 
-            <!-- Sidebar Drawer -->
-            <div id="sidebar">
-                <div id="sidebar-header">
-                    <h1>Conversations</h1>
-                    <div class="header-icons">
-                        <button id="newSessionBtn" class="icon-btn new-chat" title="New Conversation">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <!-- New conversation button -->
+                        <button id="newSessionBtn" class="icon-btn" title="New Conversation">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
                         </button>
+
+                        <!-- Stop button (hidden by default) -->
                         <button id="stopBtn" class="icon-btn stop-btn" title="Stop Agent" style="display:none">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <rect x="6" y="6" width="12" height="12"></rect>
                             </svg>
                         </button>
                     </div>
+                    <div class="badge">Agent SDK Enabled</div>
+                    <div id="status">Idle</div>
                 </div>
-                <div id="search-container">
-                    <input id="search-input" type="text" placeholder="Search conversations..." />
-                </div>
-                <div id="sessions-list"></div>
-            </div>
-
-            <!-- Chat Area -->
-            <div id="chat-area">
-                <div id="chat-header">
-                    <div class="chat-title">
-                        <button id="menu-toggle" title="Open Menu">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="3" y1="12" x2="21" y2="12"></line>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <line x1="3" y1="18" x2="21" y2="18"></line>
-                            </svg>
-                        </button>
-                        <div class="chat-avatar">C</div>
-                        <div class="chat-info">
-                            <h2>Claude</h2>
-                            <div class="chat-status" id="status">Idle</div>
-                        </div>
-                    </div>
-                    <div class="badge">Agent SDK</div>
-                </div>
-                <div id="messages"></div>
-                <div id="composer">
-                    <form id="chat-form">
-                        <div class="composer-wrapper">
-                            <textarea id="prompt" placeholder="Type a message" rows="1"></textarea>
-                            <button id="sendBtn" type="submit">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+            </header>
+            <div id="messages"></div>
+            <div id="composer">
+                <form id="chat-form">
+                    <textarea id="prompt" placeholder="Describe what Claude should do…"></textarea>
+                    <button id="sendBtn" type="submit">Send</button>
+                </form>
             </div>
         </div>
         <script>{js}</script>

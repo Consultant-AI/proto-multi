@@ -155,6 +155,7 @@ def create_instance():
         data = request.json
         name = data.get('name', f"computer-use-{int(datetime.now().timestamp())}")
         snapshot_id = data.get('snapshot_id')
+        server_type = data.get('server_type', 'cpx22')  # Default to cpx22 if not specified
 
         m = get_manager()
 
@@ -163,7 +164,8 @@ def create_instance():
             print(f"Cloning from snapshot ID: {snapshot_id} (type: {type(snapshot_id)})")
             server = m.clone_from_snapshot(
                 snapshot_id=int(snapshot_id),
-                name=name
+                name=name,
+                server_type=server_type
             )
         else:
             # Create fresh instance
@@ -174,6 +176,7 @@ def create_instance():
             user_data = generate_cloud_init_script(anthropic_api_key, m.api_token)
             server = m.create_instance(
                 name=name,
+                server_type=server_type,
                 user_data=user_data,
                 labels={"app": "computer-use-demo"}
             )
@@ -239,6 +242,76 @@ def delete_instance(instance_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/instance/<int:instance_id>/prepare-snapshot', methods=['POST'])
+@auth.login_required
+def prepare_snapshot(instance_id):
+    """Prepare instance for snapshot by committing Docker container state to disk"""
+    try:
+        m = get_manager()
+
+        # Get instance details
+        instance = m.get_instance(instance_id)
+        ip = instance['public_net']['ipv4']['ip']
+
+        # Create a script to commit Docker state
+        commit_script = """#!/bin/bash
+set -e
+exec > >(tee /var/log/docker-commit.log)
+exec 2>&1
+
+echo "========== COMMITTING DOCKER STATE =========="
+date
+
+cd /opt/proto-multi/computer-use-demo
+
+# Get the running container ID
+CONTAINER_ID=$(docker compose ps -q computer-use)
+
+if [ -z "$CONTAINER_ID" ]; then
+    echo "ERROR: No running container found"
+    exit 1
+fi
+
+echo "Container ID: $CONTAINER_ID"
+
+# Commit the running container to a new image (overwrites existing)
+echo "Committing container state to image..."
+docker commit $CONTAINER_ID computer-use-demo:local
+
+# Save the image to a tar file
+echo "Saving Docker image to disk..."
+docker save computer-use-demo:local -o /tmp/docker-image-backup.tar
+
+# Load it back to ensure it's properly saved in Docker's image cache
+echo "Reloading image to ensure persistence..."
+docker load -i /tmp/docker-image-backup.tar
+
+# Verify the image exists
+echo "Verifying image..."
+docker images | grep computer-use-demo
+
+echo "✅ Docker state committed and saved"
+date
+"""
+
+        # Execute the script on the instance using cloud-init-like approach
+        # Since we can't SSH directly, we'll use Hetzner's console API or create a one-time script
+        # For now, let's add this as a method in HetznerManager
+
+        result = m.prepare_docker_for_snapshot(instance_id)
+
+        return jsonify({
+            'success': True,
+            'message': 'Docker state committed to disk. Instance ready for snapshot.',
+            'details': result
+        })
+    except Exception as e:
+        print(f"ERROR in prepare_snapshot: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/instance/<int:instance_id>/snapshot', methods=['POST'])
 @auth.login_required
 def create_snapshot(instance_id):
@@ -253,11 +326,18 @@ def create_snapshot(instance_id):
         instance = m.get_instance(instance_id)
         ip = instance['public_net']['ipv4']['ip']
 
-        # Only warn, don't block - user might know what they're doing
-        services_ready = check_port(ip, 80, timeout=2)
+        # Check if services are actually ready
+        app_status = check_app_health(ip, timeout=3)
+        services_ready = (app_status == 'ready')
+
+        warning_msg = None
         if not services_ready:
-            print(f"⚠️  WARNING: Snapshotting instance {instance_id} but services not ready yet")
-            print(f"⚠️  Docker may still be building - restored instances will be slow")
+            print(f"⚠️  WARNING: Snapshotting instance {instance_id} but services not ready yet (status: {app_status})")
+            print(f"⚠️  Docker may still be building - restored instances may need rebuild")
+            warning_msg = 'IMPORTANT: Services not ready. Prepare the instance first using "Prepare for Snapshot" button.'
+        else:
+            print(f"✅ Services ready - creating snapshot")
+            warning_msg = 'TIP: For best results, use "Prepare for Snapshot" before creating snapshot to preserve exact Docker state.'
 
         snapshot = m.create_snapshot(instance_id, description)
 
@@ -267,7 +347,7 @@ def create_snapshot(instance_id):
                 'id': snapshot['id'],
                 'description': snapshot['description']
             },
-            'warning': None if services_ready else 'Services not ready - snapshot may require rebuild on restore'
+            'warning': warning_msg
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
