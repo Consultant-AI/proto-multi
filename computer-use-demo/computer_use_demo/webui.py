@@ -129,6 +129,11 @@ class ChatSession:
 
         try:
             self.last_active = datetime.now()
+
+            # Clean up any incomplete tool_use blocks before adding new message
+            # This handles cases where previous execution was interrupted
+            self.messages = self._clean_messages(self.messages)
+
             # Append the user message for both the API payload and UI.
             self.messages.append(
                 {
@@ -260,11 +265,39 @@ class ChatSession:
 
         session = cls(api_key=api_key, model=data["model"], tool_version=data["tool_version"])
         session.session_id = data["session_id"]
-        session.messages = data["messages"]
+
+        # Clean up messages to remove incomplete tool_use/tool_result pairs
+        session.messages = cls._clean_messages(data["messages"])
+
         session.display_messages = data["display_messages"]
         session.created_at = data["created_at"]
         session.last_active = data["last_active"]
         return session
+
+    @staticmethod
+    def _clean_messages(messages: list[BetaMessageParam]) -> list[BetaMessageParam]:
+        """Remove incomplete tool_use/tool_result pairs from messages.
+
+        The official sampling loop requires that every tool_use block has a corresponding
+        tool_result in the next user message. This cleans up any interrupted sessions.
+        """
+        if not messages:
+            return messages
+
+        # Check if the last message is an assistant message with tool_use blocks
+        if messages and messages[-1]["role"] == "assistant":
+            last_content = messages[-1]["content"]
+            if isinstance(last_content, list):
+                has_tool_use = any(
+                    isinstance(block, dict) and block.get("type") == "tool_use"
+                    for block in last_content
+                )
+                if has_tool_use:
+                    # Remove the incomplete assistant message with tool_use
+                    # This happens when the agent was stopped mid-execution
+                    messages = messages[:-1]
+
+        return messages
 
     def serialize(self) -> dict[str, Any]:
         return {
@@ -665,6 +698,12 @@ def _html_shell() -> str:
     }
     .chat-info h2 { font-size: 16px; font-weight: 400; color: var(--text-primary); }
     .chat-status { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     .badge {
         font-size: 11px;
         padding: 4px 8px;
@@ -673,6 +712,31 @@ def _html_shell() -> str:
         color: var(--accent);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+
+    .stop-btn-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: rgba(234, 67, 53, 0.1);
+        color: #ea4335;
+        border: 1px solid rgba(234, 67, 53, 0.3);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .stop-btn-header:hover {
+        background: rgba(234, 67, 53, 0.2);
+        border-color: rgba(234, 67, 53, 0.5);
+    }
+
+    .stop-btn-header svg {
+        width: 16px;
+        height: 16px;
     }
 
     /* Messages */
@@ -799,6 +863,7 @@ def _html_shell() -> str:
     const sendBtn = document.getElementById('sendBtn');
     const statusEl = document.getElementById('status');
     const stopBtn = document.getElementById('stopBtn');
+    const stopBtnHeader = document.getElementById('stopBtnHeader');
     const newSessionBtn = document.getElementById('newSessionBtn');
 
     let eventSource = null;
@@ -895,11 +960,23 @@ def _html_shell() -> str:
         }
     });
 
-    // Stop button
+    // Stop button (sidebar)
     stopBtn.addEventListener('click', async () => {
         try {
             await fetch('/api/stop', { method: 'POST' });
             stopBtn.style.display = 'none';
+            stopBtnHeader.style.display = 'none';
+        } catch (e) {
+            console.error('Failed to stop agent:', e);
+        }
+    });
+
+    // Stop button (header)
+    stopBtnHeader.addEventListener('click', async () => {
+        try {
+            await fetch('/api/stop', { method: 'POST' });
+            stopBtn.style.display = 'none';
+            stopBtnHeader.style.display = 'none';
         } catch (e) {
             console.error('Failed to stop agent:', e);
         }
@@ -987,8 +1064,9 @@ def _html_shell() -> str:
         sendBtn.disabled = running;
         promptEl.disabled = running;
 
-        // Show stop button when running, hide when idle
+        // Show stop buttons when running, hide when idle
         stopBtn.style.display = running ? 'flex' : 'none';
+        stopBtnHeader.style.display = running ? 'flex' : 'none';
 
         // Show/hide typing indicator
         if (!typingIndicator) {
@@ -1113,7 +1191,15 @@ def _html_shell() -> str:
                             <div class="chat-status" id="status">Idle</div>
                         </div>
                     </div>
-                    <div class="badge">Agent SDK</div>
+                    <div class="header-actions">
+                        <button id="stopBtnHeader" class="icon-btn stop-btn-header" title="Stop Agent" style="display:none">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                            </svg>
+                            <span>Stop</span>
+                        </button>
+                        <div class="badge">Official Loop</div>
+                    </div>
                 </div>
                 <div id="messages"></div>
                 <div id="composer">
