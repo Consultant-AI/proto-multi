@@ -37,7 +37,7 @@ from .tools import ToolResult, ToolVersion
 
 DEFAULT_MODEL = os.getenv("COMPUTER_USE_MODEL", "claude-sonnet-4-5-20250929")
 DEFAULT_TOOL_VERSION = cast(
-    ToolVersion, os.getenv("COMPUTER_USE_TOOL_VERSION", "computer_use_local")
+    ToolVersion, os.getenv("COMPUTER_USE_TOOL_VERSION", "proto_coding_v1")
 )
 
 

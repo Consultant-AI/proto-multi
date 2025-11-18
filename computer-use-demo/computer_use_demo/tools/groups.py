@@ -6,12 +6,14 @@ from .bash import BashTool20241022, BashTool20250124
 from .computer import ComputerTool20241022, ComputerTool20250124
 from .local_computer import LocalComputerTool
 from .edit import EditTool20241022, EditTool20250429, EditTool20250728
+from .coding import GlobTool, GrepTool, GitTool, TodoWriteTool
 
 ToolVersion = Literal[
     "computer_use_20250124",
     "computer_use_20241022",
     "computer_use_20250429",
     "computer_use_local",
+    "proto_coding_v1",
 ]
 BetaFlag = Literal[
     "computer-use-2024-10-22", "computer-use-2025-01-24", "computer-use-2025-04-29"
@@ -44,6 +46,19 @@ TOOL_GROUPS: list[ToolGroup] = [
     ToolGroup(
         version="computer_use_local",
         tools=[LocalComputerTool, EditTool20250728, BashTool20250124],
+        beta_flag="computer-use-2025-01-24",
+    ),
+    ToolGroup(
+        version="proto_coding_v1",
+        tools=[
+            LocalComputerTool,
+            EditTool20250728,
+            BashTool20250124,
+            GlobTool,
+            GrepTool,
+            GitTool,
+            TodoWriteTool,
+        ],
         beta_flag="computer-use-2025-01-24",
     ),
 ]
