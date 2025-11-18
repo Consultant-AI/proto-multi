@@ -34,6 +34,7 @@ from anthropic.types.beta import BetaContentBlockParam, BetaMessageParam
 
 from .loop import APIProvider, sampling_loop
 from .tools import ToolResult, ToolVersion
+from .logging import get_logger
 
 DEFAULT_MODEL = os.getenv("COMPUTER_USE_MODEL", "claude-sonnet-4-5-20250929")
 DEFAULT_TOOL_VERSION = cast(
@@ -111,11 +112,41 @@ class ChatSession:
         self.created_at = datetime.now()
         self.last_active = datetime.now()
 
-    async def stop(self) -> None:
-        """Request the agent to stop."""
+        # Logging
+        self.logger = get_logger()
+        self.logger.log_event(
+            event_type="session_created",
+            session_id=self.session_id,
+            data={
+                "model": self.model,
+                "tool_version": self.tool_version,
+            },
+            context={
+                "created_at": self.created_at.isoformat(),
+            },
+        )
+
+    async def stop(self, reason: str = "user_initiated") -> None:
+        """Request the agent to stop.
+
+        Args:
+            reason: Why the stop was triggered:
+                - "user_initiated": User clicked stop button (default)
+                - "error": An error/exception caused the stop
+                - "system": System/timeout caused the stop
+        """
         self._stop_requested = True
         if self._current_task and not self._current_task.done():
             self._current_task.cancel()
+
+        self.logger.log_event(
+            event_type="conversation_stopped",
+            session_id=self.session_id,
+            data={
+                "task_cancelled": self._current_task is not None and not self._current_task.done(),
+                "reason": reason,
+            },
+        )
 
     async def send(self, user_text: str) -> None:
         if not user_text.strip():
@@ -135,6 +166,7 @@ class ChatSession:
             self.messages = self._clean_messages(self.messages)
 
             # Append the user message for both the API payload and UI.
+            message_id = str(uuid.uuid4())
             self.messages.append(
                 {
                     "role": "user",
@@ -143,11 +175,22 @@ class ChatSession:
             )
             self.display_messages.append(
                 DisplayMessage(
-                    id=str(uuid.uuid4()),
+                    id=message_id,
                     role="user",
                     text=user_text.strip(),
                     label="You",
                 )
+            )
+
+            # Log user message
+            self.logger.log_user_message(
+                session_id=self.session_id,
+                message=user_text,
+                message_id=message_id,
+                context={
+                    "conversation_length": len(self.messages),
+                    "tools_available": self.tool_version,
+                },
             )
 
             def output_callback(block: BetaContentBlockParam):
@@ -179,6 +222,21 @@ class ChatSession:
                         images=images,
                     )
                 )
+
+                # Log tool execution
+                self.logger.log_event(
+                    event_type="tool_executed" if not result.error else "tool_failed",
+                    level="INFO" if not result.error else "ERROR",
+                    session_id=self.session_id,
+                    data={
+                        "tool_id": tool_id,
+                        "has_output": result.output is not None,
+                        "has_error": result.error is not None,
+                        "has_image": result.base64_image is not None,
+                        "output_length": len(result.output) if result.output else 0,
+                    },
+                )
+
                 # Send real-time update via SSE
                 asyncio.create_task(self._broadcast_sse_update())
 
@@ -196,6 +254,15 @@ class ChatSession:
                             label="API Error",
                             text=str(error),
                         )
+                    )
+                    # Log API error
+                    self.logger.log_error(
+                        session_id=self.session_id,
+                        error=error,
+                        context={
+                            "request_url": str(request.url) if request else None,
+                            "request_method": request.method if request else None,
+                        },
                     )
 
             updated_messages = await sampling_loop(
@@ -348,6 +415,16 @@ SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 @app.on_event("startup")
 async def startup_event():
+    # Log server startup
+    logger = get_logger()
+    logger.log_event(
+        event_type="server_started",
+        data={
+            "default_model": DEFAULT_MODEL,
+            "default_tool_version": DEFAULT_TOOL_VERSION,
+        },
+    )
+
     api_key = _resolve_api_key()
     app.state.api_key = api_key
     app.state.sessions: dict[str, ChatSession] = {}
@@ -394,7 +471,7 @@ async def send_message(payload: SendRequest):
 async def stop_agent():
     """Stop the currently running agent."""
     session = _get_current_session()
-    await session.stop()
+    await session.stop(reason="user_initiated")
     session.save(SESSIONS_DIR)
     return JSONResponse({"status": "stopped"})
 

@@ -1,0 +1,32 @@
+[
+  {
+    "content": "Create new folder on desktop",
+    "status": "completed",
+    "activeForm": "Creating folder on desktop"
+  },
+  {
+    "content": "Initialize React app",
+    "status": "completed",
+    "activeForm": "Initializing React app"
+  },
+  {
+    "content": "Build Twitter/X clone components",
+    "status": "completed",
+    "activeForm": "Building Twitter/X clone components"
+  },
+  {
+    "content": "Install dependencies and run the app",
+    "status": "completed",
+    "activeForm": "Installing dependencies and running app"
+  },
+  {
+    "content": "Open app in Chrome",
+    "status": "in_progress",
+    "activeForm": "Opening app in Chrome"
+  },
+  {
+    "content": "Test the application",
+    "status": "pending",
+    "activeForm": "Testing the application"
+  }
+]
