@@ -1,13 +1,19 @@
 #!/bin/bash
 # Test script for CEO agent with medium-level task
 
-# Set API key from environment or fail
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "ERROR: ANTHROPIC_API_KEY environment variable is not set"
-    exit 1
+cd /Users/nirfeinstein/Documents/GitHub/proto-multi/computer-use-demo
+
+# Load .env file if it exists
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
 fi
 
-cd /Users/nirfeinstein/Documents/GitHub/proto-multi/computer-use-demo
+# Check API key is set
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+    echo "ERROR: ANTHROPIC_API_KEY not set"
+    echo "Please create a .env file with: ANTHROPIC_API_KEY=your-key-here"
+    exit 1
+fi
 
 TASK="Create a simple user authentication system with the following:
 1. A user registration module that validates email and password

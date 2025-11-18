@@ -9,9 +9,17 @@ import os
 import sys
 from pathlib import Path
 
-# API key must be set in environment
+# Load .env file if available
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(__file__).parent / ".env")
+except ImportError:
+    pass
+
+# Check API key is available
 if not os.getenv("ANTHROPIC_API_KEY"):
-    print("ERROR: ANTHROPIC_API_KEY environment variable is not set")
+    print("ERROR: ANTHROPIC_API_KEY not set")
+    print("Please create a .env file with: ANTHROPIC_API_KEY=your-key-here")
     sys.exit(1)
 
 # Add parent directory to path

@@ -15,6 +15,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, cast, get_args
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    # Look for .env in the current directory and parent directories
+    load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+except ImportError:
+    pass  # dotenv not installed, will use system env vars only
+
 from anthropic.types.beta import (
     BetaContentBlockParam,
     BetaMessageParam,
