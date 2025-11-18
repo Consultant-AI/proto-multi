@@ -222,7 +222,7 @@ class ChatSession:
                     DisplayMessage(
                         id=str(uuid.uuid4()),
                         role="assistant",
-                        label="Claude",
+                        label="Proto",
                         text=assistant_text,
                     )
                 )
@@ -230,8 +230,10 @@ class ChatSession:
         finally:
             async with self._lock:
                 self._busy = False
-            # Final update when agent finishes
-            await self._broadcast_sse_update()
+            # Final update when agent finishes - send multiple times to ensure delivery
+            for _ in range(3):
+                await self._broadcast_sse_update()
+                await asyncio.sleep(0.1)
 
     async def _broadcast_sse_update(self):
         """Broadcast current state to all SSE connections."""
@@ -330,7 +332,7 @@ class SendRequest(BaseModel):
     message: str
 
 
-app = FastAPI(title="Claude Computer Use")
+app = FastAPI(title="Proto AI Agent")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -604,6 +606,14 @@ def _html_shell() -> str:
     }
     .icon-btn:hover { background: var(--hover); }
     .icon-btn.new-chat { color: var(--text-primary); }
+    .icon-btn.new-chat-header {
+        color: var(--text-primary);
+        padding: 8px;
+        border-radius: 50%;
+    }
+    .icon-btn.new-chat-header:hover {
+        background: var(--hover);
+    }
     .icon-btn.stop-btn { color: #ea4335; }
 
     /* Search */
@@ -661,7 +671,39 @@ def _html_shell() -> str:
     }
 
     /* Chat Area */
-    #chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-chat); }
+    #chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-chat);
+        position: relative;
+    }
+
+    /* Geometric Background */
+    #chat-area::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            /* Circles */
+            radial-gradient(circle at 15% 20%, rgba(0, 168, 132, 0.08) 0%, transparent 15%),
+            radial-gradient(circle at 85% 80%, rgba(0, 168, 132, 0.08) 0%, transparent 15%),
+            radial-gradient(circle at 70% 30%, rgba(0, 168, 132, 0.06) 0%, transparent 12%),
+            radial-gradient(circle at 30% 70%, rgba(0, 168, 132, 0.06) 0%, transparent 12%),
+            /* Diagonal lines */
+            repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(0, 168, 132, 0.04) 60px, rgba(0, 168, 132, 0.04) 62px),
+            repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(0, 168, 132, 0.04) 60px, rgba(0, 168, 132, 0.04) 62px),
+            /* Grid pattern */
+            repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(0, 168, 132, 0.02) 100px, rgba(0, 168, 132, 0.02) 101px),
+            repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(0, 168, 132, 0.02) 100px, rgba(0, 168, 132, 0.02) 101px);
+        background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+        opacity: 1;
+        pointer-events: none;
+        z-index: 0;
+    }
     #chat-header {
         background: var(--bg-panel-header);
         padding: 10px 16px;
@@ -670,6 +712,8 @@ def _html_shell() -> str:
         align-items: center;
         height: 60px;
         border-bottom: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
     }
     .chat-title { display: flex; align-items: center; gap: 12px; }
     #menu-toggle {
@@ -747,7 +791,8 @@ def _html_shell() -> str:
         display: flex;
         flex-direction: column;
         gap: 8px;
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.03"><path fill="%23e9edef" d="M50 0L60 40L100 50L60 60L50 100L40 60L0 50L40 40Z"/></svg>');
+        position: relative;
+        z-index: 1;
     }
     .bubble {
         max-width: 65%;
@@ -810,7 +855,13 @@ def _html_shell() -> str:
     }
 
     /* Composer */
-    #composer { padding: 10px 16px 20px; background: var(--bg-panel-header); border-top: 1px solid var(--border); }
+    #composer {
+        padding: 10px 16px 20px;
+        background: var(--bg-panel-header);
+        border-top: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
+    }
     .composer-wrapper {
         background: var(--bg-input);
         border-radius: 8px;
@@ -848,6 +899,22 @@ def _html_shell() -> str:
     #sendBtn:not(:disabled):hover { background: rgba(0, 168, 132, 0.1); }
     #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    .stop-btn-composer {
+        background: none;
+        border: none;
+        color: #ea4335;
+        cursor: pointer;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    .stop-btn-composer:hover {
+        background: rgba(234, 67, 53, 0.1);
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -863,12 +930,14 @@ def _html_shell() -> str:
     const sendBtn = document.getElementById('sendBtn');
     const statusEl = document.getElementById('status');
     const stopBtn = document.getElementById('stopBtn');
-    const stopBtnHeader = document.getElementById('stopBtnHeader');
+    const stopBtnComposer = document.getElementById('stopBtnComposer');
     const newSessionBtn = document.getElementById('newSessionBtn');
+    const newSessionBtnSidebar = document.getElementById('newSessionBtnSidebar');
 
     let eventSource = null;
     let currentSessionId = null;
     let typingIndicator = null;
+    let pollingInterval = null;
 
     // Create typing indicator element
     function createTypingIndicator() {
@@ -876,7 +945,7 @@ def _html_shell() -> str:
         div.className = 'typing-indicator';
         div.id = 'typing-indicator';
         div.innerHTML = `
-            <div class="label">Claude</div>
+            <div class="label">Proto</div>
             <div class="typing-dots">
                 <span></span>
                 <span></span>
@@ -946,7 +1015,7 @@ def _html_shell() -> str:
         }
     }
 
-    // New session
+    // New session (header)
     newSessionBtn.addEventListener('click', async () => {
         try {
             const res = await fetch('/api/sessions/new', { method: 'POST' });
@@ -960,23 +1029,37 @@ def _html_shell() -> str:
         }
     });
 
+    // New session (sidebar)
+    newSessionBtnSidebar.addEventListener('click', async () => {
+        try {
+            const res = await fetch('/api/sessions/new', { method: 'POST' });
+            const data = await res.json();
+            currentSessionId = data.sessionId;
+            await loadSessions();
+            renderMessages([], true);
+            // Close sidebar after creating new session
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('show');
+        } catch (e) {
+            console.error('Failed to create session:', e);
+            alert('Failed to create new session');
+        }
+    });
+
     // Stop button (sidebar)
     stopBtn.addEventListener('click', async () => {
         try {
             await fetch('/api/stop', { method: 'POST' });
-            stopBtn.style.display = 'none';
-            stopBtnHeader.style.display = 'none';
         } catch (e) {
             console.error('Failed to stop agent:', e);
         }
     });
 
-    // Stop button (header)
-    stopBtnHeader.addEventListener('click', async () => {
+    // Stop button (composer)
+    stopBtnComposer.addEventListener('click', async () => {
         try {
             await fetch('/api/stop', { method: 'POST' });
-            stopBtn.style.display = 'none';
-            stopBtnHeader.style.display = 'none';
         } catch (e) {
             console.error('Failed to stop agent:', e);
         }
@@ -1060,13 +1143,24 @@ def _html_shell() -> str:
     }
 
     function updateStatus(running) {
-        statusEl.textContent = running ? 'Claude is working…' : 'Idle';
-        sendBtn.disabled = running;
+        statusEl.textContent = running ? 'Thinking...' : '';
         promptEl.disabled = running;
 
-        // Show stop buttons when running, hide when idle
+        // Toggle between send and stop button in composer
+        sendBtn.style.display = running ? 'none' : 'flex';
+        stopBtnComposer.style.display = running ? 'flex' : 'none';
+
+        // Sidebar stop button (keep for convenience)
         stopBtn.style.display = running ? 'flex' : 'none';
-        stopBtnHeader.style.display = running ? 'flex' : 'none';
+
+        // Start/stop polling fallback
+        if (running && !pollingInterval) {
+            // Poll every 2 seconds while running as fallback if SSE fails
+            pollingInterval = setInterval(refreshState, 2000);
+        } else if (!running && pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
 
         // Show/hide typing indicator
         if (!typingIndicator) {
@@ -1142,7 +1236,7 @@ def _html_shell() -> str:
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Claude Computer Use</title>
+        <title>Proto - AI Agent</title>
         <style>{css}</style>
     </head>
     <body>
@@ -1155,7 +1249,7 @@ def _html_shell() -> str:
                 <div id="sidebar-header">
                     <h1>Conversations</h1>
                     <div class="header-icons">
-                        <button id="newSessionBtn" class="icon-btn new-chat" title="New Conversation">
+                        <button id="newSessionBtnSidebar" class="icon-btn new-chat" title="New Conversation">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1185,30 +1279,32 @@ def _html_shell() -> str:
                                 <line x1="3" y1="18" x2="21" y2="18"></line>
                             </svg>
                         </button>
-                        <div class="chat-avatar">C</div>
+                        <div class="chat-avatar">P</div>
                         <div class="chat-info">
-                            <h2>Claude</h2>
-                            <div class="chat-status" id="status">Idle</div>
+                            <h2>Proto</h2>
+                            <div class="chat-status" id="status"></div>
                         </div>
                     </div>
-                    <div class="header-actions">
-                        <button id="stopBtnHeader" class="icon-btn stop-btn-header" title="Stop Agent" style="display:none">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-                            </svg>
-                            <span>Stop</span>
-                        </button>
-                        <div class="badge">Official Loop</div>
-                    </div>
+                    <button id="newSessionBtn" class="icon-btn new-chat-header" title="New Conversation">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
                 </div>
                 <div id="messages"></div>
                 <div id="composer">
                     <form id="chat-form">
                         <div class="composer-wrapper">
-                            <textarea id="prompt" placeholder="Type a message" rows="1"></textarea>
-                            <button id="sendBtn" type="submit">
+                            <textarea id="prompt" placeholder="Message Proto" rows="1"></textarea>
+                            <button id="sendBtn" type="submit" title="Send message">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                </svg>
+                            </button>
+                            <button id="stopBtnComposer" type="button" class="stop-btn-composer" title="Stop" style="display:none">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
                                 </svg>
                             </button>
                         </div>
