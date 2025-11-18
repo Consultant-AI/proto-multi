@@ -7,6 +7,7 @@ from .computer import ComputerTool20241022, ComputerTool20250124
 from .local_computer import LocalComputerTool
 from .edit import EditTool20241022, EditTool20250429, EditTool20250728
 from .coding import GlobTool, GrepTool, GitTool, TodoWriteTool
+from .planning import PlanningTool, DelegateTaskTool, ReadPlanningTool
 
 ToolVersion = Literal[
     "computer_use_20250124",
@@ -58,6 +59,9 @@ TOOL_GROUPS: list[ToolGroup] = [
             GrepTool,
             GitTool,
             TodoWriteTool,
+            PlanningTool,
+            DelegateTaskTool,
+            ReadPlanningTool,
         ],
         beta_flag="computer-use-2025-01-24",
     ),

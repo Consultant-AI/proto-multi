@@ -98,7 +98,7 @@ class ChatSession:
         # Agent SDK features (optimized for Claude Code-like behavior)
         self.session_id = f"webui-{uuid.uuid4().hex[:8]}"
         self.enable_verification = False  # Disabled for faster, direct tool usage
-        self.enable_subagents = False  # Disabled for simpler execution
+        self.use_ceo_agent = os.getenv("PROTO_USE_CEO_AGENT", "true").lower() == "true"  # CEO agent with planning/delegation
         self.session_stats: dict[str, Any] = {}
 
         # SSE streaming for real-time updates
@@ -379,7 +379,7 @@ class ChatSession:
             "agentSdk": {
                 "enabled": True,
                 "verification": self.enable_verification,
-                "subagents": self.enable_subagents,
+                "ceoAgent": self.use_ceo_agent,
                 "stats": self.session_stats,
             },
             "messages": [

@@ -33,6 +33,16 @@ EventType = Literal[
     "api_request",
     "api_response",
     "api_error",
+    # Planning events
+    "planning_started",
+    "planning_completed",
+    "complexity_analyzed",
+    "document_generated",
+    "project_created",
+    # Multi-agent events
+    "agent_delegated",
+    "agent_response",
+    "agent_collaboration",
     # System events
     "server_started",
     "server_stopped",

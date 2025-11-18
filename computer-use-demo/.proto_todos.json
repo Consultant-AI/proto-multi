@@ -1,32 +1,37 @@
 [
   {
-    "content": "Create new folder on desktop",
-    "status": "completed",
-    "activeForm": "Creating folder on desktop"
+    "content": "Create auth_system directory structure",
+    "activeForm": "Creating directory structure",
+    "status": "completed"
   },
   {
-    "content": "Initialize React app",
-    "status": "completed",
-    "activeForm": "Initializing React app"
+    "content": "Implement user registration module with email and password validation",
+    "activeForm": "Implementing user registration module",
+    "status": "completed"
   },
   {
-    "content": "Build Twitter/X clone components",
-    "status": "completed",
-    "activeForm": "Building Twitter/X clone components"
+    "content": "Implement login function with credential checking",
+    "activeForm": "Implementing login function",
+    "status": "completed"
   },
   {
-    "content": "Install dependencies and run the app",
-    "status": "completed",
-    "activeForm": "Installing dependencies and running app"
+    "content": "Add password hashing with bcrypt",
+    "activeForm": "Adding password hashing",
+    "status": "completed"
   },
   {
-    "content": "Open app in Chrome",
-    "status": "in_progress",
-    "activeForm": "Opening app in Chrome"
+    "content": "Add error handling throughout the system",
+    "activeForm": "Adding error handling",
+    "status": "completed"
   },
   {
-    "content": "Test the application",
-    "status": "pending",
-    "activeForm": "Testing the application"
+    "content": "Create unit tests for key functions",
+    "activeForm": "Creating unit tests",
+    "status": "completed"
+  },
+  {
+    "content": "Create README documentation",
+    "activeForm": "Creating README documentation",
+    "status": "in_progress"
   }
 ]

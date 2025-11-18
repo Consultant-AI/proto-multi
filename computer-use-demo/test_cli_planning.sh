@@ -1,0 +1,32 @@
+#!/bin/bash
+# Test script to demonstrate CLI with planning capabilities
+
+cd /Users/nirfeinstein/Documents/GitHub/proto-multi/computer-use-demo
+
+echo "Testing Proto CLI with Planning Tools"
+echo "======================================"
+echo ""
+echo "The CLI now has the same capabilities as the WebUI:"
+echo "  - All 10 tools from proto_coding_v1 tool group"
+echo "  - Including: PlanningTool, DelegateTaskTool, ReadPlanningTool"
+echo ""
+echo "You can run it with:"
+echo "  python3 -m computer_use_demo.cli"
+echo ""
+echo "Or with custom options:"
+echo "  python3 -m computer_use_demo.cli --model claude-sonnet-4-5-20250929 --log-dir ./cli-logs"
+echo ""
+echo "Available commands in the CLI:"
+echo "  :help     - Show available commands"
+echo "  :history  - Show message count"
+echo "  :quit     - Exit the CLI"
+echo ""
+echo "Test tasks you can try:"
+echo "  1. Simple: 'Create a hello.txt file with Hello World'"
+echo "  2. Complex: 'Create a plan for building a todo app'"
+echo "  3. Planning: 'Use the planning tool to create docs for a mobile app project'"
+echo ""
+echo "Logs will be saved to: ~/.computer-use-cli/session-TIMESTAMP/"
+echo "  - transcript.txt - Full conversation log"
+echo "  - screens/       - Screenshots (if any)"
+echo ""

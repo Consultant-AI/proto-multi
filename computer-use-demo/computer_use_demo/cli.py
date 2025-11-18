@@ -43,7 +43,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--tool-version",
         choices=get_args(ToolVersion),
-        default="computer_use_local",
+        default="proto_coding_v1",
         help="Tool group to expose to the model (default: %(default)s)",
     )
     parser.add_argument(
@@ -84,6 +84,16 @@ def _parse_args() -> argparse.Namespace:
         "--token-efficient-tools-beta",
         action="store_true",
         help="Enable the token efficient tools beta flag.",
+    )
+    parser.add_argument(
+        "--test-mode",
+        action="store_true",
+        help="Run in test mode with a predefined task (non-interactive).",
+    )
+    parser.add_argument(
+        "--test-task",
+        default=None,
+        help="Task to run in test mode (required if --test-mode is set).",
     )
     return parser.parse_args()
 
@@ -151,6 +161,49 @@ class CLIRenderer:
 async def _chat_loop(args: argparse.Namespace, api_key: str):
     provider = APIProvider(args.provider)
     renderer = CLIRenderer(args.log_dir)
+
+    # Test mode: run single task and exit
+    if args.test_mode:
+        if not args.test_task:
+            renderer.log("ERROR: --test-task is required when using --test-mode")
+            return
+
+        renderer.log("=" * 80)
+        renderer.log("Running in TEST MODE")
+        renderer.log("=" * 80)
+        renderer.log(f"Task: {args.test_task}")
+        renderer.log("=" * 80)
+
+        messages: list[BetaMessageParam] = [
+            {"role": "user", "content": [{"type": "text", "text": args.test_task}]}
+        ]
+
+        try:
+            messages = await sampling_loop(
+                model=args.model,
+                provider=provider,
+                system_prompt_suffix=args.system_prompt,
+                messages=messages,
+                output_callback=renderer.output_callback,
+                tool_output_callback=renderer.tool_output_callback,
+                api_response_callback=renderer.api_response_callback,
+                api_key=api_key,
+                only_n_most_recent_images=args.only_n_images,
+                max_tokens=args.max_tokens,
+                tool_version=args.tool_version,
+                thinking_budget=args.thinking_budget or None,
+                token_efficient_tools_beta=args.token_efficient_tools_beta,
+            )
+            renderer.log("=" * 80)
+            renderer.log(f"TEST COMPLETE - {len(messages)} messages exchanged")
+            renderer.log("=" * 80)
+        except Exception as e:
+            renderer.log(f"ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+        return
+
+    # Interactive mode
     renderer.log(
         "Starting Claude computer use CLI. Type ':quit' to exit or ':help' for commands."
     )
