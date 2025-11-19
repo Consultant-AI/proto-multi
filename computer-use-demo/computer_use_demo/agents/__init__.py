@@ -9,8 +9,15 @@ from .base_agent import AgentConfig, AgentMessage, AgentResult, AgentRole, BaseA
 from .ceo_agent import CEOAgent
 from .specialists import (
     BaseSpecialist,
+    CustomerSuccessAgent,
+    DataAnalystAgent,
+    DevOpsAgent,
     MarketingStrategyAgent,
+    ProductManagerAgent,
+    QATestingAgent,
+    SalesAgent,
     SeniorDeveloperAgent,
+    TechnicalWriterAgent,
     UXDesignerAgent,
 )
 
@@ -25,6 +32,15 @@ __all__ = [
     "CEOAgent",
     # Specialists
     "BaseSpecialist",
+    # Core SaaS Agents
+    "ProductManagerAgent",
+    "QATestingAgent",
+    "DevOpsAgent",
+    "TechnicalWriterAgent",
+    "DataAnalystAgent",
+    "CustomerSuccessAgent",
+    "SalesAgent",
+    # Original Agents
     "MarketingStrategyAgent",
     "SeniorDeveloperAgent",
     "UXDesignerAgent",
