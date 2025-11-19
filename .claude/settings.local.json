@@ -21,7 +21,8 @@
       "Bash(echo:*)",
       "Bash(/Users/nirfeinstein/Documents/GitHub/proto-multi/computer-use-demo/UX_IMPROVEMENTS.md)",
       "Bash(mkdir:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
