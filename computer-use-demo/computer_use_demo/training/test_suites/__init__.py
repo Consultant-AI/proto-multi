@@ -6,9 +6,11 @@ Each test suite includes multiple test cases that assess different aspects
 of an agent's capabilities.
 """
 
+from .customer_success_suite import customer_success_suite
 from .devops_suite import devops_suite
 from .example_test_suite import product_manager_suite
 from .qa_testing_suite import qa_testing_suite
+from .sales_suite import sales_suite
 from .senior_developer_suite import senior_developer_suite
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "qa_testing_suite",
     "devops_suite",
     "senior_developer_suite",
+    "sales_suite",
+    "customer_success_suite",
 ]

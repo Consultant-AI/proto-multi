@@ -26,16 +26,20 @@ if not os.getenv("ANTHROPIC_API_KEY"):
     sys.exit(1)
 
 from computer_use_demo.agents import (
+    CustomerSuccessAgent,
     DevOpsAgent,
     ProductManagerAgent,
     QATestingAgent,
+    SalesAgent,
     SeniorDeveloperAgent,
 )
 from computer_use_demo.training import TrainingHarness
 from computer_use_demo.training.test_suites import (
+    customer_success_suite,
     devops_suite,
     product_manager_suite,
     qa_testing_suite,
+    sales_suite,
     senior_developer_suite,
 )
 
@@ -53,6 +57,8 @@ async def main():
         (QATestingAgent, qa_testing_suite, "QA Testing"),
         (DevOpsAgent, devops_suite, "DevOps"),
         (SeniorDeveloperAgent, senior_developer_suite, "Senior Developer"),
+        (SalesAgent, sales_suite, "Sales"),
+        (CustomerSuccessAgent, customer_success_suite, "Customer Success"),
     ]
 
     # Create training harness
