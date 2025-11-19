@@ -233,15 +233,19 @@ class BaseAgent(ABC):
             },
         )
 
-        # Call API
-        response = self.client.messages.create(
-            model=self.config.model,
-            max_tokens=4096,
-            temperature=self.config.temperature,
-            system=system_prompt,
-            messages=self.messages,
-            tools=tools if tools else None,
-        )
+        # Call API - only include tools if non-empty
+        api_params = {
+            "model": self.config.model,
+            "max_tokens": 4096,
+            "temperature": self.config.temperature,
+            "system": system_prompt,
+            "messages": self.messages,
+        }
+
+        if tools:  # Only add tools parameter if there are actual tools
+            api_params["tools"] = tools
+
+        response = self.client.messages.create(**api_params)
 
         # Log API response
         self.logger.log_event(

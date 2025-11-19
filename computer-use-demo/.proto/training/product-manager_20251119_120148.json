@@ -1,0 +1,66 @@
+{
+  "agent_type": "product-manager",
+  "suite_name": "Product Manager Agent Tests",
+  "timestamp": "2025-11-19T12:01:47.733613",
+  "duration": 1.14968,
+  "summary": {
+    "total": 5,
+    "passed": 0,
+    "failed": 5,
+    "errors": 0,
+    "average_score": 0.0,
+    "pass_rate": 0.0,
+    "total_time": 1.1496357917785645
+  },
+  "results": [
+    {
+      "test_name": "Create User Stories for Login Feature",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.2735629081726074,
+      "agent_output": "",
+      "error_message": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'tools: Input should be a valid list'}, 'request_id': 'req_011CVH4ASxnMvfpcd65RYCUK'}",
+      "metadata": {}
+    },
+    {
+      "test_name": "Prioritize Features for MVP",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.20493793487548828,
+      "agent_output": "",
+      "error_message": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'tools: Input should be a valid list'}, 'request_id': 'req_011CVH4ATwKX2ufgd2TtaQKn'}",
+      "metadata": {}
+    },
+    {
+      "test_name": "Document Requirements for Payment System",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.21267199516296387,
+      "agent_output": "",
+      "error_message": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'tools: Input should be a valid list'}, 'request_id': 'req_011CVH4AUofVLu4MwfUA8ycw'}",
+      "metadata": {}
+    },
+    {
+      "test_name": "Create Quarterly Roadmap",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.25528407096862793,
+      "agent_output": "",
+      "error_message": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'tools: Input should be a valid list'}, 'request_id': 'req_011CVH4AVmx5JkZF5SPXvxDf'}",
+      "metadata": {}
+    },
+    {
+      "test_name": "Write Stakeholder Update",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.20317888259887695,
+      "agent_output": "",
+      "error_message": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'tools: Input should be a valid list'}, 'request_id': 'req_011CVH4AWpDKseDPJhD5wbxD'}",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created": "2025-01-19"
+  }
+}

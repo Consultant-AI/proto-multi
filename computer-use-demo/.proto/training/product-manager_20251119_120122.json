@@ -1,0 +1,66 @@
+{
+  "agent_type": "product-manager",
+  "suite_name": "Product Manager Agent Tests",
+  "timestamp": "2025-11-19T12:01:22.378290",
+  "duration": 0.020891,
+  "summary": {
+    "total": 5,
+    "passed": 0,
+    "failed": 5,
+    "errors": 0,
+    "average_score": 0.0,
+    "pass_rate": 0.0,
+    "total_time": 0.02085113525390625
+  },
+  "results": [
+    {
+      "test_name": "Create User Stories for Login Feature",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.01605820655822754,
+      "agent_output": "",
+      "error_message": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+      "metadata": {}
+    },
+    {
+      "test_name": "Prioritize Features for MVP",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.0013501644134521484,
+      "agent_output": "",
+      "error_message": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+      "metadata": {}
+    },
+    {
+      "test_name": "Document Requirements for Payment System",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.0010449886322021484,
+      "agent_output": "",
+      "error_message": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+      "metadata": {}
+    },
+    {
+      "test_name": "Create Quarterly Roadmap",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.001130819320678711,
+      "agent_output": "",
+      "error_message": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+      "metadata": {}
+    },
+    {
+      "test_name": "Write Stakeholder Update",
+      "status": "failed",
+      "score": 0.0,
+      "execution_time": 0.0012669563293457031,
+      "agent_output": "",
+      "error_message": "\"Could not resolve authentication method. Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted\"",
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created": "2025-01-19"
+  }
+}
