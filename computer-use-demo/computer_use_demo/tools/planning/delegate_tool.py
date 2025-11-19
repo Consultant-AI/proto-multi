@@ -54,9 +54,9 @@ The specialist will receive the task, planning context, and available tools,
 and will return their completed work.
 
 Available specialists:
-- marketing: Marketing strategy, campaigns, SEO, content marketing
-- development: Software engineering, architecture, full-stack development
-- design: UI/UX design, visual design, interaction design
+- marketing-strategy: Marketing strategy, campaigns, SEO, content marketing
+- senior-developer: Software engineering, architecture, full-stack development
+- ux-designer: UI/UX design, visual design, interaction design
 
 Returns the specialist's output and execution details.""",
             "input_schema": {
@@ -64,7 +64,7 @@ Returns the specialist's output and execution details.""",
                 "properties": {
                     "specialist": {
                         "type": "string",
-                        "enum": ["marketing", "development", "design"],
+                        "enum": ["marketing-strategy", "senior-developer", "ux-designer"],
                         "description": "Which specialist to delegate to",
                     },
                     "task": {
@@ -96,7 +96,7 @@ Returns the specialist's output and execution details.""",
         Delegate a task to a specialist agent.
 
         Args:
-            specialist: Which specialist to delegate to (marketing, development, design)
+            specialist: Which specialist to delegate to (marketing-strategy, senior-developer, ux-designer)
             task: The task to complete
             project_name: Project name for loading context
             additional_context: Additional context to pass
@@ -197,18 +197,18 @@ Returns the specialist's output and execution details.""",
         Create a specialist agent instance.
 
         Args:
-            specialist: Type of specialist (marketing, development, design)
+            specialist: Type of specialist (marketing-strategy, senior-developer, ux-designer)
 
         Returns:
             Instantiated specialist agent
         """
         # Lazy import to avoid circular dependencies
-        from ...agents import DesignAgent, DeveloperAgent, MarketingAgent
+        from ...agents import MarketingStrategyAgent, SeniorDeveloperAgent, UXDesignerAgent
 
         specialist_map = {
-            "marketing": MarketingAgent,
-            "development": DeveloperAgent,
-            "design": DesignAgent,
+            "marketing-strategy": MarketingStrategyAgent,
+            "senior-developer": SeniorDeveloperAgent,
+            "ux-designer": UXDesignerAgent,
         }
 
         if specialist not in specialist_map:

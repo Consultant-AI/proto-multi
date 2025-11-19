@@ -6,13 +6,13 @@ delegated tasks by the CEO agent.
 """
 
 from .base_specialist import BaseSpecialist
-from .design_agent import DesignAgent
-from .developer_agent import DeveloperAgent
-from .marketing_agent import MarketingAgent
+from .marketing_strategy_agent import MarketingStrategyAgent
+from .senior_developer_agent import SeniorDeveloperAgent
+from .ux_designer_agent import UXDesignerAgent
 
 __all__ = [
     "BaseSpecialist",
-    "MarketingAgent",
-    "DeveloperAgent",
-    "DesignAgent",
+    "MarketingStrategyAgent",
+    "SeniorDeveloperAgent",
+    "UXDesignerAgent",
 ]

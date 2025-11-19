@@ -7,7 +7,12 @@ for domain-specific expertise.
 
 from .base_agent import AgentConfig, AgentMessage, AgentResult, AgentRole, BaseAgent
 from .ceo_agent import CEOAgent
-from .specialists import BaseSpecialist, DesignAgent, DeveloperAgent, MarketingAgent
+from .specialists import (
+    BaseSpecialist,
+    MarketingStrategyAgent,
+    SeniorDeveloperAgent,
+    UXDesignerAgent,
+)
 
 __all__ = [
     # Base
@@ -20,7 +25,7 @@ __all__ = [
     "CEOAgent",
     # Specialists
     "BaseSpecialist",
-    "MarketingAgent",
-    "DeveloperAgent",
-    "DesignAgent",
+    "MarketingStrategyAgent",
+    "SeniorDeveloperAgent",
+    "UXDesignerAgent",
 ]

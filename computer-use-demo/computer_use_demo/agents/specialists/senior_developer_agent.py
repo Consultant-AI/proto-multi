@@ -1,5 +1,5 @@
 """
-Development Specialist Agent.
+Senior Developer Specialist Agent.
 
 Expertise in:
 - Software development
@@ -15,20 +15,20 @@ from typing import Any
 from .base_specialist import BaseSpecialist
 
 
-class DeveloperAgent(BaseSpecialist):
-    """Development specialist focused on software engineering."""
+class SeniorDeveloperAgent(BaseSpecialist):
+    """Senior development specialist focused on software engineering and architecture."""
 
     def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
-        """Initialize developer agent."""
+        """Initialize senior developer agent."""
         super().__init__(
-            role="development",
-            name="Development Specialist",
+            role="senior-developer",
+            name="Senior Developer Specialist",
             session_id=session_id,
             tools=tools,
         )
 
     def get_domain_expertise(self) -> str:
-        """Get development domain expertise description."""
+        """Get senior development domain expertise description."""
         return """Software engineering, system architecture, full-stack development (frontend and backend),
 database design, API development, code quality and testing, performance optimization,
 security best practices, DevOps, CI/CD, technical documentation, and code review."""
