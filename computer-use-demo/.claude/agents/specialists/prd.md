@@ -3,15 +3,6 @@
 ## Goal
 Make it run a business while it improves itself in the process
 
-## Tasks
-commit
-- ✓ make architecture
-- ✓ make sure it can plan and run tasks without problems
-- mechanism that it improves itself during work + outside work
-add newset models
-add other models like gemini 3
-controlloing other computers on cloaud
-starting new agents in parallel + on other computers + start other computer
 
 ---
 
@@ -809,13 +800,23 @@ task_tool.update(
 - Training & verification systems
 
 ### 🚧 In Progress
-- Self-improvement mechanism refinement
+next version, agent run on server start company with many companies and improves itself during each task and during  - marketing of my content / my saas + building content, building saas. agency for other like marketing and dev and backoffice
+
+make sure it can plan and run tasks without problems
+mechanism that it improves itself during work + outside work
+self improve should be during runtime of every task and improve system or learn for the task or project + parrallel project that always run and improve it
+add newset models
+parralisation on one computer and multiple
+add other models like gemini 3
+
+after
+archtecture that not fail with the video
+starting new agents in parallel + on other computers + start other computer
+- Multi-project orchestration
 - Knowledge base optimization
 - Pattern recognition enhancement
 - Additional specialist agents
-
-### 📋 Future Enhancements
-- Multi-project orchestration
+controlloing other computers on cloaud
 - Advanced metrics & analytics
 - Agent performance optimization
 - Enhanced verification systems
