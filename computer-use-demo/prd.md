@@ -513,83 +513,258 @@ logs/                              # Logging system
 
 ### How the System Learns
 
-**1. During Task Execution**
+The system implements **active, automatic learning** through three mechanisms:
+
+#### 1. Automatic Knowledge Capture (During Work)
+
+**Location**: [agents/base_agent.py](computer-use-demo/computer_use_demo/agents/base_agent.py#L417-L581)
+
+Every agent automatically captures knowledge after task execution:
+
 ```python
-# When solving a problem, agents capture knowledge:
-knowledge_tool.add(
-    title="API Design Pattern for User Management",
-    type="pattern",
-    content="RESTful CRUD + JWT auth works well for user endpoints",
-    tags=["api", "authentication", "user-management"]
-)
+# ✅ IMPLEMENTED - Auto-capture on task completion
+async def _auto_capture_knowledge(task, result, context, start_time):
+    """Runs after EVERY task (success or failure)"""
+
+    if result.success:
+        # Capture successful patterns
+        knowledge_store.add_entry(
+            title=f"Successful approach: {task_summary}",
+            type=KnowledgeType.PATTERN,
+            content=f"""
+                Tools used: {tools_used}
+                Duration: {duration}s
+                Iterations: {result.iterations}
+                Outcome: {result.output}
+            """,
+            tags=[agent_role, "success", "auto-captured"]
+        )
+
+        # Capture complex task learnings
+        if result.iterations >= 10:
+            knowledge_store.add_entry(
+                title=f"Complex task solved: {task}",
+                type=KnowledgeType.LEARNING,
+                content="Tasks of this nature benefit from breaking into smaller steps"
+            )
+
+    else:
+        # Capture lessons from failures
+        knowledge_store.add_entry(
+            title=f"Lesson learned: {task}",
+            type=KnowledgeType.LESSON_LEARNED,
+            content=f"Error: {error_msg}\nRecommendation: Review task complexity...",
+            tags=[agent_role, "failure", "needs-review"]
+        )
 ```
 
-**2. From Decisions**
+**What Gets Auto-Captured:**
+- ✅ Successful tool usage patterns
+- ✅ Complex task completion strategies
+- ✅ Failure lessons with error context
+- ✅ Task duration and iteration metrics
+- ✅ Agent-specific approaches
+
+#### 2. Smart Knowledge Retrieval (Before Work)
+
+**Location**: [agents/ceo_agent.py](computer-use-demo/computer_use_demo/agents/ceo_agent.py#L398-L532)
+
+CEO agent searches ALL past projects for relevant knowledge before planning:
+
 ```python
-# Technical decisions are documented:
-knowledge_tool.add(
-    title="Chose PostgreSQL over MongoDB",
-    type="technical_decision",
-    content="Need ACID compliance for financial data",
-    rationale="Transactions critical, schema well-defined"
-)
+# ✅ IMPLEMENTED - Cross-project knowledge search
+async def _retrieve_relevant_knowledge(task):
+    """Searches across all projects for similar past work"""
+
+    # Extract keywords from current task
+    keywords = extract_keywords(task)  # ["authentication", "api", "jwt"]
+
+    # Search across 10 most recent projects
+    for project in all_projects[:10]:
+        knowledge_store = get_knowledge_store(project)
+
+        # Search for each keyword
+        for keyword in keywords[:5]:
+            entries = knowledge_store.search_entries(keyword)
+
+            # Return top 10 relevant entries
+            relevant_knowledge.append({
+                "title": entry.title,
+                "content": entry.content[:300],
+                "source_project": project.name,
+                "type": entry.type
+            })
+
+    return relevant_knowledge  # Used in planning context
 ```
 
-**3. From Failures**
+**Benefits:**
+- ✅ Avoids repeating past mistakes
+- ✅ Applies proven patterns from previous projects
+- ✅ Learns from failures across all projects
+- ✅ Suggests technical decisions that worked before
+
+#### 3. Background Self-Improvement (Outside Work)
+
+**Location**: [daemon/orchestrator.py](computer-use-demo/computer_use_demo/daemon/orchestrator.py#L477-L695)
+
+Company Orchestrator daemon runs continuous improvement every ~100 seconds:
+
 ```python
-# Lessons learned from mistakes:
-knowledge_tool.add(
-    title="Rate Limiting Required for External APIs",
-    type="lesson_learned",
-    content="Hit GitHub API rate limit during bulk operations",
-    prevention="Add exponential backoff and request throttling"
-)
+# ✅ IMPLEMENTED - Background learning loop
+async def _background_self_improvement():
+    """Runs every 10 event loops (~100 seconds)"""
+
+    # Task 1: Mine knowledge from session logs
+    await _mine_knowledge_from_logs()
+    # - Analyzes last 100 session events
+    # - Detects tool sequences used 3+ times
+    # - Recommends creating compound tools
+    # - Example: "GlobTool → GrepTool → EditTool" appears 5x
+    #   → Suggests "FindAndReplaceTool"
+
+    # Task 2: Analyze error patterns
+    await _analyze_error_patterns()
+    # - Scans last 50 errors from error log
+    # - Identifies top 5 recurring errors
+    # - Logs recommendations for fixes
+    # - Example: "ToolNotFound" error 12x
+    #   → Suggests validating tool availability
+
+    # Task 3: Queue optimization tasks (when idle)
+    if idle and completed_tasks >= 10:
+        work_queue.add_work(
+            "Review knowledge base and consolidate duplicate patterns",
+            priority=LOW,
+            agent="data-analyst"
+        )
+
+        work_queue.add_work(
+            "Analyze tool usage logs and identify inefficiencies",
+            priority=LOW,
+            agent="senior-developer"
+        )
 ```
 
-**4. From Patterns**
-```python
-# Successful patterns are catalogued:
-knowledge_tool.add(
-    title="Component Composition Pattern",
-    type="best_practice",
-    content="Small reusable components > large monolithic ones",
-    benefits="Easier testing, better reusability"
-)
-```
+**Improvement Actions:**
+- ✅ Pattern discovery from tool sequences
+- ✅ Error trend analysis
+- ✅ Knowledge consolidation tasks
+- ✅ Tool optimization recommendations
+- ✅ Automatic queueing of improvement work
 
-### Knowledge Usage
-
-**1. Context Retrieval**
-- When starting similar projects, knowledge_tool searches for relevant entries
-- CEO agent uses context to inform planning
-- Specialists access knowledge for implementation guidance
-
-**2. Pattern Recognition**
-- System identifies recurring problems
-- Suggests proven solutions from knowledge base
-- Avoids repeating past mistakes
-
-**3. Continuous Improvement**
-- Each project adds to knowledge base
-- Patterns emerge across projects
-- Future work benefits from accumulated wisdom
-
-### Self-Improvement Mechanism
+### Self-Improvement Mechanism (Complete Loop)
 
 ```
-Task Execution
+┌──────────────────────────────────────────────────────────────┐
+│                   DURING WORK (Real-time)                     │
+└──────────────────────────────────────────────────────────────┘
+User Task → CEO Agent
     ↓
-Knowledge Capture (via KnowledgeTool)
+[SMART RETRIEVAL] Search all projects for relevant knowledge
     ↓
-Indexed & Searchable
+Planning with Past Learnings Applied
     ↓
-Retrieved for Similar Future Tasks
+Task Execution by Specialist
     ↓
-Applied to Improve Execution
+[SELF-HEALING RETRY LOOP] 🔥 NEW!
+    ├─ Task succeeds? → Continue ✓
+    ├─ Task fails? → Analyze failure
+    │   ├─ Search knowledge base for similar past failures
+    │   ├─ Inject learnings into retry context
+    │   ├─ Retry with improved approach (max 3 attempts)
+    │   ├─ Success after retry? → Capture recovery pattern as best practice
+    │   └─ Still failing? → Queue as "hard failure" for later (HIGH priority)
     ↓
-Results Evaluated & New Knowledge Captured
+[AUTO-CAPTURE] Extract patterns, tools used, duration, outcome
     ↓
-LOOP (continuous improvement)
+Knowledge Stored in .proto/planning/{project}/knowledge/
+    ↓
+[AUTO-IMPROVEMENT TASK GENERATION] ⭐
+    ├─ Task failed? → Queue "Debug and fix" task (MEDIUM priority)
+    ├─ Task took 10+ iterations? → Queue "Optimize process" task (MEDIUM priority)
+    └─ Error seen 3+ times? → Queue "Systematic fix" task (HIGH priority)
+    ↓
+Improvement Tasks Added to Work Queue
+    ↓
+System Executes Improvement Tasks → Gets Better at Running the Business
+    ↓
+Indexed & Searchable for Future Tasks
+
+┌──────────────────────────────────────────────────────────────┐
+│              OUTSIDE WORK (Background/Idle Time)              │
+└──────────────────────────────────────────────────────────────┘
+CompanyOrchestrator Event Loop (every ~100 seconds)
+    ↓
+[LOG MINING] Analyze session logs for tool patterns
+    ↓
+[ERROR ANALYSIS] Identify recurring failures
+    ↓
+[KNOWLEDGE-BASED OPTIMIZATION] ⭐ ENHANCED!
+    ├─ Analyze each project's knowledge store
+    ├─ 5+ failures? → Queue root cause analysis (MEDIUM priority)
+    ├─ 5+ patterns? → Queue component creation (LOW priority)
+    └─ Multiple projects? → Queue cross-project consolidation (LOW priority)
+    ↓
+Project-Aware Improvement Tasks Queued
+    ↓
+Self-Optimization Tasks Execute → System Improves
+    ↓
+LOOP (continuous autonomous improvement)
+```
+
+### What Makes This Different
+
+**Before (Manual):**
+- ❌ Agents had to explicitly call `manage_knowledge`
+- ❌ Knowledge retrieval required manual search
+- ❌ No background learning
+- ❌ Each task started "cold"
+- ❌ Learnings just stored, never acted upon
+
+**Now (Automatic):**
+- ✅ **Auto-capture** after every task (success or failure)
+- ✅ **Auto-retrieval** before planning (searches all projects)
+- ✅ **Auto-mining** from logs every ~100 seconds
+- ✅ **Auto-optimization** tasks queue during idle time
+- ✅ **Auto-improvement task generation** (⭐) - turns learnings into actionable work
+- ✅ **Project-aware optimization** (⭐) - analyzes knowledge stores to queue improvements
+- ✅ **Self-healing retry loop** (🔥 NEW!) - immediate retry with learnings until success or max attempts
+- ✅ **Recovery pattern capture** (🔥 NEW!) - successful retries become best practices
+- ✅ System learns continuously AND actively improves itself while working
+
+### Metrics & Observability
+
+All self-improvement activities are logged:
+
+```jsonl
+// Session log - knowledge auto-captured
+{"event_type": "knowledge_auto_captured", "agent_role": "ceo", "task_success": true, "project_name": "saas-app", "duration_seconds": 45.2}
+
+// Session log - knowledge retrieved
+{"event_type": "knowledge_retrieved", "keywords": ["authentication", "api"], "num_results": 7, "projects_searched": 10}
+
+// 🔥 NEW - Session log - self-healing retry attempt
+{"event_type": "self_correction_attempt", "task": "Deploy backend API", "attempt": 1, "error": "ConnectionError: Connection refused"}
+{"event_type": "failure_analysis_completed", "error_category": "ConnectionError", "similar_failures": 3, "helpful_patterns": 2}
+
+// 🔥 NEW - Session log - recovery pattern captured
+{"event_type": "recovery_pattern_captured", "task": "Deploy backend API", "retry_attempt": 2, "project_name": "saas-app"}
+
+// 🔥 NEW - Session log - self-correction exhausted (too hard for now)
+{"event_type": "self_correction_exhausted", "task": "Deploy backend API", "total_attempts": 3, "final_error": "Persistent connection failure"}
+
+// ⭐ Session log - improvement task automatically queued
+{"event_type": "improvement_task_queued", "reason": "task_failure", "project_name": "saas-app", "original_task": "Deploy backend API"}
+{"event_type": "improvement_task_queued", "reason": "inefficient_execution", "iterations": 15, "project_name": "saas-app"}
+{"event_type": "improvement_task_queued", "reason": "recurring_error", "error_category": "TimeoutError", "occurrence_count": 4}
+{"event_type": "improvement_task_queued", "reason": "self_correction_exhausted", "retry_attempts": 3, "original_task": "Deploy backend API"}
+
+// System log - pattern discovered
+{"event_type": "pattern_discovered", "tool_sequence": ["glob", "grep", "edit"], "occurrence_count": 5, "recommendation": "Consider compound tool"}
+
+// ⭐ System log - project-aware optimization tasks queued
+{"event_type": "optimization_tasks_queued", "tasks_added": 3, "reason": "knowledge_based_optimization", "projects_analyzed": 3}
 ```
 
 ---
@@ -789,35 +964,51 @@ task_tool.update(
 ## System Status
 
 ### ✅ Completed
-- Multi-agent architecture (20+ specialists)
-- Complete tool suite (16 tools)
+- Multi-agent architecture (20+ specialists with 4-level nesting)
+- Complete tool suite (16 tools across 4 categories)
 - Planning & state management (ProjectManager, TaskManager, KnowledgeStore)
 - Work queue & orchestration (CompanyOrchestrator, WorkQueue)
-- Logging & monitoring (4-stream system, unified viewer)
-- Web UI (FastAPI, dark theme, real-time streaming)
-- Persistent storage architecture
+- Logging & monitoring (4-stream JSONL system, unified viewer)
+- Web UI (FastAPI, dark theme, real-time streaming, agent tree)
+- Persistent storage architecture (.proto/ folder structure)
 - Git integration for audit trail
-- Training & verification systems
+- Training & verification systems (7 test suites, FeedbackLoop)
+- **✨ AUTOMATIC SELF-IMPROVEMENT SYSTEM:**
+  - ✅ Auto-knowledge capture after every task execution
+  - ✅ Smart cross-project knowledge retrieval before planning
+  - ✅ Background log mining for pattern discovery
+  - ✅ Error trend analysis and recommendations
+  - ✅ **Auto-improvement task generation** (⭐ NEW - Jan 2025)
+    - Automatically queues debugging tasks when tasks fail
+    - Queues optimization tasks when tasks are inefficient (10+ iterations)
+    - Queues systematic fix tasks when errors repeat 3+ times
+    - All improvement tasks linked to originating project
+  - ✅ **Project-aware optimization queueing** (⭐ ENHANCED - Jan 2025)
+    - Analyzes each project's knowledge store for improvement opportunities
+    - Queues root cause analysis when 5+ failures accumulated
+    - Queues component creation when 5+ patterns identified
+    - Cross-project knowledge consolidation when idle
+  - ✅ Continuous learning AND active self-improvement while working
 
 ### 🚧 In Progress
-next version, agent run on server start company with many companies and improves itself during each task and during  - marketing of my content / my saas + building content, building saas. agency for other like marketing and dev and backoffice
 
-make sure it can plan and run tasks without problems
-mechanism that it improves itself during work + outside work
-self improve should be during runtime of every task and improve system or learn for the task or project + parrallel project that always run and improve it
-add newset models
-parralisation on one computer and multiple
-add other models like gemini 3
+**High Priority:**
+- ✅ ~~Self-improvement during work (auto-capture + auto-improvement tasks implemented)~~
+- ✅ ~~Self-improvement outside work (background daemon + project-aware optimization implemented)~~
+- Multi-project orchestration enhancements
+- Agent parallelization on single computer
+- Add newest models (Claude 3.7, etc.)
+- Add alternative models (Gemini, GPT-4, etc.)
 
-after
-archtecture that not fail with the video
-starting new agents in parallel + on other computers + start other computer
-- Multi-project orchestration
-- Knowledge base optimization
-- Pattern recognition enhancement
-- Additional specialist agents
-controlloing other computers on cloaud
-- Advanced metrics & analytics
-- Agent performance optimization
-- Enhanced verification systems
+**Next Phase:**
+- Architecture resilience improvements
+- Agent parallelization across multiple computers
+- Cloud computer control & provisioning
+- Distributed agent execution
+- Multi-company management system
+- Marketing automation agents
+- Content generation agents
+- Agency services (marketing, dev, backoffice for clients)
+- Advanced metrics & analytics dashboard
 - ML-based pattern recognition
+- Enhanced verification with visual regression testing

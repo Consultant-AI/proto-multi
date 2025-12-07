@@ -205,6 +205,11 @@ Remember: You are the orchestrator. Your job is to ensure tasks are completed su
         """
         context = context or {}
 
+        # Step 0: Smart knowledge retrieval - learn from past similar tasks
+        relevant_knowledge = await self._retrieve_relevant_knowledge(task)
+        if relevant_knowledge:
+            context['relevant_knowledge'] = relevant_knowledge
+
         # Step 1: Analyze task complexity
         analysis = self.complexity_analyzer.analyze(task, context)
 
@@ -389,3 +394,139 @@ Remember: You are the orchestrator. Your job is to ensure tasks are completed su
             iterations=1,
             delegations=[{"to": specialist_role, "task": task}],
         )
+
+    async def _retrieve_relevant_knowledge(self, task: str) -> list[dict[str, Any]]:
+        """
+        Search across all projects for relevant past knowledge.
+
+        This enables the system to learn from previous similar tasks,
+        avoiding past mistakes and applying proven patterns.
+
+        Args:
+            task: Current task description
+
+        Returns:
+            List of relevant knowledge entries from all projects
+        """
+        from ..planning.knowledge_store import KnowledgeStore
+
+        try:
+            # Extract keywords from task
+            keywords = self._extract_keywords(task)
+
+            if not keywords:
+                return []
+
+            # Get all projects
+            all_projects = self.project_manager.list_projects()
+
+            relevant_knowledge = []
+            seen_titles = set()  # Avoid duplicates
+
+            # Search across all projects
+            for project in all_projects[:10]:  # Limit to 10 most recent projects
+                try:
+                    knowledge_store = self.project_manager.get_knowledge_store(project['slug'])
+                    if not knowledge_store:
+                        continue
+
+                    # Search for each keyword
+                    for keyword in keywords[:5]:  # Top 5 keywords
+                        entries = knowledge_store.search_entries(keyword)
+
+                        # Add top 2 results per keyword
+                        for entry in entries[:2]:
+                            if entry.title not in seen_titles:
+                                seen_titles.add(entry.title)
+                                relevant_knowledge.append({
+                                    "title": entry.title,
+                                    "type": entry.type.value,
+                                    "content": entry.content[:300] + "..." if len(entry.content) > 300 else entry.content,
+                                    "tags": entry.tags,
+                                    "source_project": project['project_name'],
+                                    "relevance_score": entry.relevance_score,
+                                })
+
+                                # Limit total results
+                                if len(relevant_knowledge) >= 10:
+                                    break
+
+                        if len(relevant_knowledge) >= 10:
+                            break
+
+                except Exception as e:
+                    # Don't let one project's error break knowledge retrieval
+                    self.logger.log_event(
+                        event_type="knowledge_retrieval_error",
+                        level="WARNING",
+                        session_id=self.session_id,
+                        data={"project": project.get('slug', 'unknown'), "error": str(e)},
+                    )
+                    continue
+
+            # Log retrieval results
+            if relevant_knowledge:
+                self.logger.log_event(
+                    event_type="knowledge_retrieved",
+                    session_id=self.session_id,
+                    data={
+                        "task": task[:100],
+                        "keywords": keywords,
+                        "num_results": len(relevant_knowledge),
+                        "projects_searched": len(all_projects[:10]),
+                    },
+                )
+
+            return relevant_knowledge
+
+        except Exception as e:
+            self.logger.log_event(
+                event_type="knowledge_retrieval_failed",
+                level="WARNING",
+                session_id=self.session_id,
+                data={"error": str(e)},
+            )
+            return []
+
+    def _extract_keywords(self, text: str) -> list[str]:
+        """
+        Extract meaningful keywords from text.
+
+        Args:
+            text: Text to extract keywords from
+
+        Returns:
+            List of keywords sorted by likely relevance
+        """
+        # Simple keyword extraction - remove common words
+        common_words = {
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
+            "of", "with", "by", "from", "as", "is", "was", "are", "were", "be",
+            "been", "being", "have", "has", "had", "do", "does", "did", "will",
+            "would", "should", "could", "may", "might", "can", "this", "that",
+            "these", "those", "i", "you", "he", "she", "it", "we", "they",
+            "my", "your", "his", "her", "its", "our", "their", "me", "him",
+            "us", "them", "please", "need", "want", "make", "create", "build"
+        }
+
+        # Split and filter
+        words = text.lower().split()
+        keywords = []
+
+        for word in words:
+            # Remove punctuation
+            word = ''.join(c for c in word if c.isalnum() or c == '-')
+
+            # Keep if not common and long enough
+            if word and len(word) >= 3 and word not in common_words:
+                keywords.append(word)
+
+        # Return unique keywords, preserving order
+        seen = set()
+        unique_keywords = []
+        for kw in keywords:
+            if kw not in seen:
+                seen.add(kw)
+                unique_keywords.append(kw)
+
+        return unique_keywords[:10]  # Top 10 keywords

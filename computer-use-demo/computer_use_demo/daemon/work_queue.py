@@ -413,6 +413,10 @@ class WorkQueue:
             if item.project_name == project_name
         ]
 
+    def get_pending_work(self) -> list[WorkItem]:
+        """Get all pending work items."""
+        return self.get_work_by_status(WorkStatus.PENDING)
+
     def get_queue_summary(self) -> dict[str, Any]:
         """Get summary of queue state."""
         summary = {

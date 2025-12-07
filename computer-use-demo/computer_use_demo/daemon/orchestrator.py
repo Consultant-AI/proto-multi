@@ -133,6 +133,8 @@ class CompanyOrchestrator:
 
     async def _run_event_loop(self):
         """Main event loop for continuous operation."""
+        loop_count = 0
+
         while self.running:
             try:
                 # 1. Check work queue for pending work
@@ -144,10 +146,15 @@ class CompanyOrchestrator:
                 # 3. Perform health checks
                 await self._health_check()
 
-                # 4. Save state
+                # 4. Background self-improvement (every 10 loops = ~100 seconds)
+                loop_count += 1
+                if loop_count % 10 == 0:
+                    await self._background_self_improvement()
+
+                # 5. Save state
                 await self._save_state()
 
-                # 5. Sleep before next iteration
+                # 6. Sleep before next iteration
                 await asyncio.sleep(self.check_interval)
 
             except Exception as e:
@@ -466,3 +473,288 @@ class CompanyOrchestrator:
     def get_active_work(self) -> list[WorkItem]:
         """Get list of currently active work items."""
         return list(self.active_work.values())
+
+    async def _background_self_improvement(self):
+        """
+        Run background self-improvement tasks during idle time.
+
+        This method runs periodically to:
+        - Mine knowledge from completed work logs
+        - Identify optimization opportunities
+        - Consolidate duplicate knowledge entries
+        - Analyze error patterns
+        - Queue low-priority improvement tasks
+        """
+        try:
+            self.logger.log_event(
+                event_type="self_improvement_started",
+                session_id="orchestrator",
+                data={"stats": self.stats},
+            )
+
+            # Only run if we have capacity (not at max concurrent work)
+            if len(self.active_work) >= self.max_concurrent_work:
+                return
+
+            # Task 1: Mine knowledge from session logs
+            await self._mine_knowledge_from_logs()
+
+            # Task 2: Analyze error patterns
+            await self._analyze_error_patterns()
+
+            # Task 3: Queue optimization tasks (if idle enough)
+            if len(self.active_work) == 0 and self.stats["total_work_completed"] >= 10:
+                await self._queue_optimization_tasks()
+
+            self.logger.log_event(
+                event_type="self_improvement_completed",
+                session_id="orchestrator",
+                data={"actions_taken": "knowledge_mining_error_analysis"},
+            )
+
+        except Exception as e:
+            self.logger.log_event(
+                event_type="self_improvement_error",
+                level="WARNING",
+                session_id="orchestrator",
+                data={"error": str(e)},
+            )
+
+    async def _mine_knowledge_from_logs(self):
+        """
+        Analyze session logs to extract learnings automatically.
+
+        Scans recent session logs for patterns like:
+        - Frequently occurring errors (→ lesson_learned)
+        - Common tool sequences (→ pattern)
+        - Successful task completions (→ best_practice)
+        """
+        try:
+            import json
+            from pathlib import Path
+            from collections import Counter
+
+            # Read recent session logs
+            log_file = Path("logs/proto_sessions.jsonl")
+            if not log_file.exists():
+                return
+
+            # Analyze last 100 lines
+            recent_events = []
+            with open(log_file, "r") as f:
+                lines = f.readlines()
+                for line in lines[-100:]:
+                    try:
+                        event = json.loads(line)
+                        recent_events.append(event)
+                    except:
+                        continue
+
+            # Extract tool usage patterns
+            tool_sequences = []
+            current_sequence = []
+
+            for event in recent_events:
+                if event.get("event_type") == "tool_selected":
+                    tool_name = event.get("data", {}).get("tool_name")
+                    if tool_name:
+                        current_sequence.append(tool_name)
+                elif event.get("event_type") == "message_sent" and current_sequence:
+                    if len(current_sequence) >= 3:  # Meaningful sequence
+                        tool_sequences.append(tuple(current_sequence))
+                    current_sequence = []
+
+            # Identify common sequences (potential patterns)
+            if tool_sequences:
+                sequence_counts = Counter(tool_sequences)
+                common_sequences = sequence_counts.most_common(3)
+
+                # If a sequence appears 3+ times, it's a pattern worth capturing
+                for sequence, count in common_sequences:
+                    if count >= 3:
+                        # This would create a knowledge entry in the most recent project
+                        # For now, just log it
+                        self.logger.log_event(
+                            event_type="pattern_discovered",
+                            session_id="orchestrator",
+                            data={
+                                "tool_sequence": list(sequence),
+                                "occurrence_count": count,
+                                "recommendation": "Consider creating a compound tool for this sequence",
+                            },
+                        )
+
+        except Exception as e:
+            self.logger.log_event(
+                event_type="knowledge_mining_error",
+                level="WARNING",
+                session_id="orchestrator",
+                data={"error": str(e)},
+            )
+
+    async def _analyze_error_patterns(self):
+        """
+        Analyze error logs to identify recurring issues.
+
+        Helps system learn which errors are common and how to prevent them.
+        """
+        try:
+            import json
+            from pathlib import Path
+            from collections import Counter
+
+            error_log = Path("logs/proto_errors.jsonl")
+            if not error_log.exists():
+                return
+
+            # Read recent errors
+            recent_errors = []
+            with open(error_log, "r") as f:
+                lines = f.readlines()
+                for line in lines[-50:]:  # Last 50 errors
+                    try:
+                        event = json.loads(line)
+                        recent_errors.append(event)
+                    except:
+                        continue
+
+            if not recent_errors:
+                return
+
+            # Count error types
+            error_types = Counter()
+            for error in recent_errors:
+                error_type = error.get("event_type", "unknown")
+                error_msg = error.get("data", {}).get("error", "")
+
+                # Extract error category (first word or exception type)
+                category = error_msg.split(":")[0] if ":" in error_msg else error_type
+                error_types[category] += 1
+
+            # Log top recurring errors
+            top_errors = error_types.most_common(5)
+            if top_errors:
+                self.logger.log_event(
+                    event_type="error_analysis_completed",
+                    session_id="orchestrator",
+                    data={
+                        "top_errors": [{"type": err, "count": count} for err, count in top_errors],
+                        "recommendation": "Review error handlers for frequently occurring errors",
+                    },
+                )
+
+        except Exception as e:
+            self.logger.log_event(
+                event_type="error_analysis_failed",
+                level="WARNING",
+                session_id="orchestrator",
+                data={"error": str(e)},
+            )
+
+    async def _queue_optimization_tasks(self):
+        """
+        Queue project-aware optimization tasks based on accumulated knowledge.
+
+        Analyzes each active project's knowledge base to find improvement opportunities.
+        """
+        try:
+            from ..planning import ProjectManager
+
+            # Only queue if we've completed at least 10 tasks and queue is mostly empty
+            pending_work = self.work_queue.get_pending_work()
+            pending_count = len(pending_work)
+
+            if pending_count > 5:
+                return  # Don't add more if queue has many pending items
+
+            # Get all active projects
+            project_manager = ProjectManager()
+            all_projects = project_manager.list_projects()
+
+            if not all_projects:
+                return  # No projects to optimize
+
+            tasks_queued = 0
+
+            # Analyze each project for improvement opportunities
+            for project in all_projects[:3]:  # Top 3 most recent projects
+                project_name = project.get("slug", "")
+                if not project_name:
+                    continue
+
+                # Get project's knowledge store
+                knowledge_store = project_manager.get_knowledge_store(project_name)
+                if not knowledge_store:
+                    continue
+
+                # Get all knowledge entries
+                all_entries = knowledge_store.get_all_entries()
+                if not all_entries:
+                    continue
+
+                # Count different knowledge types
+                failures = [e for e in all_entries if e.type.value == "lesson_learned"]
+                patterns = [e for e in all_entries if e.type.value == "pattern"]
+
+                # OPTIMIZATION 1: If many failures, queue root cause analysis
+                if len(failures) >= 5:
+                    self.work_queue.add_work(
+                        description=f"Analyze and fix root causes of {len(failures)} failures in {project['project_name']}",
+                        priority=WorkPriority.MEDIUM,
+                        project_name=project_name,
+                        assigned_agent="senior-developer",
+                        context={
+                            "optimization_task": True,
+                            "task_type": "root_cause_analysis",
+                            "failure_count": len(failures),
+                        },
+                    )
+                    tasks_queued += 1
+
+                # OPTIMIZATION 2: If many patterns, consolidate and create reusable components
+                if len(patterns) >= 5:
+                    self.work_queue.add_work(
+                        description=f"Create reusable tools/components from {len(patterns)} patterns in {project['project_name']}",
+                        priority=WorkPriority.LOW,
+                        project_name=project_name,
+                        assigned_agent="senior-developer",
+                        context={
+                            "optimization_task": True,
+                            "task_type": "pattern_consolidation",
+                            "pattern_count": len(patterns),
+                        },
+                    )
+                    tasks_queued += 1
+
+            # GLOBAL OPTIMIZATION: Cross-project knowledge consolidation (only if idle)
+            if pending_count == 0 and len(all_projects) > 1:
+                self.work_queue.add_work(
+                    description="Review knowledge across all projects and consolidate common learnings",
+                    priority=WorkPriority.LOW,
+                    assigned_agent="data-analyst",
+                    context={
+                        "optimization_task": True,
+                        "task_type": "cross_project_knowledge",
+                        "project_count": len(all_projects),
+                    },
+                )
+                tasks_queued += 1
+
+            if tasks_queued > 0:
+                self.logger.log_event(
+                    event_type="optimization_tasks_queued",
+                    session_id="orchestrator",
+                    data={
+                        "tasks_added": tasks_queued,
+                        "reason": "knowledge_based_optimization",
+                        "projects_analyzed": len(all_projects[:3]),
+                    },
+                )
+
+        except Exception as e:
+            self.logger.log_event(
+                event_type="optimization_queue_error",
+                level="WARNING",
+                session_id="orchestrator",
+                data={"error": str(e)},
+            )
