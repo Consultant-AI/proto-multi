@@ -1,0 +1,19 @@
+{
+  "id": "8296adc5-414e-4c0e-9dc7-1c5d31b07315",
+  "title": "Implement rich text block editor",
+  "description": "Implementing block editor",
+  "status": "pending",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:10:00.481105",
+  "updated_at": "2025-11-20T18:10:00.481105",
+  "completed_at": null,
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

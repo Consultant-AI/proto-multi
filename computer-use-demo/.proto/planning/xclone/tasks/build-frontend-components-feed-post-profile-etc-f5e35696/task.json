@@ -1,0 +1,19 @@
+{
+  "id": "f5e35696-63d6-43ac-a3f7-5980e74b87c7",
+  "title": "Build frontend components (Feed, Post, Profile, etc.)",
+  "description": "Building frontend components",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:32:30.937107",
+  "updated_at": "2025-11-20T18:40:02.058063",
+  "completed_at": "2025-11-20T18:40:02.057992",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

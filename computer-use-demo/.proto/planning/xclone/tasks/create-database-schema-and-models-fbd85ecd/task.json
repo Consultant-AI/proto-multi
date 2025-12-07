@@ -1,0 +1,19 @@
+{
+  "id": "fbd85ecd-4ef2-4882-ac94-8a1a23628d40",
+  "title": "Create database schema and models",
+  "description": "Creating database schema",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:17:58.892043",
+  "updated_at": "2025-11-20T18:21:51.513175",
+  "completed_at": "2025-11-20T18:21:51.513171",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

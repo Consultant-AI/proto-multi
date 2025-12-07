@@ -1,0 +1,19 @@
+{
+  "id": "9c4c1360-36f5-4f6a-b3bc-dcbde3044937",
+  "title": "Create the frontend application (React/Next.js)",
+  "description": "Creating frontend application",
+  "status": "pending",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:10:00.475899",
+  "updated_at": "2025-11-20T18:10:00.475899",
+  "completed_at": null,
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

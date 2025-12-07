@@ -8,9 +8,12 @@ knowledge base file management.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .documents import DocumentType, PlanningDocuments
+from .folder_task_manager import FolderTaskManager
+from .knowledge_store import KnowledgeStore
+from .task_manager import TaskManager
 
 
 class ProjectManager:
@@ -34,6 +37,17 @@ class ProjectManager:
             base_path: Optional custom base path (default: cwd/.proto/planning)
         """
         self.base_path = base_path or self.PLANNING_ROOT
+        self._task_managers: dict[str, TaskManager] = {}
+        self._knowledge_stores: dict[str, KnowledgeStore] = {}
+
+    @property
+    def planning_root(self) -> Path:
+        """Get the planning root path."""
+        return self.base_path
+
+    def slugify_project_name(self, project_name: str) -> str:
+        """Public method to slugify project names (used by tools)."""
+        return self._slugify(project_name)
 
     def create_project(self, project_name: str) -> Path:
         """
@@ -54,6 +68,11 @@ class ProjectManager:
 
         # Create subdirectories
         (project_path / "agents").mkdir(exist_ok=True)
+        (project_path / "knowledge").mkdir(exist_ok=True)
+        (project_path / "data").mkdir(exist_ok=True)
+        (project_path / "data" / "inputs").mkdir(exist_ok=True)
+        (project_path / "data" / "outputs").mkdir(exist_ok=True)
+        (project_path / "data" / "artifacts").mkdir(exist_ok=True)
 
         # Create metadata file
         metadata = {
@@ -189,11 +208,51 @@ class ProjectManager:
 
         return None
 
+    def get_task_manager(self, project_name: str) -> Optional[TaskManager]:
+        """
+        Get task manager for a project.
+
+        Args:
+            project_name: Name of the project
+
+        Returns:
+            TaskManager instance or None if project doesn't exist
+        """
+        project_path = self.get_project_path(project_name)
+        if not project_path:
+            return None
+
+        # Cache task managers
+        if project_name not in self._task_managers:
+            self._task_managers[project_name] = FolderTaskManager(project_path)
+
+        return self._task_managers[project_name]
+
+    def get_knowledge_store(self, project_name: str) -> Optional[KnowledgeStore]:
+        """
+        Get knowledge store for a project.
+
+        Args:
+            project_name: Name of the project
+
+        Returns:
+            KnowledgeStore instance or None if project doesn't exist
+        """
+        project_path = self.get_project_path(project_name)
+        if not project_path:
+            return None
+
+        # Cache knowledge stores
+        if project_name not in self._knowledge_stores:
+            self._knowledge_stores[project_name] = KnowledgeStore(project_path)
+
+        return self._knowledge_stores[project_name]
+
     def get_project_context(self, project_name: str) -> dict[str, Any]:
         """
         Get comprehensive context for a project.
 
-        Loads all planning documents and metadata.
+        Loads all planning documents, metadata, tasks, and knowledge.
 
         Args:
             project_name: Name of the project
@@ -212,6 +271,8 @@ class ProjectManager:
             "metadata": metadata,
             "path": str(project_path),
             "documents": {},
+            "tasks": {},
+            "knowledge": {},
         }
 
         # Load all documents
@@ -229,6 +290,37 @@ class ProjectManager:
                 specialist_plans[specialist] = plan_file.read_text()
             if specialist_plans:
                 context["documents"]["specialist_plans"] = specialist_plans
+
+        # Load task summary
+        task_manager = self.get_task_manager(project_name)
+        if task_manager:
+            context["tasks"] = task_manager.get_task_summary()
+            context["tasks"]["pending_tasks"] = [
+                {"id": t.id, "title": t.title, "priority": t.priority.value}
+                for t in task_manager.get_pending_tasks()[:5]  # Top 5 pending
+            ]
+            context["tasks"]["in_progress_tasks"] = [
+                {"id": t.id, "title": t.title, "assigned_agent": t.assigned_agent}
+                for t in task_manager.get_in_progress_tasks()
+            ]
+
+        # Load knowledge summary
+        knowledge_store = self.get_knowledge_store(project_name)
+        if knowledge_store:
+            context["knowledge"] = knowledge_store.get_knowledge_summary()
+            # Add recent knowledge entries
+            all_entries = knowledge_store.get_all_entries()
+            if all_entries:
+                # Sort by updated_at, most recent first
+                sorted_entries = sorted(
+                    all_entries,
+                    key=lambda e: e.updated_at,
+                    reverse=True
+                )
+                context["knowledge"]["recent_entries"] = [
+                    {"id": e.id, "title": e.title, "type": e.type.value}
+                    for e in sorted_entries[:5]  # Top 5 recent
+                ]
 
         return context
 

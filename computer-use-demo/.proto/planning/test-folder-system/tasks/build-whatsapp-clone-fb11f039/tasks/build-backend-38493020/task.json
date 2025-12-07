@@ -1,0 +1,16 @@
+{
+  "id": "38493020-fd40-401c-887f-25ea24ffff22",
+  "title": "Build Backend",
+  "description": "Node.js backend with WebSockets",
+  "status": "pending",
+  "priority": "high",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T17:28:08.014217",
+  "updated_at": "2025-11-20T17:28:08.014217",
+  "completed_at": null,
+  "tags": [],
+  "notes": [],
+  "metadata": {},
+  "parent_id": "fb11f039-d961-4412-a5ab-5bcdbbbc40d3"
+}

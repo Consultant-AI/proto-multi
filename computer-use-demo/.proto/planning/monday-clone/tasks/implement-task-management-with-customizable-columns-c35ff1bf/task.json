@@ -1,0 +1,19 @@
+{
+  "id": "c35ff1bf-4f04-49c8-8fb3-b9076fe184d1",
+  "title": "Implement task management with customizable columns",
+  "description": "Implementing task management",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T17:33:00.210922",
+  "updated_at": "2025-11-20T17:37:38.847462",
+  "completed_at": "2025-11-20T17:37:38.847459",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

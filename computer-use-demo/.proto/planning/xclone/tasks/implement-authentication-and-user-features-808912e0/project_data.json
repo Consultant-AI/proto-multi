@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "project_id": "808912e0-48e6-4d48-858f-33fec1492002",
+  "project_title": "Implement authentication and user features",
+  "updated_at": "2025-11-20T18:40:02.059676Z",
+  "summary": {
+    "total_tasks": 1,
+    "completed": 1,
+    "in_progress": 0,
+    "pending": 0,
+    "blocked": 0
+  },
+  "task_tree": {
+    "id": "808912e0-48e6-4d48-858f-33fec1492002",
+    "title": "Implement authentication and user features",
+    "description": "Implementing authentication",
+    "status": "completed",
+    "priority": "medium",
+    "assigned_agent": null,
+    "dependencies": [],
+    "created_at": "2025-11-20T18:32:30.937658",
+    "updated_at": "2025-11-20T18:40:02.058937",
+    "completed_at": "2025-11-20T18:40:02.058932",
+    "tags": [
+      "todowrite",
+      "session"
+    ],
+    "notes": [],
+    "metadata": {},
+    "parent_id": null,
+    "children": []
+  }
+}

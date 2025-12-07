@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "project_id": "a345fe33-6b20-4164-ab77-0eb3c04201f0",
+  "project_title": "Add drag-and-drop functionality",
+  "updated_at": "2025-11-20T17:45:11.016959Z",
+  "summary": {
+    "total_tasks": 1,
+    "completed": 1,
+    "in_progress": 0,
+    "pending": 0,
+    "blocked": 0
+  },
+  "task_tree": {
+    "id": "a345fe33-6b20-4164-ab77-0eb3c04201f0",
+    "title": "Add drag-and-drop functionality",
+    "description": "Adding drag-and-drop",
+    "status": "completed",
+    "priority": "medium",
+    "assigned_agent": null,
+    "dependencies": [],
+    "created_at": "2025-11-20T17:33:00.212053",
+    "updated_at": "2025-11-20T17:37:38.847707",
+    "completed_at": "2025-11-20T17:37:38.847705",
+    "tags": [
+      "todowrite",
+      "session"
+    ],
+    "notes": [],
+    "metadata": {},
+    "parent_id": null,
+    "children": []
+  }
+}

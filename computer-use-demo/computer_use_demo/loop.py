@@ -144,6 +144,7 @@ async def sampling_loop(
     tool_version: ToolVersion,
     thinking_budget: int | None = None,
     token_efficient_tools_beta: bool = False,
+    stop_flag: Callable[[], bool] | None = None,
 ):
     """
     Agentic sampling loop for the assistant/tool interaction of computer use.
@@ -218,6 +219,11 @@ Remember: You're the CEO - make intelligent decisions about planning and delegat
     )
 
     while True:
+        # Check if stop was requested
+        if stop_flag and stop_flag():
+            print("Stop requested, breaking sampling loop")
+            break
+
         enable_prompt_caching = False
         betas = [tool_group.beta_flag] if tool_group.beta_flag else []
         if token_efficient_tools_beta:

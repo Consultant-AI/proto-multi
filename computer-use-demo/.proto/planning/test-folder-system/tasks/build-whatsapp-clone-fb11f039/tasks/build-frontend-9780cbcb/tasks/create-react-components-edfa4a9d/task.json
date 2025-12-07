@@ -1,0 +1,16 @@
+{
+  "id": "edfa4a9d-ce01-422e-9a67-8f2b79eabd74",
+  "title": "Create React Components",
+  "description": "Chat, MessageList, UserProfile components",
+  "status": "pending",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T17:28:08.016545",
+  "updated_at": "2025-11-20T17:28:08.016545",
+  "completed_at": null,
+  "tags": [],
+  "notes": [],
+  "metadata": {},
+  "parent_id": "9780cbcb-7477-4492-a8d7-5b84f40ae73f"
+}

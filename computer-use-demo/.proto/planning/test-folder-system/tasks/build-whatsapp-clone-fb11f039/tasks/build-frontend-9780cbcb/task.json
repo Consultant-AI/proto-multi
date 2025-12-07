@@ -1,0 +1,16 @@
+{
+  "id": "9780cbcb-7477-4492-a8d7-5b84f40ae73f",
+  "title": "Build Frontend",
+  "description": "React-based frontend",
+  "status": "in_progress",
+  "priority": "high",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T17:28:08.013616",
+  "updated_at": "2025-11-20T17:28:08.018022",
+  "completed_at": null,
+  "tags": [],
+  "notes": [],
+  "metadata": {},
+  "parent_id": "fb11f039-d961-4412-a5ab-5bcdbbbc40d3"
+}

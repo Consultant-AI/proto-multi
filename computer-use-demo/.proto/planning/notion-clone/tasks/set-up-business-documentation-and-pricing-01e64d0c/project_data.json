@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "project_id": "01e64d0c-ff87-4fb4-a2b8-21c420ee052d",
+  "project_title": "Set up business documentation and pricing",
+  "updated_at": "2025-11-20T18:10:00.499110Z",
+  "summary": {
+    "total_tasks": 1,
+    "completed": 0,
+    "in_progress": 0,
+    "pending": 1,
+    "blocked": 0
+  },
+  "task_tree": {
+    "id": "01e64d0c-ff87-4fb4-a2b8-21c420ee052d",
+    "title": "Set up business documentation and pricing",
+    "description": "Setting up business docs",
+    "status": "pending",
+    "priority": "medium",
+    "assigned_agent": null,
+    "dependencies": [],
+    "created_at": "2025-11-20T18:10:00.498543",
+    "updated_at": "2025-11-20T18:10:00.498543",
+    "completed_at": null,
+    "tags": [
+      "todowrite",
+      "session"
+    ],
+    "notes": [],
+    "metadata": {},
+    "parent_id": null,
+    "children": []
+  }
+}

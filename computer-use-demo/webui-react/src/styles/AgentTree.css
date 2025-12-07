@@ -1,0 +1,112 @@
+.agent-tree-container {
+  width: 100%;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.agent-tree-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* Department Section */
+.department-section {
+  margin-bottom: 2px;
+}
+
+.department-header {
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.department-header:hover {
+  background: rgba(0, 168, 132, 0.08);
+}
+
+.department-icon {
+  font-size: 10px;
+  color: var(--text-secondary);
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.department-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Agents List */
+.agents-list {
+  padding-left: 20px;
+}
+
+.agent-item {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  user-select: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.agent-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.agent-expand-icon {
+  font-size: 10px;
+  color: var(--text-secondary);
+  width: 12px;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sub-agents-list {
+  margin-top: 4px;
+}
+
+.agent-item:hover {
+  background: rgba(0, 168, 132, 0.1);
+  border-color: var(--accent);
+  transform: translateX(2px);
+}
+
+.agent-item.selected {
+  background: rgba(0, 168, 132, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(0, 168, 132, 0.3);
+}
+
+.agent-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.agent-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.agent-item.selected .agent-name {
+  font-weight: 600;
+}

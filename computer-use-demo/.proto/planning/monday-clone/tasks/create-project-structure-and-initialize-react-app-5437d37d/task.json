@@ -1,0 +1,19 @@
+{
+  "id": "5437d37d-24aa-4129-bc5b-2b39dc55194a",
+  "title": "Create project structure and initialize React app",
+  "description": "Creating project structure",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T17:33:00.207714",
+  "updated_at": "2025-11-20T17:34:37.510770",
+  "completed_at": "2025-11-20T17:34:37.510754",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

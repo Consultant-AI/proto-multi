@@ -1,0 +1,19 @@
+{
+  "id": "4612b0d7-72fa-4d5f-8b99-ca08e40e9116",
+  "title": "Create company branding and landing page",
+  "description": "Creating company branding",
+  "status": "pending",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:10:00.493837",
+  "updated_at": "2025-11-20T18:10:00.493837",
+  "completed_at": null,
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

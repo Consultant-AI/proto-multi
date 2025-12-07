@@ -1,0 +1,61 @@
+:root {
+  --bg-main: #111b21;
+  --bg-sidebar: #111b21;
+  --bg-chat: #0b141a;
+  --bg-panel-header: #202c33;
+  --bg-message-in: #202c33;
+  --bg-message-out: #005c4b;
+  --bg-input: #2a3942;
+  --text-primary: #e9edef;
+  --text-secondary: #8696a0;
+  --border: #2a3942;
+  --accent: #00a884;
+  --hover: #2a3942;
+  --resizer: #2a3942;
+  --resizer-hover: #00a884;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Helvetica Neue, Helvetica, Arial, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent);
+  color: white;
+}

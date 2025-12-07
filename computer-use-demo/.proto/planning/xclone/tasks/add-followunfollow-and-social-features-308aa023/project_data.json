@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "project_id": "308aa023-943c-4b23-beb7-b8845da01e16",
+  "project_title": "Add follow/unfollow and social features",
+  "updated_at": "2025-11-20T18:32:30.939226Z",
+  "summary": {
+    "total_tasks": 1,
+    "completed": 1,
+    "in_progress": 0,
+    "pending": 0,
+    "blocked": 0
+  },
+  "task_tree": {
+    "id": "308aa023-943c-4b23-beb7-b8845da01e16",
+    "title": "Add follow/unfollow and social features",
+    "description": "Adding social features",
+    "status": "completed",
+    "priority": "medium",
+    "assigned_agent": null,
+    "dependencies": [],
+    "created_at": "2025-11-20T18:17:58.894855",
+    "updated_at": "2025-11-20T18:32:30.938987",
+    "completed_at": "2025-11-20T18:32:30.938984",
+    "tags": [
+      "todowrite",
+      "session"
+    ],
+    "notes": [],
+    "metadata": {},
+    "parent_id": null,
+    "children": []
+  }
+}

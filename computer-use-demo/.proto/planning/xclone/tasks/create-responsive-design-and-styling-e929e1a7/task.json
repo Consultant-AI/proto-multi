@@ -1,0 +1,19 @@
+{
+  "id": "e929e1a7-9fb2-4d80-8593-8a811c556fe4",
+  "title": "Create responsive design and styling",
+  "description": "Creating responsive design",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:17:58.895649",
+  "updated_at": "2025-11-20T18:32:30.939578",
+  "completed_at": "2025-11-20T18:32:30.939575",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

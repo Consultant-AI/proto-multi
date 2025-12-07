@@ -1,0 +1,367 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-11-20T13:06:09.262836",
+  "tasks": {
+    "03ac0758-2e47-45dd-86f4-e82168e26ab5": {
+      "id": "03ac0758-2e47-45dd-86f4-e82168e26ab5",
+      "title": "Create project structure and setup files",
+      "description": "Creating project structure",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.645579",
+      "updated_at": "2025-11-20T12:35:19.646003",
+      "completed_at": "2025-11-20T12:35:19.646000",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "55b371ce-6d2c-476b-8875-d953dd133788": {
+      "id": "55b371ce-6d2c-476b-8875-d953dd133788",
+      "title": "Build backend server with Express and Socket.io",
+      "description": "Building backend server",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.646128",
+      "updated_at": "2025-11-20T12:35:19.646242",
+      "completed_at": "2025-11-20T12:35:19.646239",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "1ab811f7-f262-4719-a9bf-e86af5509eaa": {
+      "id": "1ab811f7-f262-4719-a9bf-e86af5509eaa",
+      "title": "Create React frontend with WhatsApp UI",
+      "description": "Creating React frontend",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.646345",
+      "updated_at": "2025-11-20T13:00:31.954422",
+      "completed_at": "2025-11-20T13:00:31.954419",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "dacd3288-ea3a-40aa-ba50-61c4588f3c3c": {
+      "id": "dacd3288-ea3a-40aa-ba50-61c4588f3c3c",
+      "title": "Implement authentication system",
+      "description": "Implementing authentication",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.646550",
+      "updated_at": "2025-11-20T13:00:31.954599",
+      "completed_at": "2025-11-20T13:00:31.954596",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "10a71430-af0c-46bd-b78a-b095f056d940": {
+      "id": "10a71430-af0c-46bd-b78a-b095f056d940",
+      "title": "Add real-time messaging with Socket.io",
+      "description": "Adding real-time messaging",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.646664",
+      "updated_at": "2025-11-20T13:00:31.954772",
+      "completed_at": "2025-11-20T13:00:31.954770",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "97fd3b2c-696a-46f9-8b26-eaef5de28d8f": {
+      "id": "97fd3b2c-696a-46f9-8b26-eaef5de28d8f",
+      "title": "Style UI to match WhatsApp Web",
+      "description": "Styling UI",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.646792",
+      "updated_at": "2025-11-20T13:00:31.954933",
+      "completed_at": "2025-11-20T13:00:31.954931",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "c9c46746-8e4a-475e-98d9-82daf5abaca3": {
+      "id": "c9c46746-8e4a-475e-98d9-82daf5abaca3",
+      "title": "Test and run the application",
+      "description": "Testing application",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T12:35:19.646931",
+      "updated_at": "2025-11-20T13:00:31.955094",
+      "completed_at": "2025-11-20T13:00:31.955093",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "71dac627-0fad-4b77-9277-a7ba55c64e3f": {
+      "id": "71dac627-0fad-4b77-9277-a7ba55c64e3f",
+      "title": "Build WhatsApp Clone",
+      "description": "Building WhatsApp Clone",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:00:31.953495",
+      "updated_at": "2025-11-20T13:04:12.219382",
+      "completed_at": "2025-11-20T13:04:12.219378",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "5abc5981-8def-4cf1-9941-9c6de36f3a7d": {
+      "id": "5abc5981-8def-4cf1-9941-9c6de36f3a7d",
+      "title": "Set up React project",
+      "description": "Setting up React project",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:00:31.956036",
+      "updated_at": "2025-11-20T13:00:31.957226",
+      "completed_at": "2025-11-20T13:00:31.957223",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": "71dac627-0fad-4b77-9277-a7ba55c64e3f"
+    },
+    "8fe91362-da61-4e57-9a36-7b8171831f2d": {
+      "id": "8fe91362-da61-4e57-9a36-7b8171831f2d",
+      "title": "Design database schema",
+      "description": "Designing database schema",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:00:31.956415",
+      "updated_at": "2025-11-20T13:04:12.219962",
+      "completed_at": "2025-11-20T13:04:12.219958",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": "5abc5981-8def-4cf1-9941-9c6de36f3a7d"
+    },
+    "46ea24ed-59e8-421f-a115-76ec33711268": {
+      "id": "46ea24ed-59e8-421f-a115-76ec33711268",
+      "title": "Install dependencies",
+      "description": "Installing dependencies",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:00:31.957437",
+      "updated_at": "2025-11-20T13:00:31.957656",
+      "completed_at": "2025-11-20T13:00:31.957654",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": "5abc5981-8def-4cf1-9941-9c6de36f3a7d"
+    },
+    "fc44989b-8a1e-49e9-9e56-4ce2fe261b12": {
+      "id": "fc44989b-8a1e-49e9-9e56-4ce2fe261b12",
+      "title": "Configure webpack",
+      "description": "Configuring webpack",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:00:31.957880",
+      "updated_at": "2025-11-20T13:04:12.220660",
+      "completed_at": "2025-11-20T13:04:12.220657",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": "46ea24ed-59e8-421f-a115-76ec33711268"
+    },
+    "f9a77749-fbad-4126-98ed-4eddf99d0d01": {
+      "id": "f9a77749-fbad-4126-98ed-4eddf99d0d01",
+      "title": "Install necessary frontend dependencies (socket.io-client, icons, etc.)",
+      "description": "Installing frontend dependencies",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.214122",
+      "updated_at": "2025-11-20T13:04:24.417581",
+      "completed_at": "2025-11-20T13:04:24.417568",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "cad997ac-4121-41b7-a29d-1e1bae00417c": {
+      "id": "cad997ac-4121-41b7-a29d-1e1bae00417c",
+      "title": "Create CSS styling for WhatsApp-like interface",
+      "description": "Creating CSS styling",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.215379",
+      "updated_at": "2025-11-20T13:05:09.599011",
+      "completed_at": "2025-11-20T13:05:09.598992",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": "f9a77749-fbad-4126-98ed-4eddf99d0d01"
+    },
+    "eeef1e0d-c120-4bae-8699-5c91bab0d412": {
+      "id": "eeef1e0d-c120-4bae-8699-5c91bab0d412",
+      "title": "Build Login/Register components",
+      "description": "Building authentication components",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.215975",
+      "updated_at": "2025-11-20T13:05:27.341312",
+      "completed_at": "2025-11-20T13:05:27.341286",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "0b2dbbb7-39ac-4eaa-91a7-71998db9b8d3": {
+      "id": "0b2dbbb7-39ac-4eaa-91a7-71998db9b8d3",
+      "title": "Build Sidebar component with user list",
+      "description": "Building Sidebar component",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.216789",
+      "updated_at": "2025-11-20T13:05:44.177795",
+      "completed_at": "2025-11-20T13:05:44.177757",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "26d356e5-7c6e-4207-a5ef-013c1613dfc7": {
+      "id": "26d356e5-7c6e-4207-a5ef-013c1613dfc7",
+      "title": "Build ChatWindow component with messages",
+      "description": "Building ChatWindow component",
+      "status": "completed",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.217483",
+      "updated_at": "2025-11-20T13:06:09.261199",
+      "completed_at": "2025-11-20T13:06:09.261180",
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "73734193-0392-4cc9-98d8-5691bacbcc35": {
+      "id": "73734193-0392-4cc9-98d8-5691bacbcc35",
+      "title": "Integrate Socket.io for real-time messaging",
+      "description": "Integrating real-time messaging",
+      "status": "in_progress",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.218095",
+      "updated_at": "2025-11-20T13:06:09.262793",
+      "completed_at": null,
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    },
+    "90775ea5-3ad8-4ddb-8cd7-4b4a3cf443eb": {
+      "id": "90775ea5-3ad8-4ddb-8cd7-4b4a3cf443eb",
+      "title": "Test the application",
+      "description": "Testing the application",
+      "status": "pending",
+      "priority": "medium",
+      "assigned_agent": null,
+      "dependencies": [],
+      "created_at": "2025-11-20T13:04:12.218661",
+      "updated_at": "2025-11-20T13:04:12.218661",
+      "completed_at": null,
+      "tags": [
+        "todowrite",
+        "session"
+      ],
+      "notes": [],
+      "metadata": {},
+      "parent_id": null
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "project_id": "18c28950-e067-4112-9a77-d58fb30c7d69",
+  "project_title": "Add authentication system",
+  "updated_at": "2025-11-20T18:10:00.493199Z",
+  "summary": {
+    "total_tasks": 1,
+    "completed": 0,
+    "in_progress": 0,
+    "pending": 1,
+    "blocked": 0
+  },
+  "task_tree": {
+    "id": "18c28950-e067-4112-9a77-d58fb30c7d69",
+    "title": "Add authentication system",
+    "description": "Adding authentication",
+    "status": "pending",
+    "priority": "medium",
+    "assigned_agent": null,
+    "dependencies": [],
+    "created_at": "2025-11-20T18:10:00.491965",
+    "updated_at": "2025-11-20T18:10:00.491965",
+    "completed_at": null,
+    "tags": [
+      "todowrite",
+      "session"
+    ],
+    "notes": [],
+    "metadata": {},
+    "parent_id": null,
+    "children": []
+  }
+}

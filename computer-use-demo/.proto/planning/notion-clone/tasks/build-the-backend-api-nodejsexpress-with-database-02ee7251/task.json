@@ -1,0 +1,19 @@
+{
+  "id": "02ee7251-22e5-4f89-97d4-a1e3e9a48a67",
+  "title": "Build the backend API (Node.js/Express with database)",
+  "description": "Building backend API",
+  "status": "pending",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:10:00.474697",
+  "updated_at": "2025-11-20T18:10:00.474697",
+  "completed_at": null,
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

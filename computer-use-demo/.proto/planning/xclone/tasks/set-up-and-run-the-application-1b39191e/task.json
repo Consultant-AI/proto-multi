@@ -1,0 +1,19 @@
+{
+  "id": "1b39191e-6c5d-4052-a136-9605ca33009c",
+  "title": "Set up and run the application",
+  "description": "Setting up application",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:17:58.896452",
+  "updated_at": "2025-11-20T18:32:30.939999",
+  "completed_at": "2025-11-20T18:32:30.939997",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}

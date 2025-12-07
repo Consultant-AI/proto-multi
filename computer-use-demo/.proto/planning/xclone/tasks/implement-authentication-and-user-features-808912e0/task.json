@@ -1,0 +1,19 @@
+{
+  "id": "808912e0-48e6-4d48-858f-33fec1492002",
+  "title": "Implement authentication and user features",
+  "description": "Implementing authentication",
+  "status": "completed",
+  "priority": "medium",
+  "assigned_agent": null,
+  "dependencies": [],
+  "created_at": "2025-11-20T18:32:30.937658",
+  "updated_at": "2025-11-20T18:40:02.058937",
+  "completed_at": "2025-11-20T18:40:02.058932",
+  "tags": [
+    "todowrite",
+    "session"
+  ],
+  "notes": [],
+  "metadata": {},
+  "parent_id": null
+}
