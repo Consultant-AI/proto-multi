@@ -26,7 +26,13 @@
       "Bash(timeout 5 python3:*)",
       "Bash(npm init:*)",
       "Bash(npm run build:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(python -m streamlit:*)",
+      "Bash(npm run dev:*)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(STREAMLIT_SERVER_HEADLESS=true source .venv/bin/activate:*)",
+      "Bash(python -m computer_use_demo.webui:*)",
+      "Bash(python -c:*)"
     ],
     "deny": [],
     "ask": []

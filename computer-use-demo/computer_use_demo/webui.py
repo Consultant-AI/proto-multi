@@ -1608,56 +1608,32 @@ async def get_agent_info(agent_id: str):
 
 
 @app.post("/api/agents/{agent_id}/chat")
-async def chat_with_agent(agent_id: str, request: Request):
+async def chat_with_agent(agent_id: str, payload: SendRequest):
     """Start a chat session with a specific specialist agent."""
     try:
         from .agent_org_structure import get_agent_by_id
-        from .tools.groups import TOOL_GROUPS_BY_VERSION, ToolCollection
 
         # Validate agent exists
         agent = get_agent_by_id(agent_id)
         if not agent:
             raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
 
-        # Get request data
-        data = await request.json()
-        message = data.get('message', '')
-        session_id = data.get('session_id')  # Optional existing session
+        # Use the current session (same as /api/messages endpoint)
+        session = _get_current_session()
 
-        if not message:
-            raise HTTPException(status_code=400, detail="Message is required")
+        # Start processing in background - don't wait for completion
+        task = asyncio.create_task(session.send(payload.message))
+        session._current_task = task
 
-        # Load the specialist agent
-        # For now, use a simplified approach - in full implementation,
-        # this would load the actual specialist class or use the markdown definition
-        from .agents.base_agent import AgentConfig, BaseAgent
+        # Save session after sending message
+        session.save(SESSIONS_DIR)
 
-        # Get tools
-        tool_group = TOOL_GROUPS_BY_VERSION['proto_coding_v1']
-        tools = [ToolCls() for ToolCls in tool_group.tools]
-
-        # Create a simple agent config
-        # In production, this would load from the .md file or specialist class
-        config = AgentConfig(
-            role=agent_id,
-            name=agent['name'],
-            model=DEFAULT_MODEL,
-            tools=tools,
-            max_iterations=25
-        )
-
-        # For now, return a placeholder response
-        # Full implementation would actually execute the agent
-        response = {
-            "agent_id": agent_id,
-            "agent_name": agent['name'],
-            "message": f"Chat with {agent['name']} is being implemented. You said: {message}",
-            "session_id": session_id or str(uuid.uuid4())
-        }
-
-        return JSONResponse(response)
+        # Return immediately with current state
+        return JSONResponse(session.serialize())
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

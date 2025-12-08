@@ -19,12 +19,9 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
   const [loading, setLoading] = useState(false)
   const [taskData,] = useState<Task | null>(null)
   const [currentPath, setCurrentPath] = useState<string | null>(selectedPath)
-  const [rootPath, setRootPath] = useState<string | null>(selectedPath)
-
   // Sync currentPath with selectedPath from parent
   useEffect(() => {
     setCurrentPath(selectedPath)
-    setRootPath(selectedPath)
   }, [selectedPath])
 
   useEffect(() => {
@@ -159,14 +156,6 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
     navigateToPath(fullPath)
   }
 
-  const handleBackClick = () => {
-    if (!currentPath) return
-    const parentPath = currentPath.split('/').slice(0, -1).join('/')
-    if (parentPath) {
-      navigateToPath(parentPath)
-    }
-  }
-
   if (!currentPath) {
     return (
       <div className="file-viewer">
@@ -195,17 +184,9 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
     }
   }
 
-  // Check if we can go back (not at root level)
-  const canGoBack = currentPath !== rootPath
-
   return (
     <div className="file-viewer">
       <div className="file-viewer-header">
-        {canGoBack && (
-          <button className="back-btn" onClick={handleBackClick} title="Go back">
-            ←
-          </button>
-        )}
         <div className="file-viewer-title">
           <h2>{currentPath.split('/').pop()}</h2>
           <div className="file-viewer-path">{currentPath}</div>

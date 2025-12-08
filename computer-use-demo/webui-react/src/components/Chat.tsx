@@ -16,9 +16,9 @@ interface ChatProps {
 
 export default function Chat({
   dashboardVisible,
-  agentTreeVisible,
+  agentTreeVisible: _agentTreeVisible,
   onToggleDashboard,
-  onToggleAgentTree,
+  onToggleAgentTree: _onToggleAgentTree,
   selectedAgentId,
   selectedAgentName,
   onSelectAgent
@@ -158,19 +158,11 @@ export default function Chat({
         <div className="chat-header-left">
           <button
             type="button"
-            className="toggle-agents-btn"
-            onClick={onToggleAgentTree}
-            title={agentTreeVisible ? 'Hide Agents' : 'Show Agents'}
-          >
-            {agentTreeVisible ? '◀' : '▶'}
-          </button>
-          <button
-            type="button"
             className="toggle-dashboard-btn"
             onClick={onToggleDashboard}
-            title={dashboardVisible ? 'Hide Files' : 'Show Files'}
+            title={dashboardVisible ? 'Hide Explorer' : 'Show Explorer'}
           >
-            {dashboardVisible ? '▶' : '◀'}
+            {dashboardVisible ? '◀' : '▶'}
           </button>
           <div className="chat-agent-info">
             <span className="chat-agent-icon">🤖</span>

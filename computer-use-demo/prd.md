@@ -996,6 +996,7 @@ task_tool.update(
 - ✅ ~~Self-improvement during work (auto-capture + auto-improvement tasks implemented)~~
 - ✅ ~~Self-improvement outside work (background daemon + project-aware optimization implemented)~~
 - Multi-project orchestration enhancements
+delegate to human, admin or other from pool
 - Agent parallelization on single computer
 - Add newest models (Claude 3.7, etc.)
 - Add alternative models (Gemini, GPT-4, etc.)
