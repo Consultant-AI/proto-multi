@@ -21,3 +21,9 @@ build/
 
 # Logs
 .computer-use-cli/
+computer-use-demo/logs/*.jsonl
+*.log
+
+# Node modules and temp
+computer-use-demo/webui-react/node_modules/
+computer-use-demo/webui-react/.vite/
