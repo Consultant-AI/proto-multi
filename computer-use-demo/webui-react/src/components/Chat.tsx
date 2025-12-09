@@ -42,6 +42,11 @@ export default function Chat({
     }
   }
 
+  const handleNewChat = () => {
+    setMessages([])
+    setInput('')
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -171,7 +176,7 @@ export default function Chat({
         </div>
         <div className="chat-header-right">
           <SessionHistory onLoadSession={handleLoadSession} />
-          <button type="button" className="new-chat-btn" title="New Chat">
+          <button type="button" className="new-chat-btn" onClick={handleNewChat} title="New Chat">
             +
           </button>
         </div>

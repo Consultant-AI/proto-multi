@@ -4,8 +4,8 @@
 echo "Starting Proto Multi System..."
 echo "=============================="
 
-# Set the tool version to avoid pyautogui/X11 issues
-export COMPUTER_USE_TOOL_VERSION=computer_use_20250124
+# Use proto_coding_v1 with UniversalComputerTool (auto-detects environment)
+export COMPUTER_USE_TOOL_VERSION=proto_coding_v1
 
 # Start backend
 echo "Starting backend on port 8000..."

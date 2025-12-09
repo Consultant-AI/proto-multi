@@ -5,6 +5,7 @@ from .base import BaseAnthropicTool
 from .bash import BashTool20241022, BashTool20250124
 from .computer import ComputerTool20241022, ComputerTool20250124
 from .local_computer import LocalComputerTool
+from .universal_computer import UniversalComputerTool
 from .edit import EditTool20241022, EditTool20250429, EditTool20250728
 from .coding import GlobTool, GrepTool, GitTool, TodoWriteTool, PythonExecutionTool
 from .planning import PlanningTool, DelegateTaskTool, ReadPlanningTool, WorkQueueTool
@@ -52,7 +53,7 @@ TOOL_GROUPS: list[ToolGroup] = [
     ToolGroup(
         version="proto_coding_v1",
         tools=[
-            LocalComputerTool,
+            UniversalComputerTool,  # Auto-detects: LocalComputerTool or ComputerTool20250124
             EditTool20250728,
             BashTool20250124,
             PythonExecutionTool,

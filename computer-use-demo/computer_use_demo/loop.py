@@ -391,11 +391,12 @@ def _inject_prompt_caching(
     messages: list[BetaMessageParam],
 ):
     """
-    Set cache breakpoints for the 3 most recent turns
+    Set cache breakpoints for the 2 most recent turns
     one cache breakpoint is left for tools/system prompt, to be shared across sessions
+    (Total of 3 cache blocks max to stay under API limit of 4)
     """
 
-    breakpoints_remaining = 3
+    breakpoints_remaining = 2
     for message in reversed(messages):
         if message["role"] == "user" and isinstance(
             content := message["content"], list
