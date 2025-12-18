@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class SecurityAgent(BaseSpecialist):
     """Security specialist focused on application and infrastructure security."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize security agent."""
         super().__init__(
             role="security",
             name="Security Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

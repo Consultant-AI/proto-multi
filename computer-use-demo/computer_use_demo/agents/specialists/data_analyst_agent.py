@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class DataAnalystAgent(BaseSpecialist):
     """Data Analyst specialist focused on data analysis and insights."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize data analyst agent."""
         super().__init__(
             role="data-analyst",
             name="Data Analyst Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

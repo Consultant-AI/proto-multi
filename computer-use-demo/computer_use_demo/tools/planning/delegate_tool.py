@@ -28,15 +28,17 @@ class DelegateTaskTool(BaseAnthropicTool):
     name: str = "delegate_task"
     api_type: str = "custom"
 
-    def __init__(self, available_tools: list[Any] | None = None):
+    def __init__(self, available_tools: list[Any] | None = None, api_key: str | None = None):
         """
         Initialize delegation tool.
 
         Args:
             available_tools: Tools that can be passed to specialist agents
+            api_key: Optional Anthropic API key
         """
         super().__init__()
         self.available_tools = available_tools or []
+        self.api_key = api_key
 
     def to_params(self):
         """Return tool parameter schema for Anthropic API."""
@@ -217,7 +219,7 @@ Returns the specialist's output and execution details.""",
             )
 
         agent_class = specialist_map[specialist]
-        return agent_class(tools=self.available_tools)
+        return agent_class(tools=self.available_tools, api_key=self.api_key)
 
     def _enhance_task_with_context(self, task: str, context: dict, specialist: str) -> str:
         """

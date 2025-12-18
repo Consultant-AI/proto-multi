@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class AdminCoordinatorAgent(BaseSpecialist):
     """Admin Coordinator specialist focused on administrative support and coordination."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize admin coordinator agent."""
         super().__init__(
             role="admin-coordinator",
             name="Admin Coordinator Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

@@ -30,6 +30,7 @@ class BaseSpecialist(BaseAgent):
         session_id: str | None = None,
         tools: list[Any] | None = None,
         model: str = "claude-sonnet-4-5-20250929",
+        api_key: str | None = None,
     ):
         """
         Initialize specialist agent.
@@ -48,7 +49,7 @@ class BaseSpecialist(BaseAgent):
             tools=tools or [],
             max_iterations=25,
         )
-        super().__init__(config, session_id)
+        super().__init__(config, session_id, api_key)
 
     @abstractmethod
     def get_domain_expertise(self) -> str:

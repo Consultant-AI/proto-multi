@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class QATestingAgent(BaseSpecialist):
     """QA Testing specialist focused on quality assurance and testing."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize QA testing agent."""
         super().__init__(
             role="qa-testing",
             name="QA Testing Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

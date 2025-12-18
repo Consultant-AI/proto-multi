@@ -9,6 +9,7 @@
 ## Active Tasks
 
 ### High Priority
+stable for run it itself and monitor and fix
 folders seen as you go
 see the messages as they go
 subagent call each other

@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class FinanceAgent(BaseSpecialist):
     """Finance specialist focused on financial planning and operations."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize finance agent."""
         super().__init__(
             role="finance",
             name="Finance Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

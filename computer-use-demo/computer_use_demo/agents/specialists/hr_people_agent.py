@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class HRPeopleAgent(BaseSpecialist):
     """HR People specialist focused on human resources and people operations."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize HR people agent."""
         super().__init__(
             role="hr-people",
             name="HR People Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

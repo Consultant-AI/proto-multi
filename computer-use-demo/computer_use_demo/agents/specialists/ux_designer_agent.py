@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class UXDesignerAgent(BaseSpecialist):
     """UX Designer specialist focused on UI/UX and visual design."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize UX designer agent."""
         super().__init__(
             role="ux-designer",
             name="UX Designer Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

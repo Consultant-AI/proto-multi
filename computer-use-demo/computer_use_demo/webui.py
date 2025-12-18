@@ -392,6 +392,28 @@ class ChatSession:
                 "tool_version": self.tool_version,
             }, f)
 
+        # Also save as JSON for easy access by agents
+        try:
+            # Save to default Proto folder as requested
+            # Use ProjectManager.PLANNING_ROOT (~/Proto)
+            from .planning import ProjectManager
+            proto_root = ProjectManager.PLANNING_ROOT
+            log_dir = proto_root / "logs" / "conversations"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            
+            json_file = log_dir / f"{self.session_id}.json"
+            
+            # Use serializer but we might need to be careful about strict JSON compliance
+            # serialize() returns dict with datetimes as strings, which is good.
+            data = self.serialize()
+            
+            with open(json_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            # Don't fail the main save if logging fails
+            print(f"Failed to save JSON log: {e}")
+
     @classmethod
     def load(cls, session_id: str, sessions_dir: Path, api_key: str) -> "ChatSession":
         """Load session from disk."""

@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class CustomerSuccessAgent(BaseSpecialist):
     """Customer Success specialist focused on customer satisfaction and retention."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize customer success agent."""
         super().__init__(
             role="customer-success",
             name="Customer Success Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

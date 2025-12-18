@@ -18,13 +18,14 @@ from .base_specialist import BaseSpecialist
 class ProductStrategyAgent(BaseSpecialist):
     """Product Strategy specialist focused on long-term product vision and market strategy."""
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None):
         """Initialize product strategy agent."""
         super().__init__(
             role="product-strategy",
             name="Product Strategy Specialist",
             session_id=session_id,
             tools=tools,
+            api_key=api_key,
         )
 
     def get_domain_expertise(self) -> str:

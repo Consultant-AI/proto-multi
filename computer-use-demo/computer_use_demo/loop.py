@@ -150,7 +150,16 @@ async def sampling_loop(
     Agentic sampling loop for the assistant/tool interaction of computer use.
     """
     tool_group = TOOL_GROUPS_BY_VERSION[tool_version]
-    tool_collection = ToolCollection(*(ToolCls() for ToolCls in tool_group.tools))
+    
+    # Instantiate tools, passing api_key to DelegateTaskTool specifically
+    tools = []
+    for ToolCls in tool_group.tools:
+        if ToolCls.__name__ == "DelegateTaskTool":
+            tools.append(ToolCls(api_key=api_key))
+        else:
+            tools.append(ToolCls())
+            
+    tool_collection = ToolCollection(*tools)
 
     # Add CEO agent instructions for proto_coding_v1
     ceo_agent_prompt = ""

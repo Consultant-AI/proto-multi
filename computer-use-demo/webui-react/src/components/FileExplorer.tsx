@@ -17,6 +17,19 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
   const [isPicking, setIsPicking] = useState(false)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
 
+  // Helper to filter out paths that are already contained within another path in the list
+  const filterRedundantPaths = (nodes: FileNode[]): FileNode[] => {
+    return nodes.filter(node => {
+      // Check if any OTHER node is a parent of this node
+      return !nodes.some(otherNode => {
+        if (otherNode.path === node.path) return false
+        // A path is a parent if the test path starts with the other path + /
+        // or if they are the same (already handled above)
+        return node.path.startsWith(otherNode.path + '/')
+      })
+    })
+  }
+
   useEffect(() => {
     loadProjects()
     loadFileTree()
@@ -415,17 +428,24 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
           <div className="loading">Loading...</div>
         ) : (
           <div className="file-tree">
-            {/* Combined list - all items together */}
-            {[...customPaths, ...fileTree].length > 0 ? (
-              [...customPaths, ...fileTree].map(node => renderFileNode(node, 0, customPaths.some(c => c.path === node.path)))
-            ) : (
-              <div className="empty-explorer">
-                <p>No folders to display</p>
-                <button onClick={handlePickFolder} disabled={isPicking}>
-                  {isPicking ? 'Opening...' : 'Add a folder'}
-                </button>
-              </div>
-            )}
+            {/* Combined list - all items together, filtered for redundancy */}
+            {(() => {
+              const combined = [...customPaths, ...fileTree]
+              const filtered = filterRedundantPaths(combined)
+
+              if (filtered.length > 0) {
+                return filtered.map(node => renderFileNode(node, 0, customPaths.some(c => c.path === node.path)))
+              }
+
+              return (
+                <div className="empty-explorer">
+                  <p>No folders to display</p>
+                  <button onClick={handlePickFolder} disabled={isPicking}>
+                    {isPicking ? 'Opening...' : 'Add a folder'}
+                  </button>
+                </div>
+              )
+            })()}
 
             {/* Add button at the bottom */}
             {([...customPaths, ...fileTree].length > 0) && (
