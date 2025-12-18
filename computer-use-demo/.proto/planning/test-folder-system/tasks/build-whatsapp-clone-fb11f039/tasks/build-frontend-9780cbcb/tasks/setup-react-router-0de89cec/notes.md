@@ -1,4 +1,0 @@
-# Setup React Router
-
-## Notes
-

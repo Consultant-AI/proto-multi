@@ -24,7 +24,7 @@
 .task-badge {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 12px;
   font-weight: 500;
   color: white;
@@ -35,7 +35,7 @@
   margin-bottom: 24px;
   padding: 16px;
   background: var(--bg-panel-header);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .task-section h3 {
@@ -64,7 +64,7 @@
 .meta-item {
   background: var(--bg-panel-header);
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .meta-label {
@@ -94,8 +94,8 @@
   justify-content: space-between;
   padding: 12px;
   background: var(--bg-main);
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
   cursor: pointer;
 }
 

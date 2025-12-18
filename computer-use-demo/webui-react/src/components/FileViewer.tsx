@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Folder, File, FileText } from 'lucide-react'
 import { Task } from '../types'
 import TaskViewer from './TaskViewer'
 import '../styles/FileViewer.css'
@@ -164,7 +165,7 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
         </div>
         <div className="file-viewer-content empty">
           <div className="empty-state">
-            <span className="empty-icon">📁</span>
+            <span className="empty-icon"><Folder size={48} /></span>
             <p>Select a file or folder to view its contents</p>
           </div>
         </div>
@@ -218,7 +219,7 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
                       className="folder-item clickable"
                       onClick={() => handleFolderClick(folder.path)}
                     >
-                      <div className="item-icon">📁</div>
+                      <div className="item-icon"><Folder size={32} /></div>
                       <div className="item-name">{folder.name}</div>
                     </div>
                   ))}
@@ -238,7 +239,7 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
                       onClick={() => handleFileClick(file.name)}
                     >
                       <div className="file-icon">
-                        {file.type === 'json' ? '📄' : file.type === 'markdown' ? '📝' : '📄'}
+                        {file.type === 'json' ? <File size={24} /> : file.type === 'markdown' ? <FileText size={24} /> : <File size={24} />}
                       </div>
                       <div className="file-info">
                         <div className="file-name">{file.name}</div>

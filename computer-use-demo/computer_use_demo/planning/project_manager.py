@@ -21,13 +21,13 @@ class ProjectManager:
     Manages project planning folder structure and documents.
 
     Handles:
-    - Creating .proto/planning/{project}/ folders
+    - Creating ~/Proto/{project}/ folders (in user's home directory)
     - Checking for existing projects
     - Saving/loading planning documents
     - Managing knowledge base files
     """
 
-    PLANNING_ROOT = Path.cwd() / ".proto" / "planning"
+    PLANNING_ROOT = Path.home() / "Proto"
 
     def __init__(self, base_path: Path | None = None):
         """

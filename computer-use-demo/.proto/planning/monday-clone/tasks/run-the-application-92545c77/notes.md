@@ -1,4 +1,0 @@
-# Run the application
-
-## Notes
-

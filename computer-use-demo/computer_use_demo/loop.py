@@ -134,7 +134,7 @@ async def sampling_loop(
     system_prompt_suffix: str,
     messages: list[BetaMessageParam],
     output_callback: Callable[[BetaContentBlockParam], None],
-    tool_output_callback: Callable[[ToolResult, str], None],
+    tool_output_callback: Callable[[ToolResult, str, str, dict[str, Any]], None],
     api_response_callback: Callable[
         [httpx.Request, httpx.Response | object | None, Exception | None], None
     ],
@@ -307,7 +307,12 @@ Remember: You're the CEO - make intelligent decisions about planning and delegat
                 tool_result_content.append(
                     _make_api_tool_result(result, tool_use_block["id"])
                 )
-                tool_output_callback(result, tool_use_block["id"])
+                tool_output_callback(
+                    result,
+                    tool_use_block["id"],
+                    tool_use_block["name"],
+                    cast(dict[str, Any], tool_use_block.get("input", {}))
+                )
 
         if not tool_result_content:
             return messages

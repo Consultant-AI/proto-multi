@@ -203,26 +203,54 @@ class ChatSession:
                     # Send real-time update via SSE
                     asyncio.create_task(self._broadcast_sse_update())
 
-            def tool_output_callback(result: ToolResult, tool_id: str):
-                text_parts: list[str] = []
+            def tool_output_callback(result: ToolResult, tool_id: str, tool_name: str, tool_input: dict[str, Any]):
+                # Format tool name nicely
+                tool_display_name = tool_name.replace("_", " ").title()
+
+                # Build concise tool description
+                input_parts = []
+                for key, value in tool_input.items():
+                    # Format value concisely
+                    if isinstance(value, str):
+                        if len(value) > 50:
+                            formatted_value = f'"{value[:50]}..."'
+                        else:
+                            formatted_value = f'"{value}"'
+                    elif isinstance(value, list):
+                        formatted_value = str(value)
+                    else:
+                        formatted_value = str(value)
+                    input_parts.append(f"{key}={formatted_value}")
+
+                # Create parameter description (no tool name - it's shown by the UI via label)
+                text_parts = []
+
+                if input_parts:
+                    text_parts.append(', '.join(input_parts))
+
+                # Add additional info if present (but skip generic "executed" messages)
                 if result.system:
                     text_parts.append(f"[system] {result.system.strip()}")
-                if result.output:
+                # Only include output if it's meaningful (not just "executed" confirmation)
+                if result.output and not result.output.strip().endswith("executed"):
                     text_parts.append(result.output.strip())
                 if result.error:
                     text_parts.append(f"⚠️ {result.error.strip()}")
+
+                final_text = "\n".join(text_parts) if text_parts else "(no parameters)"
+
                 images = (
                     [f"data:image/png;base64,{result.base64_image}"]
                     if result.base64_image
                     else []
                 )
-                summary = text_parts or ["(tool executed)"]
+
                 self.display_messages.append(
                     DisplayMessage(
                         id=str(uuid.uuid4()),
                         role="tool",
-                        label=f"Tool {tool_id}",
-                        text="\n".join(summary),
+                        label=tool_display_name,
+                        text=final_text,
                         images=images,
                     )
                 )
@@ -1091,6 +1119,63 @@ async def update_task_notes(task_id: str, project_name: str, content: str = Body
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/dashboard/projects")
+async def create_project(project_name: str = Body(...), description: str = Body(default="")):
+    """Create a new project with proper folder structure."""
+    try:
+        # Run blocking file I/O operations in thread pool
+        loop = asyncio.get_event_loop()
+
+        def _create_project_sync():
+            from pathlib import Path
+
+            # Create project directory in .proto/planning/
+            project_manager = ProjectManager()
+
+            # Use ProjectManager's slugify method for consistency
+            sanitized_name = project_manager.slugify_project_name(project_name)
+
+            # Use base_path to get the planning root directory
+            project_path = project_manager.base_path / sanitized_name
+
+            if project_path.exists():
+                raise HTTPException(status_code=400, detail=f"Project '{sanitized_name}' already exists")
+
+            # Create project structure
+            project_path.mkdir(parents=True, exist_ok=True)
+
+            # Create tasks directory
+            tasks_dir = project_path / "tasks"
+            tasks_dir.mkdir(exist_ok=True)
+
+            # Create docs directory for planning documents
+            docs_dir = project_path / "docs"
+            docs_dir.mkdir(exist_ok=True)
+
+            # Create files directory for project files
+            files_dir = project_path / "files"
+            files_dir.mkdir(exist_ok=True)
+
+            # Create README.md with project description
+            readme_path = project_path / "README.md"
+            readme_content = f"# {project_name}\n\n{description}\n\n## Project Structure\n\n- `tasks/`: Project tasks and subtasks\n- `docs/`: Planning documents\n- `files/`: Project files and resources\n"
+            with open(readme_path, 'w') as f:
+                f.write(readme_content)
+
+            return {
+                "name": sanitized_name,
+                "path": str(project_path),
+                "created": True
+            }
+
+        result = await loop.run_in_executor(None, _create_project_sync)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/sessions/history")
 async def get_session_history():
     """Get list of previous sessions from logs."""
@@ -1379,6 +1464,15 @@ async def get_file_contents(path: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/dashboard/config")
+async def get_dashboard_config():
+    """Get dashboard configuration including default paths."""
+    from .planning import ProjectManager
+    return {
+        "defaultProjectPath": str(ProjectManager.PLANNING_ROOT)
+    }
+
+
 @app.get("/api/browse/folder")
 async def browse_folder(path: str):
     """Browse any folder on the filesystem."""
@@ -1497,8 +1591,11 @@ async def pick_folder():
     """Open native macOS file/folder picker dialog and return selected path."""
     import subprocess
     try:
+        # Get default projects path
+        default_path = str(Path.home() / "Proto")
+
         # Use Python/objc to open NSOpenPanel that allows both files and folders
-        script = '''
+        script = f'''
 import objc
 from Foundation import NSURL
 from AppKit import NSOpenPanel, NSApp, NSApplication
@@ -1512,6 +1609,10 @@ panel.setCanChooseDirectories_(True)
 panel.setAllowsMultipleSelection_(False)
 panel.setPrompt_("Add")
 panel.setMessage_("Select a file or folder to add to Explorer")
+
+# Set default directory
+default_url = NSURL.fileURLWithPath_("{default_path}")
+panel.setDirectoryURL_(default_url)
 
 # Run the panel
 result = panel.runModal()
@@ -1618,7 +1719,7 @@ async def chat_with_agent(agent_id: str, payload: SendRequest):
         if not agent:
             raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
 
-        # Use the current session (same as /api/messages endpoint)
+        # Use the ChatSession.send() approach for all agents
         session = _get_current_session()
 
         # Start processing in background - don't wait for completion

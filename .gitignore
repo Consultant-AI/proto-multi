@@ -1,29 +1,55 @@
-# Local Claude overrides
-.claude/settings.local.local.json
-.claude/settings.local.json
+# System and IDE
+.DS_Store
+.vscode/
+.idea/
+.zed/
 
-# Secrets / developer environment files
-computer-use-demo/hetzner-deploy/.env
-*.env.local
-*.env
-.anthropic/
-*api_key*
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
 
-# Test files
-test_mcp_*.py
+# Vite/Build
+dist/
+build/
+.vite/
 
 # Python
 __pycache__/
 *.pyc
-*.egg-info/
-dist/
-build/
-
-# Logs
-.computer-use-cli/
-computer-use-demo/logs/*.jsonl
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
+.pytest_cache/
 
-# Node modules and temp
-computer-use-demo/webui-react/node_modules/
-computer-use-demo/webui-react/.vite/
+# Local/Runtime Data
+.proto/
+.proto_todos.json
+.computer-use-cli/
+logs/
+*.sqlite
+*.db
+
+# Secrets and Configs
+.env
+.env.*
+!.env.example
+.claude/
+.anthropic/
+*api_key*
+site-packages/
+
+

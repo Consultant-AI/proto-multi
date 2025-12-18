@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Folder, FolderOpen, File, FileText, FileCode, RefreshCw, Plus } from 'lucide-react'
 import { FileNode, Project } from '../types'
 import '../styles/FileExplorer.css'
 
@@ -61,6 +62,70 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
       setLoading(false)
     }
   }
+
+  // Load default path on startup
+  useEffect(() => {
+    // Check if we should add the default path (only if customPaths is empty or explicitly requested)
+    const initDefaultPath = async () => {
+      let defaultPath: string | null = null
+
+      try {
+        // Try config endpoint first
+        const response = await fetch('/api/dashboard/config')
+        if (response.ok) {
+          const config = await response.json()
+          defaultPath = config.defaultProjectPath
+        }
+      } catch (e) {
+        // Ignore config failure
+      }
+
+      // Fallback: Try to resolve using relative path based on known structure
+      if (!defaultPath) {
+        try {
+          const response = await fetch('/api/browse/folder?path=../../../../Proto')
+          if (response.ok) {
+            const data = await response.json()
+            if (data.path) {
+              defaultPath = data.path
+            }
+          }
+        } catch (e) {
+          console.error('Failed to resolve default path fallback:', e)
+        }
+      }
+
+      if (!defaultPath) return
+
+      // Check if already in customPaths (re-read from storage to be safe)
+      const saved = localStorage.getItem('explorer_custom_paths')
+      let currentPaths: FileNode[] = []
+      if (saved) {
+        try {
+          currentPaths = JSON.parse(saved)
+        } catch { }
+      }
+
+      // If default path is not in the list, add it
+      const exists = currentPaths.some(p => p.path === defaultPath)
+
+      // Also check if we already have it in state (to avoid double render issues)
+      if (!exists) {
+        const newNode: FileNode = {
+          name: 'Proto Projects', // Friendly name
+          path: defaultPath,
+          type: 'folder',
+          children: []
+        }
+
+        const updatedPaths = [newNode, ...currentPaths]
+        setCustomPaths(updatedPaths)
+        localStorage.setItem('explorer_custom_paths', JSON.stringify(updatedPaths))
+      }
+    }
+
+    initDefaultPath()
+  }, []) // Empty dependency array - run once on mount
 
   const handlePickFolder = async () => {
     if (isPicking) return
@@ -260,7 +325,7 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
         >
           <span className="file-node-icon">
             {node.type === 'folder' ? (
-              isExpanded ? '📂' : '📁'
+              isExpanded ? <FolderOpen size={16} /> : <Folder size={16} />
             ) : (
               getFileIcon(node.name)
             )}
@@ -303,12 +368,12 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
   }
 
   const getFileIcon = (filename: string) => {
-    if (filename.endsWith('.json')) return '📄'
-    if (filename.endsWith('.md')) return '📝'
-    if (filename.endsWith('.py')) return '🐍'
-    if (filename.endsWith('.ts') || filename.endsWith('.tsx')) return '📘'
-    if (filename.endsWith('.js') || filename.endsWith('.jsx')) return '📙'
-    return '📄'
+    if (filename.endsWith('.json')) return <File size={16} />
+    if (filename.endsWith('.md')) return <FileText size={16} />
+    if (filename.endsWith('.py')) return <FileCode size={16} />
+    if (filename.endsWith('.ts') || filename.endsWith('.tsx')) return <FileCode size={16} />
+    if (filename.endsWith('.js') || filename.endsWith('.jsx')) return <FileCode size={16} />
+    return <File size={16} />
   }
 
   return (
@@ -322,7 +387,7 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
             title="Add folder"
             disabled={isPicking}
           >
-            {isPicking ? '...' : '+'}
+            {isPicking ? '...' : <Plus size={16} />}
           </button>
           <button
             className="add-file-btn"
@@ -330,7 +395,7 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
             title="Add file"
             disabled={isPicking}
           >
-            📄
+            <File size={16} />
           </button>
           <button
             className="refresh-btn"
@@ -340,7 +405,7 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
             }}
             title="Refresh"
           >
-            🔄
+            <RefreshCw size={16} />
           </button>
         </div>
       </div>
@@ -370,7 +435,7 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
                   onClick={handlePickFolder}
                   disabled={isPicking}
                 >
-                  + Add Folder / File
+                  <Plus size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Add Folder / File
                 </button>
               </div>
             )}

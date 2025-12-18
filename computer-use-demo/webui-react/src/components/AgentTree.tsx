@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import '../styles/AgentTree.css'
 
 interface Agent {
@@ -16,7 +17,7 @@ interface Department {
 }
 
 interface AgentTreeProps {
-  onSelectAgent: (agentId: string, agentName: string) => void
+  onSelectAgent: (agentId: string, agentName: string, agentIcon: string) => void
   selectedAgentId: string | null
 }
 
@@ -84,12 +85,12 @@ function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
                 toggleAgent(agent.id)
               }}
             >
-              {isExpanded ? '▼' : '▶'}
+              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </span>
           )}
           <div
             className="agent-content"
-            onClick={() => onSelectAgent(agent.id, agent.name)}
+            onClick={() => onSelectAgent(agent.id, agent.name, agent.icon)}
           >
             <span className="agent-icon">{agent.icon}</span>
             <span className="agent-name">{agent.name}</span>

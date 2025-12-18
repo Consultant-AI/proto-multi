@@ -1,4 +1,0 @@
-# Build WhatsApp Clone
-
-## Notes
-

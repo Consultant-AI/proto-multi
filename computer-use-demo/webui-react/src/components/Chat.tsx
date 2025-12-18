@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { PanelLeftClose, PanelLeftOpen, User, Square, Send, Plus } from 'lucide-react'
 import { Message } from '../types'
 import SessionHistory from './SessionHistory'
 import AgentTree from './AgentTree'
@@ -11,7 +12,8 @@ interface ChatProps {
   onToggleAgentTree: () => void
   selectedAgentId: string | null
   selectedAgentName: string
-  onSelectAgent: (agentId: string, agentName: string) => void
+  selectedAgentIcon: string
+  onSelectAgent: (agentId: string, agentName: string, agentIcon: string) => void
 }
 
 export default function Chat({
@@ -21,30 +23,91 @@ export default function Chat({
   onToggleAgentTree: _onToggleAgentTree,
   selectedAgentId,
   selectedAgentName,
+  selectedAgentIcon,
   onSelectAgent
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const [sessionRefreshTrigger, setSessionRefreshTrigger] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Load current session on mount
+  useEffect(() => {
+    const loadCurrentSession = async () => {
+      try {
+        const response = await fetch('/api/messages')
+        if (!response.ok) return
+        const data = await response.json()
+        setCurrentSessionId(data.sessionId)
+        // Load messages from the current session
+        if (data.messages && Array.isArray(data.messages)) {
+          const formattedMessages = data.messages.map((msg: any) => ({
+            role: msg.role === 'tool' ? 'assistant' : msg.role,
+            content: msg.content || msg.text || '',
+            timestamp: new Date().toISOString()
+          }))
+          setMessages(formattedMessages)
+        }
+      } catch (error) {
+        console.error('Failed to load current session:', error)
+      }
+    }
+    loadCurrentSession()
+  }, [])
 
   const handleLoadSession = async (sessionId: string) => {
     try {
-      const response = await fetch(`/api/sessions/${sessionId}/messages`)
-      if (!response.ok) {
-        console.error('Failed to load session messages')
+      // First switch to the session
+      const switchResponse = await fetch(`/api/sessions/${sessionId}/switch`, {
+        method: 'POST'
+      })
+      if (!switchResponse.ok) {
+        console.error('Failed to switch session')
         return
       }
-      const data = await response.json()
-      setMessages(data)
+      const sessionData = await switchResponse.json()
+      setCurrentSessionId(sessionData.sessionId)
+
+      // Load the session's messages from the serialize() data
+      if (sessionData.messages && Array.isArray(sessionData.messages)) {
+        const formattedMessages = sessionData.messages.map((msg: any) => ({
+          role: msg.role === 'tool' ? 'assistant' : msg.role,
+          content: msg.content || msg.text || '',
+          timestamp: new Date().toISOString()
+        }))
+        setMessages(formattedMessages)
+      } else {
+        // Fallback to empty if no messages
+        setMessages([])
+      }
+
+      // Trigger refresh
+      setSessionRefreshTrigger(prev => prev + 1)
     } catch (error) {
       console.error('Failed to load session:', error)
     }
   }
 
-  const handleNewChat = () => {
-    setMessages([])
-    setInput('')
+  const handleNewConversation = async () => {
+    try {
+      const response = await fetch('/api/sessions/new', {
+        method: 'POST'
+      })
+      if (!response.ok) {
+        console.error('Failed to create new session')
+        return
+      }
+      const data = await response.json()
+      setCurrentSessionId(data.sessionId)
+      setMessages([])
+      setInput('')
+      // Trigger session list refresh
+      setSessionRefreshTrigger(prev => prev + 1)
+    } catch (error) {
+      console.error('Failed to create new conversation:', error)
+    }
   }
 
   const scrollToBottom = () => {
@@ -102,12 +165,8 @@ export default function Chat({
               } else if (msg.role === 'assistant') {
                 content = msg.text || msg.content || ''
               } else if (msg.role === 'tool') {
-                // Show tool usage (without ID)
-                const label = msg.label || 'Tool'
-                const text = msg.text || ''
-                // Remove tool ID from label (e.g., "Tool abc123" -> "Tool")
-                const cleanLabel = label.replace(/\s+[a-zA-Z0-9_-]+$/, '')
-                content = `🔧 ${cleanLabel}\n${text}`
+                // Just use the text directly - the label/icon will show the tool name
+                content = msg.text || ''
               }
 
               return {
@@ -167,17 +226,25 @@ export default function Chat({
             onClick={onToggleDashboard}
             title={dashboardVisible ? 'Hide Explorer' : 'Show Explorer'}
           >
-            {dashboardVisible ? '◀' : '▶'}
+            {dashboardVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
           <div className="chat-agent-info">
-            <span className="chat-agent-icon">🤖</span>
+            <span className="chat-agent-icon">{selectedAgentIcon}</span>
             <div className="chat-agent-name">{selectedAgentName}</div>
           </div>
         </div>
         <div className="chat-header-right">
-          <SessionHistory onLoadSession={handleLoadSession} />
-          <button type="button" className="new-chat-btn" onClick={handleNewChat} title="New Chat">
-            +
+          <SessionHistory
+            onLoadSession={handleLoadSession}
+            refreshTrigger={sessionRefreshTrigger}
+          />
+          <button
+            type="button"
+            className="new-chat-btn"
+            title="New Chat"
+            onClick={handleNewConversation}
+          >
+            <Plus size={18} />
           </button>
         </div>
       </div>
@@ -195,22 +262,36 @@ export default function Chat({
             </div>
           </div>
         ) : (
-          messages.map((message, index) => (
-            <div
-              key={index}
-              className={`message message-${message.role}`}
-            >
-              <div className="message-avatar">
-                {message.role === 'user' ? '👤' : '🤖'}
-              </div>
-              <div className="message-content">
-                <div className="message-text">{message.content}</div>
-                <div className="message-timestamp">
-                  {new Date(message.timestamp).toLocaleTimeString()}
+          <>
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`message message-${message.role}`}
+              >
+                <div className="message-avatar">
+                  {message.role === 'user' ? <User size={18} /> : selectedAgentIcon}
+                </div>
+                <div className="message-content">
+                  <div className="message-text">{message.content}</div>
+                  <div className="message-timestamp">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+            {isStreaming && (
+              <div className="message message-assistant">
+                <div className="message-avatar">{selectedAgentIcon}</div>
+                <div className="message-content">
+                  <div className="message-text loading-indicator">
+                    <span className="loading-dot"></span>
+                    <span className="loading-dot"></span>
+                    <span className="loading-dot"></span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -234,7 +315,7 @@ export default function Chat({
               onClick={handleStop}
               title="Stop"
             >
-              ⏹
+              <Square size={18} />
             </button>
           ) : (
             <button
@@ -243,7 +324,7 @@ export default function Chat({
               onClick={handleSend}
               disabled={!input.trim()}
             >
-              ➤
+              <Send size={18} />
             </button>
           )}
         </div>

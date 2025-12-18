@@ -25,13 +25,15 @@ class CEOAgent(BaseAgent):
     4. Synthesizes final results
     """
 
-    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None):
+    def __init__(self, session_id: str | None = None, tools: list[Any] | None = None, api_key: str | None = None, beta_flag: str | None = None):
         """
         Initialize CEO agent.
 
         Args:
             session_id: Optional session ID
             tools: Optional list of tools (defaults to proto_coding_v1 tools)
+            api_key: Optional Anthropic API key
+            beta_flag: Optional Anthropic API beta flag
         """
         config = AgentConfig(
             role="ceo",
@@ -39,8 +41,9 @@ class CEOAgent(BaseAgent):
             model="claude-sonnet-4-5-20250929",
             tools=tools or [],
             max_iterations=25,
+            beta_flag=beta_flag,
         )
-        super().__init__(config, session_id)
+        super().__init__(config, session_id, api_key)
 
         # Initialize planning components
         self.complexity_analyzer = TaskComplexityAnalyzer()

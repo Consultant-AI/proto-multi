@@ -13,10 +13,12 @@ function App() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
   const [selectedAgentName, setSelectedAgentName] = useState<string>('CEO Agent')
+  const [selectedAgentIcon, setSelectedAgentIcon] = useState<string>('👔')
 
-  const handleSelectAgent = (agentId: string, agentName: string) => {
+  const handleSelectAgent = (agentId: string, agentName: string, agentIcon: string) => {
     setSelectedAgentId(agentId)
     setSelectedAgentName(agentName)
+    setSelectedAgentIcon(agentIcon)
   }
 
   const handleExplorerResize = (deltaX: number) => {
@@ -81,6 +83,7 @@ function App() {
           onToggleAgentTree={() => setAgentTreeVisible(!agentTreeVisible)}
           selectedAgentId={selectedAgentId}
           selectedAgentName={selectedAgentName}
+          selectedAgentIcon={selectedAgentIcon}
           onSelectAgent={handleSelectAgent}
         />
       </div>

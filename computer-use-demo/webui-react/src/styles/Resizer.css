@@ -2,7 +2,7 @@
   background: var(--resizer);
   position: relative;
   flex-shrink: 0;
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
 }
 
 .resizer-vertical {
@@ -44,7 +44,7 @@
   position: absolute;
   background: var(--text-secondary);
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .resizer-vertical::before {

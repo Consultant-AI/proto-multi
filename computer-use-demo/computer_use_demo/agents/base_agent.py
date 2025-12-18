@@ -29,6 +29,7 @@ class AgentConfig:
     max_iterations: int = 25
     temperature: float = 1.0
     max_self_correction_attempts: int = 3  # Max retry attempts with self-correction
+    beta_flag: str | None = None  # Anthropic API beta flag (e.g. "computer-use-2025-01-24")
 
 
 @dataclass
@@ -67,17 +68,18 @@ class BaseAgent(ABC):
     - Inter-agent communication protocol
     """
 
-    def __init__(self, config: AgentConfig, session_id: str | None = None):
+    def __init__(self, config: AgentConfig, session_id: str | None = None, api_key: str | None = None):
         """
         Initialize base agent.
 
         Args:
             config: Agent configuration
             session_id: Optional session ID for logging
+            api_key: Optional Anthropic API key (if not provided, will use environment)
         """
         self.config = config
         self.session_id = session_id or f"{config.role}-agent"
-        self.client = Anthropic()
+        self.client = Anthropic(api_key=api_key) if api_key else Anthropic()
         self.logger = get_logger()
         self.messages: list[dict[str, Any]] = []
         self.iteration_count = 0
