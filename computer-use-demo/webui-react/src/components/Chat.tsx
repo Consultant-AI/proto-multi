@@ -29,12 +29,77 @@ export default function Chat({
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const [_currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [sessionRefreshTrigger, setSessionRefreshTrigger] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const websocketRef = useRef<WebSocket | null>(null)
 
-  // Load current session on mount
+  // Establish persistent WebSocket connection on mount
   useEffect(() => {
+    const connectWebSocket = () => {
+      // Close existing connection if any
+      if (websocketRef.current) {
+        websocketRef.current.close()
+      }
+
+      // Create WebSocket connection
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`)
+      websocketRef.current = ws
+
+      ws.onopen = () => {
+        console.log('WebSocket connected')
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+
+          // Handle different message types
+          if (data.messages && Array.isArray(data.messages)) {
+            // Full messages array - update all messages including tool calls
+            const formattedMessages = data.messages.map((msg: any) => {
+              let content = ''
+
+              if (msg.role === 'user') {
+                content = msg.text || msg.content || ''
+              } else if (msg.role === 'assistant') {
+                content = msg.text || msg.content || ''
+              } else if (msg.role === 'tool') {
+                // Just use the text directly - the label/icon will show the tool name
+                content = msg.text || ''
+              }
+
+              return {
+                role: msg.role === 'tool' ? 'assistant' : msg.role,
+                content: content,
+                timestamp: new Date().toISOString()
+              }
+            })
+
+            setMessages(formattedMessages)
+            setIsStreaming(data.running || false)
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket data:', error)
+        }
+      }
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error)
+      }
+
+      ws.onclose = () => {
+        console.log('WebSocket closed, reconnecting in 3s...')
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000)
+      }
+    }
+
+    // Connect WebSocket
+    connectWebSocket()
+
+    // Load current session
     const loadCurrentSession = async () => {
       try {
         const response = await fetch('/api/messages')
@@ -55,6 +120,13 @@ export default function Chat({
       }
     }
     loadCurrentSession()
+
+    // Cleanup on unmount
+    return () => {
+      if (websocketRef.current) {
+        websocketRef.current.close()
+      }
+    }
   }, [])
 
   const handleLoadSession = async (sessionId: string) => {

@@ -24,7 +24,7 @@ import threading
 import time
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request, File, UploadFile, Body
+from fastapi import FastAPI, HTTPException, Request, File, UploadFile, Body, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -106,6 +106,9 @@ class ChatSession:
 
         # SSE streaming for real-time updates
         self._sse_queues: list[asyncio.Queue] = []
+
+        # WebSocket connections for real-time updates
+        self._ws_connections: list[WebSocket] = []
 
         # Stop/resume functionality
         self._stop_requested = False
@@ -200,8 +203,11 @@ class ChatSession:
             def output_callback(block: BetaContentBlockParam):
                 if isinstance(block, dict) and block.get("type") == "text":
                     self._pending_assistant_chunks.append(block.get("text", ""))
-                    # Send real-time update via SSE
-                    asyncio.create_task(self._broadcast_sse_update())
+                    # Send real-time update via WebSocket/SSE
+                    # Schedule on main event loop (thread-safe)
+                    loop.call_soon_threadsafe(
+                        lambda: asyncio.create_task(self._broadcast_sse_update())
+                    )
 
             def tool_output_callback(result: ToolResult, tool_id: str, tool_name: str, tool_input: dict[str, Any]):
                 # Format tool name nicely
@@ -269,8 +275,11 @@ class ChatSession:
                     },
                 )
 
-                # Send real-time update via SSE
-                asyncio.create_task(self._broadcast_sse_update())
+                # Send real-time update via WebSocket/SSE
+                # Schedule on main event loop (thread-safe)
+                loop.call_soon_threadsafe(
+                    lambda: asyncio.create_task(self._broadcast_sse_update())
+                )
 
             def api_response_callback(
                 request: httpx.Request,
@@ -370,13 +379,29 @@ class ChatSession:
                 await asyncio.sleep(0.1)
 
     async def _broadcast_sse_update(self):
-        """Broadcast current state to all SSE connections."""
+        """Broadcast current state to all SSE and WebSocket connections."""
         data = self.serialize()
+
+        # Broadcast to SSE
         for queue in self._sse_queues:
             try:
                 await queue.put(data)
             except:
                 pass  # Queue might be closed
+
+        # Broadcast to WebSocket
+        data_json = json.dumps(data)
+        disconnected = []
+        for ws in self._ws_connections:
+            try:
+                await ws.send_text(data_json)
+            except:
+                disconnected.append(ws)
+
+        # Remove disconnected WebSockets
+        for ws in disconnected:
+            if ws in self._ws_connections:
+                self._ws_connections.remove(ws)
 
     def save(self, sessions_dir: Path) -> None:
         """Save session to disk."""
@@ -723,6 +748,33 @@ async def stream_updates(request: Request):
             "X-Accel-Buffering": "no",  # Disable nginx buffering
         },
     )
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time updates."""
+    await websocket.accept()
+    session = _get_current_session()
+    session._ws_connections.append(websocket)
+
+    try:
+        # Send initial state
+        initial_data = session.serialize()
+        await websocket.send_text(json.dumps(initial_data))
+
+        # Keep connection alive and listen for close
+        while True:
+            # Wait for messages (mostly just to detect disconnect)
+            try:
+                await websocket.receive_text()
+            except WebSocketDisconnect:
+                break
+    except Exception:
+        pass  # Connection closed
+    finally:
+        # Clean up
+        if websocket in session._ws_connections:
+            session._ws_connections.remove(websocket)
 
 
 # Dashboard API Endpoints

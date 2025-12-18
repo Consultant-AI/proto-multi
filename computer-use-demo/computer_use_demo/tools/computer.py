@@ -245,7 +245,15 @@ class BaseComputerTool:
             return result.replace(
                 base64_image=base64.b64encode(path.read_bytes()).decode()
             )
-        raise ToolError(f"Failed to take screenshot: {result.error}")
+        
+        error_msg = result.error or ""
+        if "could not create image from display" in error_msg:
+            error_msg += (
+                "\n\nHINT: This error on macOS usually means the application lacks 'Screen Recording' permissions. "
+                "Please go to System Settings > Privacy & Security > Screen Recording and grant access to your terminal or the app running this system."
+            )
+        
+        raise ToolError(f"Failed to take screenshot: {error_msg}")
 
     async def shell(self, command: str, take_screenshot=True) -> ToolResult:
         """Run a shell command and return the output, error, and optionally a screenshot."""

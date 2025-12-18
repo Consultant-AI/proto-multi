@@ -154,6 +154,12 @@ class LocalComputerTool(BaseAnthropicTool):
         try:
             screenshot = await self._run(pyautogui.screenshot)
         except Exception as exc:  # pragma: no cover - depends on OS
+            error_msg = str(exc)
+            if "UnidentifiedImageError" in error_msg or "cannot identify image file" in error_msg:
+                raise ToolError(
+                    "Failed to capture screenshot. This is likely due to missing 'Screen Recording' permissions. "
+                    "On macOS, please go to System Settings > Privacy & Security > Screen Recording and grant access to your terminal/application."
+                ) from exc
             raise ToolError(f"Failed to capture screenshot: {exc}") from exc
 
         if self.display_width != self._screen_width or self.display_height != self._screen_height:

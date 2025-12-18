@@ -412,9 +412,15 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
           </button>
           <button
             className="refresh-btn"
-            onClick={() => {
-              loadProjects()
-              loadFileTree()
+            onClick={async () => {
+              setLoading(true)
+              await loadProjects()
+              await loadFileTree()
+              // Reload contents of all expanded folders
+              for (const expandedPath of Array.from(expandedFolders)) {
+                await loadFolderContents(expandedPath)
+              }
+              setLoading(false)
             }}
             title="Refresh"
           >

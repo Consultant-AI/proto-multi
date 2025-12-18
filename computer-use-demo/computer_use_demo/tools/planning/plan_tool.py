@@ -26,6 +26,10 @@ class PlanningTool(BaseAnthropicTool):
     name: str = "create_planning_docs"
     api_type: str = "custom"
 
+    def __init__(self, api_key: str | None = None):
+        self.api_key = api_key
+        super().__init__()
+
     def to_params(self):
         """Return tool parameter schema for Anthropic API."""
         return {
@@ -80,6 +84,10 @@ Returns paths to created planning documents.""",
         Returns:
             ToolResult with paths to created documents
         """
+        # Validate API key early
+        if not self.api_key:
+            return ToolResult(error="ANTHROPIC_API_KEY is missing. Planning documents cannot be generated.")
+
         context = context or {}
         logger = get_logger()
 
@@ -87,7 +95,7 @@ Returns paths to created planning documents.""",
             # Initialize components
             analyzer = TaskComplexityAnalyzer()
             project_manager = ProjectManager()
-            client = Anthropic()
+            client = Anthropic(api_key=self.api_key)
 
             # Analyze task complexity
             logger.log_event(

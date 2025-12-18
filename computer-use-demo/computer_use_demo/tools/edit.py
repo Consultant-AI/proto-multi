@@ -40,7 +40,44 @@ class EditTool20250124(BaseAnthropicTool):
     def to_params(self) -> Any:
         return {
             "name": self.name,
-            "type": self.api_type,
+            "type": "custom",
+            "description": "A filesystem editor tool that allows the agent to view, create, and edit files.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "enum": ["view", "create", "str_replace", "insert", "undo_edit"],
+                        "description": "The command to run",
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "The absolute path to the file",
+                    },
+                    "file_text": {
+                        "type": "string",
+                        "description": "The content of the file (required for 'create')",
+                    },
+                    "view_range": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "Optional line range for 'view'",
+                    },
+                    "old_str": {
+                        "type": "string",
+                        "description": "The string to replace (required for 'str_replace')",
+                    },
+                    "new_str": {
+                        "type": "string",
+                        "description": "The replacement string (required for 'str_replace' and 'insert')",
+                    },
+                    "insert_line": {
+                        "type": "integer",
+                        "description": "The line number to insert at (required for 'insert')",
+                    },
+                },
+                "required": ["command", "path"],
+            },
         }
 
     async def __call__(
@@ -313,7 +350,44 @@ class EditTool20250429(BaseAnthropicTool):
     def to_params(self) -> Any:
         return {
             "name": self.name,
-            "type": self.api_type,
+            "type": "custom",
+            "description": "An filesystem editor tool that allows the agent to view, create, and edit files.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "enum": ["view", "create", "str_replace", "insert"],
+                        "description": "The command to run",
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "The absolute path to the file",
+                    },
+                    "file_text": {
+                        "type": "string",
+                        "description": "The content of the file (required for 'create')",
+                    },
+                    "view_range": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "Optional line range for 'view'",
+                    },
+                    "old_str": {
+                        "type": "string",
+                        "description": "The string to replace (required for 'str_replace')",
+                    },
+                    "new_str": {
+                        "type": "string",
+                        "description": "The replacement string (required for 'str_replace' and 'insert')",
+                    },
+                    "insert_line": {
+                        "type": "integer",
+                        "description": "The line number to insert at (required for 'insert')",
+                    },
+                },
+                "required": ["command", "path"],
+            },
         }
 
     async def __call__(
