@@ -55,10 +55,12 @@ Use this tool when:
 The specialist will receive the task, planning context, and available tools,
 and will return their completed work.
 
-Available specialists:
-- marketing-strategy: Marketing strategy, campaigns, SEO, content marketing
-- senior-developer: Software engineering, architecture, full-stack development
-- ux-designer: UI/UX design, visual design, interaction design
+Available specialists (19 total):
+- Development & Technical: senior-developer, devops, qa-testing, security, technical-writer
+- Product & Design: product-manager, product-strategy, ux-designer
+- Data & Analytics: data-analyst, growth-analytics
+- Business Functions: sales, customer-success, marketing-strategy, content-marketing
+- Operations & Support: finance, legal-compliance, hr-people, business-operations, admin-coordinator
 
 Returns the specialist's output and execution details.""",
             "input_schema": {
@@ -66,7 +68,13 @@ Returns the specialist's output and execution details.""",
                 "properties": {
                     "specialist": {
                         "type": "string",
-                        "enum": ["marketing-strategy", "senior-developer", "ux-designer"],
+                        "enum": [
+                            "senior-developer", "devops", "qa-testing", "security", "technical-writer",
+                            "product-manager", "product-strategy", "ux-designer",
+                            "data-analyst", "growth-analytics",
+                            "sales", "customer-success", "marketing-strategy", "content-marketing",
+                            "finance", "legal-compliance", "hr-people", "business-operations", "admin-coordinator"
+                        ],
                         "description": "Which specialist to delegate to",
                     },
                     "task": {
@@ -98,7 +106,7 @@ Returns the specialist's output and execution details.""",
         Delegate a task to a specialist agent.
 
         Args:
-            specialist: Which specialist to delegate to (marketing-strategy, senior-developer, ux-designer)
+            specialist: Which specialist to delegate to (19 available specialists)
             task: The task to complete
             project_name: Project name for loading context
             additional_context: Additional context to pass
@@ -196,29 +204,24 @@ Returns the specialist's output and execution details.""",
 
     def _create_specialist(self, specialist: str):
         """
-        Create a specialist agent instance.
+        Create a specialist agent instance dynamically using AGENT_REGISTRY.
 
         Args:
-            specialist: Type of specialist (marketing-strategy, senior-developer, ux-designer)
+            specialist: Type of specialist (any of the 19 available specialists)
 
         Returns:
             Instantiated specialist agent
         """
-        # Lazy import to avoid circular dependencies
-        from ...agents import MarketingStrategyAgent, SeniorDeveloperAgent, UXDesignerAgent
+        # Import the agent registry dynamically
+        from ...agents import AGENT_REGISTRY
 
-        specialist_map = {
-            "marketing-strategy": MarketingStrategyAgent,
-            "senior-developer": SeniorDeveloperAgent,
-            "ux-designer": UXDesignerAgent,
-        }
-
-        if specialist not in specialist_map:
+        if specialist not in AGENT_REGISTRY:
+            available = [k for k in AGENT_REGISTRY.keys() if k != "ceo-agent"]
             raise ValueError(
-                f"Unknown specialist '{specialist}'. Available: {list(specialist_map.keys())}"
+                f"Unknown specialist '{specialist}'. Available specialists: {', '.join(available)}"
             )
 
-        agent_class = specialist_map[specialist]
+        agent_class = AGENT_REGISTRY[specialist]
         return agent_class(tools=self.available_tools, api_key=self.api_key)
 
     def _enhance_task_with_context(self, task: str, context: dict, specialist: str) -> str:

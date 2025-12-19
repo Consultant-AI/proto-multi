@@ -48,6 +48,11 @@
 
 good planning and files
 
+delegations to sub
+
+good context engenriing
+parrallel work on same computer
+using multiple computers like any desk
 
 
 - [ ] System stability for autonomous operation and self-monitoring

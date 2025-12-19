@@ -51,44 +51,55 @@ class ProjectManager:
 
     def create_project(self, project_name: str) -> Path:
         """
-        Create a new project planning folder.
+        Create a new project with dual-structure architecture.
+
+        Creates:
+        - ~/Proto/{project}/.proto/planning/ for planning/meta files
+        - ~/Proto/{project}/ for actual project code (empty initially)
 
         Args:
             project_name: Name of the project (will be slugified)
 
         Returns:
-            Path to the created project folder
+            Path to the planning folder (.proto/planning/)
         """
         # Slugify project name
         slug = self._slugify(project_name)
 
-        # Create project directory
-        project_path = self.base_path / slug
-        project_path.mkdir(parents=True, exist_ok=True)
+        # Create project root directory
+        project_root = self.base_path / slug
+        project_root.mkdir(parents=True, exist_ok=True)
 
-        # Create subdirectories
-        (project_path / "agents").mkdir(exist_ok=True)
-        (project_path / "knowledge").mkdir(exist_ok=True)
-        (project_path / "data").mkdir(exist_ok=True)
-        (project_path / "data" / "inputs").mkdir(exist_ok=True)
-        (project_path / "data" / "outputs").mkdir(exist_ok=True)
-        (project_path / "data" / "artifacts").mkdir(exist_ok=True)
+        # Create .proto/planning/ structure for planning/meta files
+        planning_path = project_root / ".proto" / "planning"
+        planning_path.mkdir(parents=True, exist_ok=True)
 
-        # Create metadata file
+        # Create subdirectories in planning folder
+        (planning_path / "agents").mkdir(exist_ok=True)
+        (planning_path / "knowledge").mkdir(exist_ok=True)
+        (planning_path / "data").mkdir(exist_ok=True)
+        (planning_path / "data" / "inputs").mkdir(exist_ok=True)
+        (planning_path / "data" / "outputs").mkdir(exist_ok=True)
+        (planning_path / "data" / "artifacts").mkdir(exist_ok=True)
+
+        # Create metadata file in planning folder
         metadata = {
             "project_name": project_name,
             "slug": slug,
             "created_at": datetime.utcnow().isoformat() + "Z",
             "updated_at": datetime.utcnow().isoformat() + "Z",
             "status": "active",
+            "structure": "dual",  # Mark as dual-structure project
+            "planning_path": str(planning_path),
+            "project_root": str(project_root),
         }
-        self._save_metadata(project_path, metadata)
+        self._save_metadata(planning_path, metadata)
 
-        return project_path
+        return planning_path
 
     def project_exists(self, project_name: str) -> bool:
         """
-        Check if a project already exists.
+        Check if a project already exists (dual-structure or legacy).
 
         Args:
             project_name: Name of the project
@@ -97,28 +108,46 @@ class ProjectManager:
             True if project exists
         """
         slug = self._slugify(project_name)
-        project_path = self.base_path / slug
-        return project_path.exists() and (project_path / ".project_metadata.json").exists()
+        project_root = self.base_path / slug
+
+        # Check for dual-structure project (.proto/planning/)
+        dual_planning_path = project_root / ".proto" / "planning"
+        if dual_planning_path.exists() and (dual_planning_path / ".project_metadata.json").exists():
+            return True
+
+        # Check for legacy project structure (backwards compatibility)
+        if project_root.exists() and (project_root / ".project_metadata.json").exists():
+            return True
+
+        return False
 
     def get_project_path(self, project_name: str) -> Path | None:
         """
-        Get path to existing project.
+        Get path to existing project planning folder.
 
         Args:
             project_name: Name of the project
 
         Returns:
-            Path to project or None if doesn't exist
+            Path to planning folder (.proto/planning/) or None if doesn't exist
         """
         slug = self._slugify(project_name)
-        project_path = self.base_path / slug
-        if self.project_exists(project_name):
-            return project_path
+        project_root = self.base_path / slug
+
+        # Check for dual-structure project (.proto/planning/)
+        dual_planning_path = project_root / ".proto" / "planning"
+        if dual_planning_path.exists() and (dual_planning_path / ".project_metadata.json").exists():
+            return dual_planning_path
+
+        # Check for legacy project structure (backwards compatibility)
+        if project_root.exists() and (project_root / ".project_metadata.json").exists():
+            return project_root
+
         return None
 
     def list_projects(self) -> list[dict[str, Any]]:
         """
-        List all existing projects.
+        List all existing projects (dual-structure and legacy).
 
         Returns:
             List of project metadata dicts
@@ -129,9 +158,17 @@ class ProjectManager:
         projects = []
         for project_dir in self.base_path.iterdir():
             if project_dir.is_dir():
-                metadata_file = project_dir / ".project_metadata.json"
-                if metadata_file.exists():
-                    metadata = json.loads(metadata_file.read_text())
+                # Check for dual-structure project
+                dual_metadata_file = project_dir / ".proto" / "planning" / ".project_metadata.json"
+                if dual_metadata_file.exists():
+                    metadata = json.loads(dual_metadata_file.read_text())
+                    projects.append(metadata)
+                    continue
+
+                # Check for legacy project
+                legacy_metadata_file = project_dir / ".project_metadata.json"
+                if legacy_metadata_file.exists():
+                    metadata = json.loads(legacy_metadata_file.read_text())
                     projects.append(metadata)
 
         # Sort by updated_at (most recent first)

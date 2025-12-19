@@ -186,6 +186,137 @@ Each agent has access to:
 
 ---
 
+## Agent Delegation Model
+
+### Why Delegation to Specialists is Critical
+
+**CEO Agent Role:**
+- Orchestrates work, analyzes complexity, creates planning
+- **Should NOT do specialized work directly**
+- **Should ALWAYS delegate to specialists** for execution
+
+**Specialist Sub-Agent Excellence:**
+Each specialist is highly optimized for their domain:
+
+**Engineering Specialists:**
+- **Senior Developer**: Expert at complex implementation, architecture decisions
+- **Frontend Developer**: Masters React, TypeScript, UI/UX implementation
+- **Backend Developer**: Database design, APIs, authentication, scalability
+- **DevOps Engineer**: Docker, CI/CD, deployment, infrastructure
+- **QA Engineer**: Testing strategies, E2E tests, bug analysis
+- **Security Engineer**: Vulnerability assessment, encryption, security audits
+
+**Product & Design Specialists:**
+- **Product Manager**: Requirements, roadmaps, feature prioritization
+- **UX Designer**: User experience, interface design, usability
+- **User Researcher**: User needs analysis, testing, feedback
+
+**Business Specialists:**
+- **Marketing Director**: Strategy, campaigns, content planning
+- **Sales Director**: Pipeline management, outreach, conversions
+- **Customer Success Manager**: Support, retention, satisfaction
+
+### Delegation Best Practices
+
+**✅ ALWAYS Delegate When:**
+1. Task requires specialized domain knowledge
+2. Implementation involves specific technologies
+3. Quality depends on expert judgment
+4. Specialist has dedicated tools/workflows
+
+**❌ NEVER Skip Delegation:**
+- CEO writing frontend code directly ❌
+- CEO designing database schemas ❌
+- CEO implementing security features ❌
+- Any agent doing work outside their expertise ❌
+
+### Delegation Flow
+
+```
+User: "Build a web app with authentication"
+    ↓
+CEO Agent:
+  1. Analyzes: "Complex project requiring planning"
+  2. Creates planning docs in .proto/planning/
+  3. Breaks down into specialist tasks:
+     ├─ "Design authentication system" → Backend Developer
+     ├─ "Create login UI" → Frontend Developer
+     ├─ "Set up deployment" → DevOps Engineer
+     └─ "Write security tests" → QA Engineer
+    ↓
+Backend Developer (Specialist):
+  ✅ Reads project context from .proto/planning/
+  ✅ Understands requirements, technical spec
+  ✅ Implements authentication (JWT, sessions, etc.)
+  ✅ Uses tools: Edit, Bash, PythonExec, Git
+  ✅ Updates knowledge base with decisions
+  ✅ Returns result to CEO
+    ↓
+Frontend Developer (Specialist):
+  ✅ Reads Backend Developer's work
+  ✅ Implements login forms, state management
+  ✅ Integrates with backend API
+  ✅ Returns result to CEO
+    ↓
+CEO Agent:
+  ✅ Coordinates handoffs between specialists
+  ✅ Ensures consistency across work
+  ✅ Updates project status
+  ✅ Reports completion to user
+```
+
+### Sub-Agent Specialization Advantages
+
+**1. Deep Domain Expertise**
+- Specialists have domain-specific prompts and context
+- Know best practices for their field
+- Make better technical decisions
+
+**2. Better Tool Usage**
+- Each specialist knows optimal tool combinations
+- Senior Developer: GlobTool → GrepTool → EditTool → GitTool
+- DevOps Engineer: BashTool → Docker commands → Git commits
+- Frontend Developer: EditTool → PythonExec (npm) → Browser testing
+
+**3. Quality & Efficiency**
+- Specialists work faster in their domain
+- Fewer iterations needed
+- Higher quality output
+
+**4. Knowledge Accumulation**
+- Each specialist builds domain-specific knowledge
+- Patterns recognized and reused
+- Continuous improvement in specialty
+
+**5. Parallel Execution**
+- Multiple specialists can work simultaneously
+- Frontend + Backend + DevOps in parallel
+- Reduces total project time
+
+### When Any Agent Can Delegate
+
+**Not Just CEO:**
+Any agent can delegate when they need specialist help:
+
+```
+Senior Developer working on API:
+  "I need a database schema designed"
+  → Delegates to Backend Developer (database specialist)
+
+Frontend Developer needs deployment:
+  "This needs to be deployed to production"
+  → Delegates to DevOps Engineer
+
+Product Manager needs market research:
+  "What do users think about this feature?"
+  → Delegates to User Researcher
+```
+
+**Key Principle:**
+**If work requires specialized knowledge, ALWAYS delegate to the specialist.**
+
+---
+
 ## Complete Tool Catalog (16 Tools)
 
 ### Core Computer Tools (4 tools)
@@ -400,54 +531,92 @@ Each agent has access to:
 
 ---
 
-## State Management & Persistence
+## Project Management System
 
-### Persistent Storage Architecture
+### Dual-Structure Architecture
+
+Each project maintains **two separate folders** for clean organization:
+
+**1. Planning & Meta (~/Proto/{project}/.proto/)**
+- Planning documents, decisions, knowledge
+- Never mixed with actual code
+
+**2. Actual Project Files (~/Proto/{project}/)**
+- Source code, documentation, assets
+- Standard project structure
+
+### Complete Directory Structure
 
 ```
-~/.proto/
-├── daemon/
-│   ├── work_queue.json           # Pending/active work items
-│   └── orchestrator_state.json   # Runtime state for recovery
-│
-└── planning/
-    └── {project-slug}/            # e.g., "saas-company", "xclone"
-        ├── .project_metadata.json # Project metadata (name, description, tags)
-        ├── tasks.json             # TaskManager state
-        │
-        ├── project_overview.md    # High-level project description
-        ├── requirements.md        # Detailed requirements
-        ├── technical_spec.md      # Technical specifications
-        ├── roadmap.md             # Project roadmap
-        ├── knowledge_base.md      # Aggregated knowledge
-        ├── decisions.md           # Technical decisions log
-        │
-        ├── agents/                # Specialist-specific plans
-        │   ├── senior-developer_plan.md
-        │   ├── product-manager_plan.md
-        │   └── marketing-strategy_plan.md
-        │
-        ├── knowledge/             # KnowledgeStore
-        │   ├── index.json         # Knowledge index
-        │   ├── technical_decision/
-        │   ├── learning/
-        │   ├── pattern/
-        │   ├── reference/
-        │   ├── context/
-        │   ├── best_practice/
-        │   └── lesson_learned/
-        │
-        └── data/                  # Project artifacts
-            ├── inputs/            # Input files
-            ├── outputs/           # Generated outputs
-            └── artifacts/         # Build artifacts, exports
+~/Proto/
+└── {project-name}/                # Example: "saas-company"
+    │
+    ├── .proto/                    # Planning & Meta (System Management)
+    │   └── planning/
+    │       ├── .project_metadata.json  # Project info (name, description, tags, status)
+    │       ├── tasks.json              # TaskManager state & dependencies
+    │       │
+    │       ├── project_overview.md     # High-level project description
+    │       ├── requirements.md         # Detailed requirements
+    │       ├── technical_spec.md       # Technical specifications
+    │       ├── roadmap.md              # Project roadmap & milestones
+    │       ├── knowledge_base.md       # Aggregated knowledge
+    │       ├── decisions.md            # Technical decisions log
+    │       │
+    │       ├── agents/                 # Specialist-specific plans
+    │       │   ├── senior-developer_plan.md
+    │       │   ├── frontend-developer_plan.md
+    │       │   ├── devops-engineer_plan.md
+    │       │   ├── product-manager_plan.md
+    │       │   ├── ux-designer_plan.md
+    │       │   └── marketing-strategy_plan.md
+    │       │
+    │       └── knowledge/              # KnowledgeStore
+    │           ├── index.json          # Knowledge index
+    │           ├── technical_decision/
+    │           ├── learning/
+    │           ├── pattern/
+    │           ├── reference/
+    │           ├── context/
+    │           ├── best_practice/
+    │           └── lesson_learned/
+    │
+    └── [Actual Project Files]     # Standard project structure
+        ├── src/                   # Source code
+        ├── docs/                  # User documentation
+        ├── tests/                 # Test files
+        ├── public/                # Public assets
+        ├── package.json           # Dependencies
+        ├── README.md              # Project readme
+        └── ...                    # Other project files
 
-logs/                              # Logging system
+~/.proto/daemon/                   # Global system state
+├── work_queue.json                # Pending/active work items
+└── orchestrator_state.json        # Runtime state for recovery
+
+logs/                              # System logging
 ├── proto_sessions.jsonl           # Session events
 ├── proto_errors.jsonl             # Error tracking
 ├── proto_tools.jsonl              # Tool invocations
 └── proto_system.jsonl             # System events
 ```
+
+### Why This Structure Works
+
+**Clean Separation:**
+- ✅ Planning docs never clutter actual codebase
+- ✅ Easy to version control (`.proto/` can be in .gitignore or separate repo)
+- ✅ Clear distinction between "what we're doing" vs "what we've built"
+
+**Persistent Context:**
+- ✅ All meta information survives across sessions
+- ✅ Any agent can read planning context to understand project
+- ✅ Knowledge accumulates and informs future decisions
+
+**Scalable:**
+- ✅ Each project self-contained
+- ✅ Easy to archive, clone, or share
+- ✅ Specialist plans kept organized by agent type
 
 ### Recovery Mechanisms
 
@@ -809,130 +978,334 @@ All self-improvement activities are logged:
 
 ## Key Principles
 
-### 1. Flexible Delegation
-- Any agent can call any other agent based on task needs
-- Not constrained by organizational hierarchy
-- CEO orchestrates, but specialists self-organize
+### 1. Intelligent Delegation (Most Important)
+**Core Philosophy: Right Agent for Right Task**
+- ✅ CEO orchestrates, specialists execute
+- ✅ Any agent can delegate to any specialist when needed
+- ✅ Not constrained by organizational hierarchy
+- ✅ Specialists are domain experts - always prefer them
+- ❌ Never do specialized work outside your expertise
+- ❌ Never skip delegation when specialist exists
 
-### 2. Enterprise-Grade Architecture
+**Why This Matters:**
+- Better quality (specialists know best practices)
+- Faster execution (specialists work in their domain)
+- Scalable (multiple specialists work in parallel)
+- Continuous improvement (specialists accumulate domain knowledge)
+
+### 2. Dual-Structure Project Organization
+**Planning Separate from Code**
+- ✅ Planning/meta in `{project}/.proto/planning/`
+- ✅ Actual code in `{project}/` (src/, docs/, tests/)
+- ✅ Clear separation: "what we're doing" vs "what we've built"
+- ✅ Planning survives code changes, provides persistent context
+
+**Benefits:**
+- Never clutter codebase with planning docs
+- Easy to version control separately
+- Context available to all agents across sessions
+- Specialist plans organized by agent type
+
+### 3. Enterprise-Grade Architecture
 - Multi-tier design (Presentation → Orchestration → Agents → Planning → Tools → Infrastructure)
 - Production-ready components (logging, monitoring, recovery)
 - Scalable and maintainable
 
-### 3. Continuous Operation
+### 4. Continuous Operation
 - Can run autonomously via CompanyOrchestrator daemon
 - WorkQueue system for scheduled/ongoing work
 - Health monitoring and graceful degradation
 
-### 4. Persistent Learning
+### 5. Persistent Learning & Self-Improvement
 - Knowledge accumulates across sessions
 - Decisions, patterns, learnings stored permanently
 - Each project makes future projects better
+- System learns from both successes and failures
+- Auto-queues optimization tasks during idle time
 
-### 5. Tool Access
+### 6. Universal Tool Access
 - All 16 tools available to all agents
 - Tools can be chained for complex operations
 - Smart tool selection based on task requirements
+- Specialists know optimal tool combinations for their domain
 
-### 6. Hierarchical UI, Flat Execution
+### 7. Flat Peer-to-Peer Execution
 - Tree structure for user navigation/discovery
 - Actual execution is flexible peer-to-peer
 - Best agent/tool selected regardless of hierarchy
+- Any agent can call any other agent when needed
 
-### 7. State Persistence
+### 8. State Persistence & Recovery
 - All project state in `.proto/planning/{project}/`
 - Recovery from crashes/restarts
 - Full audit trail via Git commits
-
-### 8. Self-Improvement
-- System learns from each interaction
-- Knowledge base grows continuously
-- Future performance improves automatically
+- Work queue persists for daemon recovery
 
 ---
 
 ## Project Lifecycle Example
 
-### Starting a New Project
+### Complete Example: Building a SaaS Application
 
-**1. User Request**: "Build a SaaS application for project management"
-
-**2. CEO Analysis**:
-```python
-complexity = analyzer.analyze_task(user_request)  # Result: "very_complex"
-# → Triggers comprehensive planning
+**1. User Request**
+```
+"Build a SaaS application for project management with authentication,
+team collaboration, and real-time updates"
 ```
 
-**3. Planning Phase**:
+**2. CEO Agent Analysis & Planning**
 ```python
-# ProjectTool checks: does "saas-project-management" exist?
-if not project_tool.exists("saas-project-management"):
-    # PlanningTool creates:
-    planning_tool.create(
-        project_name="saas-project-management",
-        documents=["project_overview", "requirements", "technical_spec", "roadmap"]
-    )
-```
+# Step 1: Analyze complexity
+complexity = analyzer.analyze_task(user_request)
+# Result: "very_complex" → Triggers comprehensive planning
 
-**4. Task Breakdown**:
-```python
-# TaskTool creates hierarchical tasks:
-task_tool.create(
-    title="Build SaaS Backend",
-    priority="HIGH",
-    dependencies=[],
-    subtasks=[
-        "Design database schema",
-        "Implement authentication",
-        "Create API endpoints",
-        "Add rate limiting"
+# Step 2: Create project structure
+project_manager.create_project("saas-project-mgmt")
+# Creates:
+# ~/Proto/saas-project-mgmt/
+# ~/Proto/saas-project-mgmt/.proto/planning/
+
+# Step 3: Generate planning documents
+planning_tool.create(
+    project_name="saas-project-mgmt",
+    documents=[
+        "project_overview",     # High-level vision
+        "requirements",         # Detailed requirements
+        "technical_spec",       # Architecture & tech stack
+        "roadmap"              # Implementation phases
     ]
 )
+# All saved in ~/Proto/saas-project-mgmt/.proto/planning/
+
+# Step 4: Break down into specialist tasks
+tasks = [
+    ("Product Manager", "Define features & prioritize roadmap"),
+    ("UX Designer", "Design user interface & workflows"),
+    ("Backend Developer", "Build API & authentication"),
+    ("Frontend Developer", "Create React UI"),
+    ("DevOps Engineer", "Set up deployment pipeline"),
+]
 ```
 
-**5. Execution**:
+**3. CEO Delegates to Product Manager**
 ```python
-# CEO delegates to specialists:
 delegate_tool.delegate(
-    specialist="senior-developer",
-    task="Build backend infrastructure",
-    context=read_planning_tool.get_project_context("saas-project-management")
+    specialist="product-manager",
+    task="Define product requirements and feature prioritization",
+    context=read_planning_tool.get_project_context("saas-project-mgmt")
 )
 ```
 
-**6. Specialist Work**:
+**4. Product Manager Creates Detailed Requirements**
 ```python
-# Senior Developer uses tools:
-glob_tool.find("src/**/*.py")  # Find relevant files
-grep_tool.search("class.*Model", type="py")  # Find models
-edit_tool.create("src/models/user.py", content=...)  # Create new file
-python_exec.run("pytest tests/")  # Run tests
-git_tool.commit("Add User model with authentication")
-```
+# Product Manager reads planning context from .proto/planning/
+# Writes detailed requirements
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/.proto/planning/requirements.md",
+    content="""
+    ## Core Features
+    1. User Authentication (Google, GitHub SSO)
+    2. Team Workspace Management
+    3. Real-time Task Board
+    4. Comments & Notifications
+    ...
+    """
+)
 
-**7. Knowledge Capture**:
-```python
+# Updates knowledge base
 knowledge_tool.add(
-    title="FastAPI + SQLAlchemy + Alembic Stack",
-    type="best_practice",
-    content="This stack provides excellent dev experience for SaaS apps",
-    tags=["fastapi", "sqlalchemy", "backend"]
+    title="Feature Priority: Real-time collaboration critical",
+    type="technical_decision",
+    content="Users expect instant updates - WebSocket required"
 )
 ```
 
-**8. Progress Tracking**:
+**5. CEO Delegates to UX Designer**
 ```python
-task_tool.update(
-    task_id="build-backend",
-    status="COMPLETED",
-    notes="Backend infrastructure complete with auth and core models"
+delegate_tool.delegate(
+    specialist="ux-designer",
+    task="Design user interface for task management and collaboration"
 )
 ```
 
-**9. Continuous Improvement**:
-- Knowledge stored for future SaaS projects
-- Patterns identified and catalogued
-- Next SaaS project starts with this accumulated wisdom
+**6. UX Designer Creates Mockups**
+```python
+# UX Designer creates designs in actual project folder
+# Note: .proto/ is for planning, actual files go in project root
+bash_tool.run("cd ~/Proto/saas-project-mgmt && mkdir -p designs/")
+# Creates Figma files, wireframes, etc. in ~/Proto/saas-project-mgmt/designs/
+
+# Documents decisions in planning
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/.proto/planning/agents/ux-designer_plan.md",
+    content="UI approach: Kanban-style board with drag-drop..."
+)
+```
+
+**7. CEO Delegates to Backend Developer**
+```python
+delegate_tool.delegate(
+    specialist="backend-developer",
+    task="Implement authentication API and database schema",
+    context=read_planning_tool.get_project_context("saas-project-mgmt")
+)
+```
+
+**8. Backend Developer Implements API**
+```python
+# Backend Dev reads all planning context
+planning_context = read_planning_tool.get_project_context("saas-project-mgmt")
+
+# Creates actual code in project folder (NOT in .proto/)
+bash_tool.run("cd ~/Proto/saas-project-mgmt && mkdir -p src/api")
+
+# Implements authentication
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/src/api/auth.py",
+    content="""
+    from fastapi import FastAPI, Depends
+    from sqlalchemy.orm import Session
+    # ... implementation
+    """
+)
+
+# Runs tests
+python_exec.run("cd ~/Proto/saas-project-mgmt && pytest tests/")
+
+# Commits code
+git_tool.commit("Add authentication API with JWT tokens")
+
+# Documents decision in planning/knowledge
+knowledge_tool.add(
+    project="saas-project-mgmt",
+    title="Auth Stack: FastAPI + JWT + SQLAlchemy",
+    type="best_practice",
+    content="FastAPI provides excellent async support for real-time features",
+    tags=["backend", "authentication", "fastapi"]
+)
+```
+
+**9. CEO Delegates to Frontend Developer**
+```python
+delegate_tool.delegate(
+    specialist="frontend-developer",
+    task="Build React UI connecting to backend API",
+    context=read_planning_tool.get_project_context("saas-project-mgmt")
+)
+```
+
+**10. Frontend Developer Builds UI**
+```python
+# Frontend Dev creates React app in actual project folder
+bash_tool.run("cd ~/Proto/saas-project-mgmt && npx create-react-app frontend")
+
+# Implements components
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/frontend/src/components/TaskBoard.tsx",
+    content="// Task board implementation with drag-drop..."
+)
+
+# Integrates with backend
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/frontend/src/api/client.ts",
+    content="// API client connecting to FastAPI backend..."
+)
+
+# Updates planning with frontend decisions
+knowledge_tool.add(
+    project="saas-project-mgmt",
+    title="Frontend Stack: React + TypeScript + TailwindCSS",
+    type="technical_decision",
+    tags=["frontend", "react", "typescript"]
+)
+```
+
+**11. CEO Delegates to DevOps Engineer**
+```python
+delegate_tool.delegate(
+    specialist="devops-engineer",
+    task="Set up deployment pipeline and hosting"
+)
+```
+
+**12. DevOps Sets Up Deployment**
+```python
+# DevOps creates deployment configs in project folder
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/Dockerfile",
+    content="FROM python:3.11..."
+)
+
+edit_tool.create(
+    file="~/Proto/saas-project-mgmt/docker-compose.yml",
+    content="services:\n  backend:\n    ..."
+)
+
+# Documents deployment strategy
+knowledge_tool.add(
+    project="saas-project-mgmt",
+    title="Deployment: Docker + Railway",
+    type="technical_decision",
+    content="Railway provides easy deployment with auto-scaling"
+)
+```
+
+**13. Final Project Structure**
+```
+~/Proto/saas-project-mgmt/
+├── .proto/                          # Planning & Meta
+│   └── planning/
+│       ├── project_overview.md      # CEO created
+│       ├── requirements.md          # Product Manager updated
+│       ├── technical_spec.md        # Backend Dev contributed
+│       ├── roadmap.md
+│       ├── knowledge/               # All specialists contributed
+│       │   └── technical_decision/
+│       │       ├── auth-stack.json
+│       │       ├── frontend-stack.json
+│       │       └── deployment.json
+│       └── agents/                  # Specialist plans
+│           ├── product-manager_plan.md
+│           ├── ux-designer_plan.md
+│           ├── backend-developer_plan.md
+│           ├── frontend-developer_plan.md
+│           └── devops-engineer_plan.md
+│
+└── [Actual Project Files]           # All specialists built this
+    ├── src/                         # Backend code
+    │   ├── api/
+    │   ├── models/
+    │   └── services/
+    ├── frontend/                    # Frontend code
+    │   ├── src/
+    │   ├── public/
+    │   └── package.json
+    ├── designs/                     # UX designs
+    ├── tests/                       # QA tests
+    ├── Dockerfile                   # DevOps config
+    ├── docker-compose.yml
+    └── README.md
+```
+
+**14. Continuous Improvement**
+```python
+# All knowledge captured during execution
+# Future "build SaaS" projects will:
+# - Retrieve this knowledge automatically
+# - Apply proven patterns
+# - Avoid same mistakes
+# - Start from accumulated wisdom
+```
+
+### Key Takeaways from Example
+
+✅ **CEO orchestrated, never coded directly**
+✅ **Each specialist worked in their domain**
+✅ **Planning (.proto/) separate from code**
+✅ **All decisions documented in knowledge base**
+✅ **Specialists collaborated through CEO coordination**
+✅ **Project structure clean and organized**
+✅ **Knowledge persists for future projects**
 
 ---
 

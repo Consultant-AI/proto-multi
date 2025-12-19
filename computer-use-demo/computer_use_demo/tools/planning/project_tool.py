@@ -26,23 +26,27 @@ class ProjectTool(BaseAnthropicTool):
         """Return tool parameter schema for Anthropic API."""
         return {
             "name": self.name,
-            "description": """Manage and discover projects.
+            "description": """Manage and discover projects (dual-structure architecture).
 
 Use this tool to:
-- List all existing projects
+- List all existing projects from ~/Proto/
 - Get details about a specific project
 - Check if a project exists
-- Get project context (tasks, knowledge, planning docs)
+- Get project context (tasks, knowledge, planning docs from .proto/planning/)
 
 This helps you decide whether to:
 1. Continue work on an existing project
 2. Create a new project for a new conversation/task
 
 Operations:
-- list: List all projects (sorted by most recent)
+- list: List all projects (sorted by most recent, shows both dual-structure and legacy)
 - get: Get details about a specific project by name
 - exists: Check if a project exists
-- context: Get full project context (planning, tasks, knowledge)
+- context: Get full project context (planning docs, tasks, knowledge from .proto/planning/)
+
+All projects follow dual-structure:
+- Planning/meta in ~/Proto/{project}/.proto/planning/
+- Actual code in ~/Proto/{project}/
 
 Returns project information to help with decision making.""",
             "input_schema": {
