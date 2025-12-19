@@ -961,55 +961,49 @@ task_tool.update(
 
 ---
 
-## System Status
 
-### ✅ Completed
-- Multi-agent architecture (20+ specialists with 4-level nesting)
-- Complete tool suite (16 tools across 4 categories)
-- Planning & state management (ProjectManager, TaskManager, KnowledgeStore)
-- Work queue & orchestration (CompanyOrchestrator, WorkQueue)
-- Logging & monitoring (4-stream JSONL system, unified viewer)
-- Web UI (FastAPI, dark theme, real-time streaming, agent tree)
-- Persistent storage architecture (.proto/ folder structure)
-- Git integration for audit trail
-- Training & verification systems (7 test suites, FeedbackLoop)
-- **✨ AUTOMATIC SELF-IMPROVEMENT SYSTEM:**
-  - ✅ Auto-knowledge capture after every task execution
-  - ✅ Smart cross-project knowledge retrieval before planning
-  - ✅ Background log mining for pattern discovery
-  - ✅ Error trend analysis and recommendations
-  - ✅ **Auto-improvement task generation** (⭐ NEW - Jan 2025)
-    - Automatically queues debugging tasks when tasks fail
-    - Queues optimization tasks when tasks are inefficient (10+ iterations)
-    - Queues systematic fix tasks when errors repeat 3+ times
-    - All improvement tasks linked to originating project
-  - ✅ **Project-aware optimization queueing** (⭐ ENHANCED - Jan 2025)
-    - Analyzes each project's knowledge store for improvement opportunities
-    - Queues root cause analysis when 5+ failures accumulated
-    - Queues component creation when 5+ patterns identified
-    - Cross-project knowledge consolidation when idle
-  - ✅ Continuous learning AND active self-improvement while working
+---
 
-### 🚧 In Progress
+## Hetzner Cloud Deployment
 
-**High Priority:**
-- ✅ ~~Self-improvement during work (auto-capture + auto-improvement tasks implemented)~~
-- ✅ ~~Self-improvement outside work (background daemon + project-aware optimization implemented)~~
-- Multi-project orchestration enhancements
-delegate to human, admin or other from pool
-- Agent parallelization on single computer
-- Add newest models (Claude 3.7, etc.)
-- Add alternative models (Gemini, GPT-4, etc.)
+### Quick Setup
+```bash
+export HETZNER_API_TOKEN=your-token
+export ANTHROPIC_API_KEY=your-key
+cd computer-use-demo/hetzner-deploy
+pip3 install -r requirements.txt
+./deploy.sh
+```
 
-**Next Phase:**
-- Architecture resilience improvements
-- Agent parallelization across multiple computers
-- Cloud computer control & provisioning
-- Distributed agent execution
-- Multi-company management system
-- Marketing automation agents
-- Content generation agents
-- Agency services (marketing, dev, backoffice for clients)
-- Advanced metrics & analytics dashboard
-- ML-based pattern recognition
-- Enhanced verification with visual regression testing
+### Deployment Options
+- **Server**: Hetzner CX22 (2 vCPU, 4GB RAM)
+- **Cost**: €0.007/hr (~€5/month if 24/7)
+- **Build Time**: 10-15 min (fresh) or 1-2 min (from snapshot)
+- **Location**: Ashburn, VA (USA) or Nuremberg, Germany (nbg1)
+
+### Features
+- Auto-start on boot
+- Pause/resume (€0/hr when paused)
+- Snapshots for quick cloning
+- HTTP Basic Auth (admin/anthropic2024)
+
+### Control Dashboard
+```bash
+python3 control_panel.py
+# Access: http://localhost:5500
+```
+
+**Dashboard Actions:**
+- Create/delete instances
+- Pause/resume for cost savings
+- Create snapshots (~€0.20/month storage)
+- Clone from snapshots (1-2 min deploy)
+
+### Cost Savings
+- Running 24/7: ~€7/month
+- Snapshot + Delete: ~€0.20/month
+- **Savings: ~€6.80/month (97%)**
+
+---
+
+*Last updated: 2025-12-19*
