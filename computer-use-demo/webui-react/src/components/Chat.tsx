@@ -73,7 +73,8 @@ export default function Chat({
               return {
                 role: msg.role === 'tool' ? 'assistant' : msg.role,
                 content: content,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                images: msg.images || []
               }
             })
 
@@ -111,7 +112,8 @@ export default function Chat({
           const formattedMessages = data.messages.map((msg: any) => ({
             role: msg.role === 'tool' ? 'assistant' : msg.role,
             content: msg.content || msg.text || '',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            images: msg.images || []
           }))
           setMessages(formattedMessages)
         }
@@ -147,7 +149,8 @@ export default function Chat({
         const formattedMessages = sessionData.messages.map((msg: any) => ({
           role: msg.role === 'tool' ? 'assistant' : msg.role,
           content: msg.content || msg.text || '',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          images: msg.images || []
         }))
         setMessages(formattedMessages)
       } else {
@@ -244,7 +247,8 @@ export default function Chat({
               return {
                 role: msg.role === 'tool' ? 'assistant' : msg.role,
                 content: content,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                images: msg.images || []
               }
             })
 
@@ -345,6 +349,13 @@ export default function Chat({
                 </div>
                 <div className="message-content">
                   <div className="message-text">{message.content}</div>
+                  {message.images && message.images.length > 0 && (
+                    <div className="message-images">
+                      {message.images.map((img, i) => (
+                        <img key={i} src={img} alt="Tool output" className="message-image" />
+                      ))}
+                    </div>
+                  )}
                   <div className="message-timestamp">
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </div>

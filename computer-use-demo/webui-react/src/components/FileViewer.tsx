@@ -20,9 +20,13 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
   const [loading, setLoading] = useState(false)
   const [taskData,] = useState<Task | null>(null)
   const [currentPath, setCurrentPath] = useState<string | null>(selectedPath)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedContent, setEditedContent] = useState<string>('')
+
   // Sync currentPath with selectedPath from parent
   useEffect(() => {
     setCurrentPath(selectedPath)
+    setIsEditing(false) // Reset editing when path changes
   }, [selectedPath])
 
   useEffect(() => {
@@ -50,7 +54,9 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
         lastPart.endsWith('.ts') ||
         lastPart.endsWith('.tsx') ||
         lastPart.endsWith('.js') ||
-        lastPart.endsWith('.jsx')
+        lastPart.endsWith('.jsx') ||
+        lastPart.endsWith('.html') ||
+        lastPart.endsWith('.css')
       )
 
       if (isFile) {
@@ -127,7 +133,7 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
     if (!bytes) return '-'
     const kb = bytes / 1024
     if (kb < 1024) return `${kb.toFixed(1)} KB`
-    return `${(kb / 1024).toFixed(1)} MB`
+    return `${((kb / 1024)).toFixed(1)} MB`
   }
 
   const formatDate = (dateStr?: string) => {
@@ -157,6 +163,51 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
     navigateToPath(fullPath)
   }
 
+  const handleOpen = async () => {
+    try {
+      await fetch('/api/open-in-finder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: currentPath })
+      })
+    } catch (error) {
+      console.error('Failed to open in Finder:', error)
+    }
+  }
+
+  const handleEdit = () => {
+    setEditedContent(fileContent || '')
+    setIsEditing(true)
+  }
+
+  const handleSave = async () => {
+    if (!currentPath) return
+    setLoading(true)
+    try {
+      const response = await fetch('/api/browse/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: currentPath, content: editedContent })
+      })
+      if (response.ok) {
+        setFileContent(editedContent)
+        setIsEditing(false)
+      } else {
+        const error = await response.json()
+        alert('Failed to save: ' + (error.detail || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Failed to save file:', error)
+      alert('Error saving file')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+  }
+
   if (!currentPath) {
     return (
       <div className="file-viewer">
@@ -173,18 +224,6 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
     )
   }
 
-  const handleOpen = async () => {
-    try {
-      await fetch('/api/open-in-finder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: currentPath })
-      })
-    } catch (error) {
-      console.error('Failed to open in Finder:', error)
-    }
-  }
-
   return (
     <div className="file-viewer">
       <div className="file-viewer-header">
@@ -192,9 +231,16 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
           <h2>{currentPath.split('/').pop()}</h2>
           <div className="file-viewer-path">{currentPath}</div>
         </div>
-        <button className="open-btn" onClick={handleOpen} title="Open in Finder">
-          Open
-        </button>
+        <div className="file-viewer-actions">
+          {!isEditing && fileContent && (
+            <button className="edit-btn" onClick={handleEdit}>
+              Edit
+            </button>
+          )}
+          <button className="open-btn" onClick={handleOpen} title="Open in Finder">
+            Open
+          </button>
+        </div>
       </div>
 
       <div className="file-viewer-content">
@@ -204,7 +250,26 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
           <TaskViewer task={taskData} />
         ) : fileContent ? (
           <div className="file-content">
-            <pre>{fileContent}</pre>
+            {isEditing ? (
+              <div className="editor-container">
+                <textarea
+                  className="file-editor"
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  spellCheck={false}
+                />
+                <div className="editor-actions">
+                  <button className="save-btn" onClick={handleSave} disabled={loading}>
+                    {loading ? 'Saving...' : 'Save'}
+                  </button>
+                  <button className="cancel-btn" onClick={handleCancel} disabled={loading}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <pre>{fileContent}</pre>
+            )}
           </div>
         ) : contents ? (
           <div className="folder-contents">

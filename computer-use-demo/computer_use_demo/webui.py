@@ -22,6 +22,7 @@ import platform
 import subprocess
 import threading
 import time
+from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request, File, UploadFile, Body, WebSocket, WebSocketDisconnect
@@ -268,8 +269,11 @@ class ChatSession:
                     session_id=self.session_id,
                     data={
                         "tool_id": tool_id,
+                        "tool_name": tool_name,
+                        "inputs": tool_input,
                         "has_output": result.output is not None,
                         "has_error": result.error is not None,
+                        "error_message": result.error if result.error else None,
                         "has_image": result.base64_image is not None,
                         "output_length": len(result.output) if result.output else 0,
                     },
@@ -513,7 +517,50 @@ class SendRequest(BaseModel):
     message: str
 
 
-app = FastAPI(title="Proto AI Agent")
+class SaveFileRequest(BaseModel):
+    path: str
+    content: str
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create thread pool executor for agent work
+    # This runs blocking agent operations in separate thread
+    # so web server stays responsive
+    import concurrent.futures
+    app.state.agent_executor = concurrent.futures.ThreadPoolExecutor(
+        max_workers=4,  # Allow up to 4 concurrent agent sessions
+        thread_name_prefix="agent_worker"
+    )
+
+    # Log server startup
+    logger = get_logger()
+    logger.log_event(
+        event_type="server_started",
+        data={
+            "default_model": DEFAULT_MODEL,
+            "default_tool_version": DEFAULT_TOOL_VERSION,
+        },
+    )
+
+    api_key = _resolve_api_key()
+    app.state.api_key = api_key
+    app.state.sessions: dict[str, ChatSession] = {}
+    app.state.current_session_id = None
+
+    # Create a default session
+    session = ChatSession(api_key=api_key)
+    app.state.sessions[session.session_id] = session
+    app.state.current_session_id = session.session_id
+
+    yield
+
+    # Shutdown: clean up executor
+    if hasattr(app.state, "agent_executor"):
+        app.state.agent_executor.shutdown(wait=True)
+
+
+app = FastAPI(title="Proto AI Agent", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -545,38 +592,6 @@ async def ensure_responsive_middleware(request: Request, call_next):
 
 SESSIONS_DIR = Path.home() / ".claude" / "webui_sessions"
 SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
-
-
-@app.on_event("startup")
-async def startup_event():
-    # Create thread pool executor for agent work
-    # This runs blocking agent operations in separate thread
-    # so web server stays responsive
-    import concurrent.futures
-    app.state.agent_executor = concurrent.futures.ThreadPoolExecutor(
-        max_workers=4,  # Allow up to 4 concurrent agent sessions
-        thread_name_prefix="agent_worker"
-    )
-
-    # Log server startup
-    logger = get_logger()
-    logger.log_event(
-        event_type="server_started",
-        data={
-            "default_model": DEFAULT_MODEL,
-            "default_tool_version": DEFAULT_TOOL_VERSION,
-        },
-    )
-
-    api_key = _resolve_api_key()
-    app.state.api_key = api_key
-    app.state.sessions: dict[str, ChatSession] = {}
-    app.state.current_session_id: str | None = None
-
-    # Create a default session
-    session = ChatSession(api_key=api_key)
-    app.state.sessions[session.session_id] = session
-    app.state.current_session_id = session.session_id
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -1531,6 +1546,32 @@ async def get_file_contents(path: str):
             }
 
         result = await loop.run_in_executor(None, _get_file_contents_sync)
+        return JSONResponse(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/browse/save")
+async def save_file_endpoint(request: SaveFileRequest):
+    try:
+        loop = asyncio.get_event_loop()
+
+        def _save_file_sync():
+            from pathlib import Path
+            path = Path(request.path)
+            # Basic validation: ensure path is real and not a directory
+            if path.exists() and path.is_dir():
+                raise HTTPException(status_code=400, detail="Cannot save to a directory")
+
+            # Write content
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(request.content)
+            return {"status": "success", "path": str(path)}
+
+        result = await loop.run_in_executor(None, _save_file_sync)
         return JSONResponse(result)
     except HTTPException:
         raise
@@ -3056,10 +3097,24 @@ def _html_shell() -> str:
         }
     }
 
+    async function loadScreenshot() {
+        try {
+            const res = await fetch('/api/computer/screenshot');
+            if (res.ok) {
+                const data = await res.json();
+                const screenshotEl = document.getElementById('live-screenshot');
+                screenshotEl.innerHTML = `<img src="data:image/png;base64,${data.image}" alt="Computer Screen" />`;
+            }
+        } catch (e) {
+            console.error('Error loading screenshot:', e);
+        }
+    }
+
     // Refresh dashboard every 10 seconds if open
     setInterval(() => {
         if (dashboardPanel.classList.contains('open')) {
             loadDashboardData();
+            loadScreenshot();
         }
     }, 10000);
     """
@@ -3181,6 +3236,19 @@ def _html_shell() -> str:
                         </div>
                     </div>
                     <div class="dashboard-section">
+                        <div class="section-header">
+                            <h3>Live Screenshot</h3>
+                            <button class="icon-btn small" onclick="loadScreenshot()" title="Refresh">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="live-screenshot" class="live-screenshot">
+                            <div class="loading">No screenshot yet</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-section">
                         <h3>Active Tasks</h3>
                         <div id="tasks-list" class="tasks-list">
                             <div class="loading">Loading...</div>
@@ -3193,6 +3261,19 @@ def _html_shell() -> str:
     </body>
     </html>
     """
+
+
+@app.get("/api/computer/screenshot")
+async def get_latest_screenshot_endpoint():
+    try:
+        from .tools.universal_computer import UniversalComputerTool
+        tool = UniversalComputerTool()
+        result = await tool(action="screenshot")
+        if result.base64_image:
+            return JSONResponse(content={"image": result.base64_image})
+        return JSONResponse(status_code=500, content={"error": "Failed to take screenshot"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def main():

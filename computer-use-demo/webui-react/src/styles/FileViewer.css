@@ -52,6 +52,28 @@
   white-space: nowrap;
 }
 
+.file-viewer-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.edit-btn {
+  background: var(--bg-panel-header);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.edit-btn:hover {
+  background: var(--hover);
+}
+
 .open-btn {
   background: var(--accent);
   border: none;
@@ -63,7 +85,6 @@
   font-weight: 500;
   transition: all var(--transition-fast);
   flex-shrink: 0;
-  margin-left: auto;
 }
 
 .open-btn:hover {
@@ -210,6 +231,55 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-primary);
+}
+
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  gap: 12px;
+}
+
+.file-editor {
+  flex: 1;
+  background: var(--bg-panel-header);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.file-editor:focus {
+  border-color: var(--accent);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.save-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.cancel-btn {
+  background: var(--bg-panel-header);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
 }
 
 .loading {

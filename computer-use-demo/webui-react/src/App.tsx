@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import FileExplorer from './components/FileExplorer'
 import FileViewer from './components/FileViewer'
+import ComputerPanel from './components/ComputerPanel'
 import Chat from './components/Chat'
 import Resizer from './components/Resizer'
 import './styles/App.css'
@@ -14,6 +15,7 @@ function App() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
   const [selectedAgentName, setSelectedAgentName] = useState<string>('CEO Agent')
   const [selectedAgentIcon, setSelectedAgentIcon] = useState<string>('👔')
+  const [dashboardMode, setDashboardMode] = useState<'files' | 'computer'>('files')
 
   const handleSelectAgent = (agentId: string, agentName: string, agentIcon: string) => {
     setSelectedAgentId(agentId)
@@ -54,14 +56,32 @@ function App() {
             onResize={handleExplorerResize}
           />
 
-          {/* File Viewer */}
+          {/* File Viewer / Computer Panel */}
           <div
             className="file-viewer-container"
             style={{ width: `${viewerWidth}px` }}
           >
-            <FileViewer
-              selectedPath={selectedPath}
-            />
+            <div className="dashboard-tabs">
+              <button
+                className={dashboardMode === 'files' ? 'active' : ''}
+                onClick={() => setDashboardMode('files')}
+              >
+                Files
+              </button>
+              <button
+                className={dashboardMode === 'computer' ? 'active' : ''}
+                onClick={() => setDashboardMode('computer')}
+              >
+                Computer
+              </button>
+            </div>
+            {dashboardMode === 'files' ? (
+              <FileViewer
+                selectedPath={selectedPath}
+              />
+            ) : (
+              <ComputerPanel />
+            )}
           </div>
         </div>
       )}

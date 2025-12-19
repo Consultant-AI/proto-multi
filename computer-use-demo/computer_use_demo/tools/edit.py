@@ -41,7 +41,9 @@ class EditTool20250124(BaseAnthropicTool):
         return {
             "name": self.name,
             "type": "custom",
-            "description": "A filesystem editor tool that allows the agent to view, create, and edit files.",
+            "description": "A filesystem editor tool that allows the agent to view, create, and edit files. "
+                           "CRITICAL: When using 'create', you MUST provide the 'file_text' parameter with the FULL content of the file. "
+                           "When using 'str_replace', you MUST provide 'old_str' and 'new_str'.",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -56,7 +58,7 @@ class EditTool20250124(BaseAnthropicTool):
                     },
                     "file_text": {
                         "type": "string",
-                        "description": "The content of the file (required for 'create')",
+                        "description": "The content of the file. This parameter is MANDATORY when command is 'create'.",
                     },
                     "view_range": {
                         "type": "array",
@@ -98,7 +100,10 @@ class EditTool20250124(BaseAnthropicTool):
             return await self.view(_path, view_range)
         elif command == "create":
             if file_text is None:
-                raise ToolError("Parameter `file_text` is required for command: create")
+                raise ToolError(
+                    "Parameter `file_text` is required for command: create. "
+                    "Please call the tool again with: command='create', path='...', file_text='<file content here>'"
+                )
             self.write_file(_path, file_text)
             self._file_history[_path].append(file_text)
             return ToolResult(output=f"File created successfully at: {_path}")
@@ -366,7 +371,7 @@ class EditTool20250429(BaseAnthropicTool):
                     },
                     "file_text": {
                         "type": "string",
-                        "description": "The content of the file (required for 'create')",
+                        "description": "The content of the file. This parameter is MANDATORY when command is 'create'.",
                     },
                     "view_range": {
                         "type": "array",
@@ -408,7 +413,10 @@ class EditTool20250429(BaseAnthropicTool):
             return await self.view(_path, view_range)
         elif command == "create":
             if file_text is None:
-                raise ToolError("Parameter `file_text` is required for command: create")
+                raise ToolError(
+                    "Parameter `file_text` is required for command: create. "
+                    "Please call the tool again with: command='create', path='...', file_text='<file content here>'"
+                )
             self.write_file(_path, file_text)
             self._file_history[_path].append(file_text)
             return ToolResult(output=f"File created successfully at: {_path}")

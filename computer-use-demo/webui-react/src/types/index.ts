@@ -39,6 +39,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  images?: string[];
 }
 
 export interface Session {

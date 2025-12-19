@@ -45,25 +45,48 @@ class APIProvider(StrEnum):
     VERTEX = "vertex"
 
 
-# This system prompt is optimized for the Docker environment in this repository and
+# This system prompt is optimized for the current environment and
 # specific tool combinations enabled.
 # We encourage modifying this system prompt to ensure the model has context for the
 # environment it is running in, and to provide any additional information that may be
 # helpful for the task at hand.
-SYSTEM_PROMPT = f"""<SYSTEM_CAPABILITY>
-* You are controlling an Ubuntu 24.04 LTS system using {platform.machine()} architecture with internet access.
-* The system runs in a Docker container and has the following GUI applications installed:
+import os
+import platform
+
+def get_system_prompt():
+    is_mac = platform.system() == "Darwin"
+    arch = platform.machine()
+    home = os.path.expanduser("~")
+    
+    if is_mac:
+        os_info = f"macOS ({platform.mac_ver()[0]})"
+        gui_apps = """
+  - Google Chrome browser (launch: use computer tool to click icon or open via Terminal)
+  - Visual Studio Code (launch: code --no-sandbox or click icon)
+  - Terminal/iTerm2
+  - Finder for file management
+"""
+    else:
+        os_info = "Ubuntu 24.04 LTS"
+        gui_apps = """
   - Google Chrome browser (launch: google-chrome --no-sandbox or click icon)
   - Firefox browser (launch: firefox or click icon)
   - Visual Studio Code IDE (launch: code --no-sandbox or click icon)
   - LibreOffice Suite (Writer, Calc, Impress)
   - File Manager (PCManFM), Text Editor (gedit), Calculator
-* To launch GUI apps: Use computer tool to click icons OR use bash with DISPLAY=:1
+"""
+
+    return f"""<SYSTEM_CAPABILITY>
+* You are controlling a {os_info} system using {arch} architecture.
+* The system is running LOCALLY on the user's computer (not in a Docker container).
+* GUI applications installed: {gui_apps}
+* To launch GUI apps: Use computer tool to click icons OR use bash.
 * GUI apps may take time to appear. Always take a screenshot to verify they opened.
 * When using your bash tool with commands that are expected to output very large quantities of text, redirect into a tmp file and use str_replace_based_edit_tool or `grep -n -B <lines before> -A <lines after> <query> <filename>` to confirm output.
-* When viewing a page it can be helpful to zoom out so that you can see everything on the page.  Either that, or make sure you scroll down to see everything before deciding something isn't available.
-* When using your computer function calls, they take a while to run and send back to you.  Where possible/feasible, try to chain multiple of these calls all into one function calls request.
+* When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available.
+* When using your computer function calls, they take a while to run and send back to you. Where possible/feasible, try to chain multiple of these calls all into one function calls request.
 * The current date is {datetime.today().strftime('%A, %B %-d, %Y')}.
+* Your home directory is {home}.
 </SYSTEM_CAPABILITY>
 
 <DEFAULT_PROJECT_FOLDER>
@@ -175,6 +198,9 @@ DONE - Task complete!
 - Always finish what user asked for
 - Screenshot after each step to verify progress
 </CRITICAL_WORKFLOWS>"""
+
+SYSTEM_PROMPT = get_system_prompt()
+
 
 
 async def sampling_loop(

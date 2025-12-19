@@ -46,13 +46,22 @@
 
 **High Priority:**
 
+write sinply in bulltes all archtecure ideas and requirments -> then make tasks from it
+
+think of ultimate ui with seeing computers files folders and web
+
+
+qa and fixes to be stable
+all files should be openned and editable like vscode
+in the web ui also can see vms and other chrome
+
 good planning and files
 
 delegations to sub
 
 good context engenriing
 parrallel work on same computer
-using multiple computers like any desk
+using multiple computers like any desk and they control each other
 
 
 - [ ] System stability for autonomous operation and self-monitoring
