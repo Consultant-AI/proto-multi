@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { PanelLeftClose, PanelLeftOpen, User, Square, Send, Plus } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, User, Square, Send, Plus, X } from 'lucide-react'
 import { Message } from '../types'
 import SessionHistory from './SessionHistory'
 import AgentTree from './AgentTree'
 import '../styles/Chat.css'
 
 interface ChatProps {
-  dashboardVisible: boolean
-  agentTreeVisible: boolean
-  onToggleDashboard: () => void
-  onToggleAgentTree: () => void
+  viewerVisible: boolean
+  onToggleViewer: () => void
+  onHideChat?: () => void
   selectedAgentId: string | null
   selectedAgentName: string
   selectedAgentIcon: string
@@ -17,10 +16,9 @@ interface ChatProps {
 }
 
 export default function Chat({
-  dashboardVisible,
-  agentTreeVisible: _agentTreeVisible,
-  onToggleDashboard,
-  onToggleAgentTree: _onToggleAgentTree,
+  viewerVisible,
+  onToggleViewer,
+  onHideChat,
   selectedAgentId,
   selectedAgentName,
   selectedAgentIcon,
@@ -298,11 +296,11 @@ export default function Chat({
         <div className="chat-header-left">
           <button
             type="button"
-            className="toggle-dashboard-btn"
-            onClick={onToggleDashboard}
-            title={dashboardVisible ? 'Hide Explorer' : 'Show Explorer'}
+            className="toggle-viewer-btn"
+            onClick={onToggleViewer}
+            title={viewerVisible ? 'Hide Viewer' : 'Show Viewer'}
           >
-            {dashboardVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            {viewerVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
           <div className="chat-agent-info">
             <span className="chat-agent-icon">{selectedAgentIcon}</span>
@@ -322,6 +320,16 @@ export default function Chat({
           >
             <Plus size={18} />
           </button>
+          {onHideChat && (
+            <button
+              type="button"
+              className="hide-chat-btn"
+              title="Hide Chat"
+              onClick={onHideChat}
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -329,7 +337,7 @@ export default function Chat({
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="chat-empty">
-            <h3>Select a specialist agent to start</h3>
+            <h3>Select a specialist agent and type your request 🙃</h3>
             <div className="embedded-agent-tree">
               <AgentTree
                 onSelectAgent={onSelectAgent}

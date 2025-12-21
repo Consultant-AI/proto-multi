@@ -1,0 +1,125 @@
+.browser-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #1e1e1e;
+    overflow: hidden;
+    outline: none;
+}
+
+.browser-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #3c3c3c;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.nav-actions button {
+    background: transparent;
+    border: none;
+    color: #cccccc;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.nav-actions button:hover {
+    background: #404040;
+    color: #ffffff;
+}
+
+.address-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #1e1e1e;
+    border: 1px solid #3c3c3c;
+    border-radius: 20px;
+    padding: 4px 12px;
+    gap: 8px;
+    margin-right: 8px;
+}
+
+.address-icon {
+    color: #858585;
+}
+
+.address-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #d4d4d4;
+    font-size: 13px;
+    outline: none;
+}
+
+.go-btn {
+    background: transparent;
+    border: none;
+    color: #858585;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 50%;
+    display: flex;
+}
+
+.go-btn:hover {
+    background: #404040;
+    color: #ffffff;
+}
+
+.browser-viewport {
+    flex: 1;
+    background: #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    position: relative;
+}
+
+.browser-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.browser-canvas img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    cursor: crosshair;
+}
+
+.browser-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #858585;
+}
+
+.spin {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

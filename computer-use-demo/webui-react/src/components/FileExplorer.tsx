@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Folder, FolderOpen, File, FileText, FileCode, RefreshCw, Plus } from 'lucide-react'
+import { Folder, FolderOpen, File, FileText, FileCode, RefreshCw, Plus, X } from 'lucide-react'
 import { FileNode, Project } from '../types'
 import '../styles/FileExplorer.css'
 
 interface FileExplorerProps {
   onSelectPath: (path: string) => void
   selectedPath: string | null
+  onToggleVisible?: () => void
 }
 
-export default function FileExplorer({ onSelectPath, selectedPath }: FileExplorerProps) {
+export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisible }: FileExplorerProps) {
   const [, setProjects] = useState<Project[]>([])
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [fileTree, setFileTree] = useState<FileNode[]>([])
@@ -426,6 +427,15 @@ export default function FileExplorer({ onSelectPath, selectedPath }: FileExplore
           >
             <RefreshCw size={16} />
           </button>
+          {onToggleVisible && (
+            <button
+              className="close-explorer-btn"
+              onClick={onToggleVisible}
+              title="Close Explorer"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
 

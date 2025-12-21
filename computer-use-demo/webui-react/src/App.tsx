@@ -1,21 +1,16 @@
 import { useState } from 'react'
-import FileExplorer from './components/FileExplorer'
-import FileViewer from './components/FileViewer'
-import ComputerPanel from './components/ComputerPanel'
+import ViewerTabs from './components/ViewerTabs'
 import Chat from './components/Chat'
 import Resizer from './components/Resizer'
 import './styles/App.css'
 
 function App() {
-  const [dashboardVisible, setDashboardVisible] = useState(true)
-  const [agentTreeVisible, setAgentTreeVisible] = useState(true)
-  const [explorerWidth, setExplorerWidth] = useState(300)
-  const [viewerWidth, setViewerWidth] = useState(400)
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [viewerVisible, setViewerVisible] = useState(true)
+  const [chatVisible, setChatVisible] = useState(true)
+  const [viewerWidth, setViewerWidth] = useState(600)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
   const [selectedAgentName, setSelectedAgentName] = useState<string>('CEO Agent')
   const [selectedAgentIcon, setSelectedAgentIcon] = useState<string>('👔')
-  const [dashboardMode, setDashboardMode] = useState<'files' | 'computer'>('files')
 
   const handleSelectAgent = (agentId: string, agentName: string, agentIcon: string) => {
     setSelectedAgentId(agentId)
@@ -23,71 +18,30 @@ function App() {
     setSelectedAgentIcon(agentIcon)
   }
 
-  const handleExplorerResize = (deltaX: number) => {
-    setExplorerWidth(prev => Math.max(200, Math.min(600, prev + deltaX)))
-  }
-
   const handleViewerResize = (deltaX: number) => {
-    setViewerWidth(prev => Math.max(300, Math.min(800, prev + deltaX)))
+    setViewerWidth(prev => {
+      const newWidth = prev + deltaX
+      // Ensure viewer is at least 300px and leaves at least 200px for chat
+      const maxWidth = window.innerWidth - 200 - 5 // 5px for resizer
+      return Math.max(300, Math.min(maxWidth, newWidth))
+    })
   }
 
   return (
     <div className="app">
-      {/* Dashboard Panel (File Explorer + File Viewer) */}
-      {dashboardVisible && (
-        <div
-          className="dashboard-panel"
-          style={{ width: `${explorerWidth + viewerWidth}px` }}
-        >
-          {/* File Explorer */}
-          <div
-            className="file-explorer-container"
-            style={{ width: `${explorerWidth}px` }}
-          >
-            <FileExplorer
-              onSelectPath={setSelectedPath}
-              selectedPath={selectedPath}
-            />
-          </div>
-
-          {/* Resizer between Explorer and Viewer */}
-          <Resizer
-            orientation="vertical"
-            onResize={handleExplorerResize}
+      {/* Viewer Tabs Panel */}
+      {viewerVisible && (
+        <div className={`viewer-panel ${!chatVisible ? 'viewer-expanded' : ''}`} style={chatVisible ? { width: `${viewerWidth}px` } : {}}>
+          <ViewerTabs
+            onClose={chatVisible ? () => setViewerVisible(false) : undefined}
+            chatVisible={chatVisible}
+            onToggleChat={() => setChatVisible(!chatVisible)}
           />
-
-          {/* File Viewer / Computer Panel */}
-          <div
-            className="file-viewer-container"
-            style={{ width: `${viewerWidth}px` }}
-          >
-            <div className="dashboard-tabs">
-              <button
-                className={dashboardMode === 'files' ? 'active' : ''}
-                onClick={() => setDashboardMode('files')}
-              >
-                Files
-              </button>
-              <button
-                className={dashboardMode === 'computer' ? 'active' : ''}
-                onClick={() => setDashboardMode('computer')}
-              >
-                Computer
-              </button>
-            </div>
-            {dashboardMode === 'files' ? (
-              <FileViewer
-                selectedPath={selectedPath}
-              />
-            ) : (
-              <ComputerPanel />
-            )}
-          </div>
         </div>
       )}
 
-      {/* Resizer between Dashboard and Chat */}
-      {dashboardVisible && (
+      {/* Resizer between Viewer and Chat */}
+      {viewerVisible && chatVisible && (
         <Resizer
           orientation="vertical"
           onResize={handleViewerResize}
@@ -95,18 +49,19 @@ function App() {
       )}
 
       {/* Chat Panel */}
-      <div className="chat-panel">
-        <Chat
-          dashboardVisible={dashboardVisible}
-          agentTreeVisible={agentTreeVisible}
-          onToggleDashboard={() => setDashboardVisible(!dashboardVisible)}
-          onToggleAgentTree={() => setAgentTreeVisible(!agentTreeVisible)}
-          selectedAgentId={selectedAgentId}
-          selectedAgentName={selectedAgentName}
-          selectedAgentIcon={selectedAgentIcon}
-          onSelectAgent={handleSelectAgent}
-        />
-      </div>
+      {chatVisible && (
+        <div className="chat-panel">
+          <Chat
+            viewerVisible={viewerVisible}
+            onToggleViewer={() => setViewerVisible(!viewerVisible)}
+            onHideChat={viewerVisible ? () => setChatVisible(false) : undefined}
+            selectedAgentId={selectedAgentId}
+            selectedAgentName={selectedAgentName}
+            selectedAgentIcon={selectedAgentIcon}
+            onSelectAgent={handleSelectAgent}
+          />
+        </div>
+      )}
     </div>
   )
 }

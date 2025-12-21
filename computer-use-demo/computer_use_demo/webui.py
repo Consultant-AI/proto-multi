@@ -40,6 +40,16 @@ from .logging import get_logger
 from .planning import ProjectManager
 from .daemon import WorkQueue
 
+# Playwright for embedded browser
+try:
+    from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    PLAYWRIGHT_AVAILABLE = False
+    Browser = None
+    BrowserContext = None
+    Page = None
+
 DEFAULT_MODEL = os.getenv("COMPUTER_USE_MODEL", "claude-sonnet-4-5-20250929")
 DEFAULT_TOOL_VERSION = cast(
     ToolVersion, os.getenv("COMPUTER_USE_TOOL_VERSION", "proto_coding_v1")
@@ -522,6 +532,125 @@ class SaveFileRequest(BaseModel):
     content: str
 
 
+class ClickRequest(BaseModel):
+    x: int
+    y: int
+    button: str = "left"
+
+
+class TypeRequest(BaseModel):
+    text: str
+    enter: bool = False
+
+
+class BrowserManager:
+    """Manages headless browser instances for embedded web viewing."""
+
+    def __init__(self):
+        self.playwright = None
+        self.browser: Browser | None = None
+        self.page: Page | None = None
+        self.screenshot_task = None
+        self._latest_screenshot: str | None = None
+        self._screenshot_lock = asyncio.Lock()
+
+    async def start(self):
+        """Initialize playwright and browser."""
+        if not PLAYWRIGHT_AVAILABLE:
+            print("⚠️  Playwright not available. Install with: pip install playwright && playwright install chromium")
+            return
+
+        try:
+            self.playwright = await async_playwright().start()
+            self.browser = await self.playwright.chromium.launch(headless=True)
+            self.page = await self.browser.new_page(viewport={"width": 1280, "height": 720})
+
+            # Start screenshot update loop
+            self.screenshot_task = asyncio.create_task(self._update_screenshot_loop())
+            print("✓ Headless browser initialized")
+        except Exception as e:
+            print(f"⚠️  Failed to initialize browser: {e}")
+
+    async def _update_screenshot_loop(self):
+        """Continuously update screenshot."""
+        while True:
+            try:
+                if self.page:
+                    screenshot_bytes = await self.page.screenshot()
+                    async with self._screenshot_lock:
+                        self._latest_screenshot = base64.b64encode(screenshot_bytes).decode()
+                await asyncio.sleep(0.5)  # Update twice per second
+            except Exception as e:
+                print(f"Screenshot error: {e}")
+                await asyncio.sleep(1)
+
+    async def navigate(self, url: str):
+        """Navigate to a URL."""
+        if not self.page:
+            raise RuntimeError("Browser not initialized")
+        await self.page.goto(url, wait_until="networkidle")
+
+    async def get_screenshot(self) -> tuple[str, dict]:
+        """Get latest screenshot and viewport bounds."""
+        async with self._screenshot_lock:
+            screenshot = self._latest_screenshot or ""
+
+        viewport = self.page.viewport_size if self.page else {"width": 1280, "height": 720}
+        bounds = {
+            "x": 0,
+            "y": 0,
+            "width": viewport["width"],
+            "height": viewport["height"]
+        }
+        return screenshot, bounds
+
+    async def click(self, x: int, y: int):
+        """Click at coordinates."""
+        if not self.page:
+            raise RuntimeError("Browser not initialized")
+        await self.page.mouse.click(x, y)
+
+    async def type_text(self, text: str, press_enter: bool = False):
+        """Type text."""
+        if not self.page:
+            raise RuntimeError("Browser not initialized")
+        await self.page.keyboard.type(text)
+        if press_enter:
+            await self.page.keyboard.press("Enter")
+
+    async def go_back(self):
+        """Navigate back."""
+        if not self.page:
+            raise RuntimeError("Browser not initialized")
+        await self.page.go_back()
+
+    async def go_forward(self):
+        """Navigate forward."""
+        if not self.page:
+            raise RuntimeError("Browser not initialized")
+        await self.page.go_forward()
+
+    async def refresh(self):
+        """Refresh page."""
+        if not self.page:
+            raise RuntimeError("Browser not initialized")
+        await self.page.reload()
+
+    async def stop(self):
+        """Cleanup browser resources."""
+        if self.screenshot_task:
+            self.screenshot_task.cancel()
+            try:
+                await self.screenshot_task
+            except asyncio.CancelledError:
+                pass
+
+        if self.browser:
+            await self.browser.close()
+        if self.playwright:
+            await self.playwright.stop()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create thread pool executor for agent work
@@ -553,7 +682,15 @@ async def lifespan(app: FastAPI):
     app.state.sessions[session.session_id] = session
     app.state.current_session_id = session.session_id
 
+    # Initialize embedded browser
+    app.state.browser_manager = BrowserManager()
+    await app.state.browser_manager.start()
+
     yield
+
+    # Shutdown: clean up browser
+    if hasattr(app.state, "browser_manager"):
+        await app.state.browser_manager.stop()
 
     # Shutdown: clean up executor
     if hasattr(app.state, "agent_executor"):
@@ -3272,6 +3409,77 @@ async def get_latest_screenshot_endpoint():
         if result.base64_image:
             return JSONResponse(content={"image": result.base64_image})
         return JSONResponse(status_code=500, content={"error": "Failed to take screenshot"})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@app.post("/api/computer/browser/navigate")
+async def browser_navigate(request: SendRequest):
+    """Navigate embedded browser to URL."""
+    try:
+        url = request.message
+        if not url.startswith('http'):
+            url = 'https://' + url
+
+        browser_manager = app.state.browser_manager
+        await browser_manager.navigate(url)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/computer/browser/command")
+async def browser_command(request: SendRequest):
+    """Execute browser commands: back, forward, refresh."""
+    try:
+        cmd = request.message.lower()
+        browser_manager = app.state.browser_manager
+
+        if cmd == 'back':
+            await browser_manager.go_back()
+        elif cmd == 'forward':
+            await browser_manager.go_forward()
+        elif cmd == 'refresh':
+            await browser_manager.refresh()
+        else:
+            raise HTTPException(status_code=400, detail="Invalid command")
+
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/computer/browser/screenshot")
+async def get_browser_screenshot():
+    """Get screenshot of embedded browser."""
+    try:
+        browser_manager = app.state.browser_manager
+        screenshot, bounds = await browser_manager.get_screenshot()
+
+        return JSONResponse(content={
+            "image": screenshot,
+            "bounds": bounds
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/computer/browser/click")
+async def browser_click(request: ClickRequest):
+    """Click at coordinates in embedded browser."""
+    try:
+        browser_manager = app.state.browser_manager
+        await browser_manager.click(request.x, request.y)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/computer/browser/type")
+async def browser_type(request: TypeRequest):
+    """Type text in embedded browser."""
+    try:
+        browser_manager = app.state.browser_manager
+        await browser_manager.type_text(request.text, request.enter)
+        return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

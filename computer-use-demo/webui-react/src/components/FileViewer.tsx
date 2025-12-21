@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Folder, File, FileText } from 'lucide-react'
+import { Folder, File, FileText, PanelLeft } from 'lucide-react'
 import { Task } from '../types'
 import TaskViewer from './TaskViewer'
 import '../styles/FileViewer.css'
@@ -7,6 +7,8 @@ import '../styles/FileViewer.css'
 interface FileViewerProps {
   selectedPath: string | null
   onPathChange?: (path: string) => void
+  explorerVisible?: boolean
+  onToggleExplorer?: () => void
 }
 
 interface FolderContents {
@@ -14,7 +16,7 @@ interface FolderContents {
   folders: Array<{ name: string; path: string }>
 }
 
-export default function FileViewer({ selectedPath, onPathChange }: FileViewerProps) {
+export default function FileViewer({ selectedPath, onPathChange, explorerVisible, onToggleExplorer }: FileViewerProps) {
   const [contents, setContents] = useState<FolderContents | null>(null)
   const [fileContent, setFileContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -228,8 +230,19 @@ export default function FileViewer({ selectedPath, onPathChange }: FileViewerPro
     <div className="file-viewer">
       <div className="file-viewer-header">
         <div className="file-viewer-title">
-          <h2>{currentPath.split('/').pop()}</h2>
-          <div className="file-viewer-path">{currentPath}</div>
+          {!explorerVisible && onToggleExplorer && (
+            <button
+              className="show-explorer-title-btn"
+              onClick={onToggleExplorer}
+              title="Show Explorer"
+            >
+              <PanelLeft size={16} />
+            </button>
+          )}
+          <div className="file-viewer-title-text">
+            <h2>{currentPath.split('/').pop()}</h2>
+            <div className="file-viewer-path">{currentPath}</div>
+          </div>
         </div>
         <div className="file-viewer-actions">
           {!isEditing && fileContent && (

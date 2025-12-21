@@ -46,6 +46,29 @@
 
 **High Priority:**
 
+make it like on stich the design there is good and with real data
+
+ 
+fix chromium 
+
+new tab
+bar, files from all computers, all computers previews, terminal 
+bar with url/ file / terminal / computer viewer and under it files, computers, terminals, history of chrome, history of files, history of terminal
+
+one bar for url, file, terminal computer
+
+make tab system browser with tabs for computer view / file view / web view / terminal
+
+one unified tab with all options computer, files, website, terminal
+
+explorer in file
+in the chat you 
+
+choose computer, in chat, in files there is seperations by computers / one to all, to computer viewer choose vm, browser only local, terminal also choose computer, history of chats from all computers
+
+
+proto
+
 write sinply in bulltes all archtecure ideas and requirments -> then make tasks from it
 
 think of ultimate ui with seeing computers files folders and web

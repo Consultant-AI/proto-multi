@@ -27,7 +27,8 @@
 }
 
 .add-path-btn,
-.add-file-btn {
+.add-file-btn,
+.close-explorer-btn {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -44,7 +45,8 @@
 }
 
 .add-path-btn:hover:not(:disabled),
-.add-file-btn:hover:not(:disabled) {
+.add-file-btn:hover:not(:disabled),
+.close-explorer-btn:hover {
   background: var(--hover);
   color: var(--accent);
 }
@@ -53,6 +55,10 @@
 .add-file-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.close-explorer-btn {
+  margin-left: auto;
 }
 
 .refresh-btn {

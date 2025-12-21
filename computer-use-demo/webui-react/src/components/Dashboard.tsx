@@ -1,0 +1,407 @@
+import { useState, useEffect } from 'react'
+import { Folder, FolderOpen, Globe, Monitor, Terminal, Plus, ChevronRight, ChevronDown } from 'lucide-react'
+import ComputerPanel from './ComputerPanel'
+import '../styles/Dashboard.css'
+
+interface DashboardProps {
+  onOpenResource?: (type: 'files' | 'web' | 'computer' | 'terminal', id: string) => void
+}
+
+interface FileNode {
+  name: string
+  path: string
+  type: 'folder' | 'file'
+  children?: FileNode[]
+}
+
+export default function Dashboard({ onOpenResource }: DashboardProps) {
+  const [folders, setFolders] = useState<FileNode[]>([])
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [webPages, setWebPages] = useState<any[]>([])
+  const [computers, setComputers] = useState<any[]>([])
+  const [terminals, setTerminals] = useState<any[]>([])
+  const [history, setHistory] = useState<any[]>([])
+  const [userName, setUserName] = useState('User')
+
+  // Helper to filter out paths that are already contained within another path in the list
+  const filterRedundantPaths = (nodes: FileNode[]): FileNode[] => {
+    return nodes.filter(node => {
+      return !nodes.some(otherNode => {
+        if (otherNode.path === node.path) return false
+        return node.path.startsWith(otherNode.path + '/')
+      })
+    })
+  }
+
+  // Load folder contents during initial setup
+  const loadFolderContentsInitial = async (path: string, currentFolders: FileNode[]) => {
+    try {
+      const isAbsolutePath = path.startsWith('/')
+      const apiPath = isAbsolutePath
+        ? `/api/browse/folder?path=${encodeURIComponent(path)}`
+        : `/api/dashboard/folder?path=${encodeURIComponent(path)}`
+
+      const response = await fetch(apiPath)
+      if (!response.ok) return
+
+      const data = await response.json()
+
+      // Update the folder tree with loaded children
+      const updateTreeNode = (nodes: FileNode[]): FileNode[] => {
+        return nodes.map(node => {
+          if (node.path === path) {
+            const children: FileNode[] = [
+              ...data.folders.map((folder: { name: string; path: string }) => ({
+                name: folder.name,
+                path: folder.path,
+                type: 'folder' as const,
+                children: []
+              })),
+              ...data.files.map((file: { name: string }) => ({
+                name: file.name,
+                path: `${path}/${file.name}`,
+                type: 'file' as const
+              }))
+            ]
+            return { ...node, children }
+          } else if (node.children && node.children.length > 0) {
+            return { ...node, children: updateTreeNode(node.children) }
+          }
+          return node
+        })
+      }
+
+      setFolders(prevFolders => updateTreeNode(prevFolders.length > 0 ? prevFolders : currentFolders))
+    } catch (error) {
+      console.error('Failed to load folder contents:', error)
+    }
+  }
+
+  useEffect(() => {
+    // Fetch real data from backend
+    const fetchData = async () => {
+      try {
+        // Fetch folders from projects endpoint (same as FileExplorer)
+        const projectsRes = await fetch('/api/dashboard/projects')
+        if (projectsRes.ok) {
+          const projects = await projectsRes.json()
+          const projectFolders: FileNode[] = projects.map((project: any) => ({
+            name: project.name,
+            path: project.path,
+            type: 'folder',
+            children: []
+          }))
+
+          // Load custom paths from localStorage (same as FileExplorer)
+          const saved = localStorage.getItem('explorer_custom_paths')
+          let customPaths: FileNode[] = []
+          if (saved) {
+            try {
+              customPaths = JSON.parse(saved)
+            } catch {
+              // Invalid JSON, ignore
+            }
+          }
+
+          // Combine and filter redundant paths
+          const combined = [...customPaths, ...projectFolders]
+          const filtered = filterRedundantPaths(combined)
+          setFolders(filtered)
+
+          // Auto-expand first level folders
+          const firstLevelPaths = new Set(filtered.map(folder => folder.path))
+          setExpandedFolders(firstLevelPaths)
+
+          // Load contents for all first-level folders
+          for (const folder of filtered) {
+            if (folder.type === 'folder') {
+              loadFolderContentsInitial(folder.path, filtered)
+            }
+          }
+        }
+
+        // Fetch web pages
+        const webRes = await fetch('/api/web-pages')
+        if (webRes.ok) setWebPages(await webRes.json())
+
+        // Fetch computers
+        const computersRes = await fetch('/api/computers')
+        if (computersRes.ok) setComputers(await computersRes.json())
+
+        // Fetch terminals
+        const terminalsRes = await fetch('/api/terminals')
+        if (terminalsRes.ok) setTerminals(await terminalsRes.json())
+
+        // Fetch history
+        const historyRes = await fetch('/api/tab-history')
+        if (historyRes.ok) setHistory(await historyRes.json())
+
+        // Fetch user name
+        const userRes = await fetch('/api/user')
+        if (userRes.ok) {
+          const userData = await userRes.json()
+          setUserName(userData.name || 'User')
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const activeComputers = computers.filter(c => c.status === 'active').length
+  const runningTerminals = terminals.filter(t => t.status === 'running').length
+
+  const toggleFolder = async (path: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newExpanded = new Set(expandedFolders)
+    if (newExpanded.has(path)) {
+      newExpanded.delete(path)
+    } else {
+      newExpanded.add(path)
+      // Load folder contents if not already loaded
+      await loadFolderContents(path)
+    }
+    setExpandedFolders(newExpanded)
+  }
+
+  const loadFolderContents = async (path: string) => {
+    try {
+      const isAbsolutePath = path.startsWith('/')
+      const apiPath = isAbsolutePath
+        ? `/api/browse/folder?path=${encodeURIComponent(path)}`
+        : `/api/dashboard/folder?path=${encodeURIComponent(path)}`
+
+      const response = await fetch(apiPath)
+      if (!response.ok) return
+
+      const data = await response.json()
+
+      // Update the folder tree with loaded children
+      const updateTreeNode = (nodes: FileNode[]): FileNode[] => {
+        return nodes.map(node => {
+          if (node.path === path) {
+            const children: FileNode[] = [
+              ...data.folders.map((folder: { name: string; path: string }) => ({
+                name: folder.name,
+                path: folder.path,
+                type: 'folder' as const,
+                children: []
+              })),
+              ...data.files.map((file: { name: string }) => ({
+                name: file.name,
+                path: `${path}/${file.name}`,
+                type: 'file' as const
+              }))
+            ]
+            return { ...node, children }
+          } else if (node.children && node.children.length > 0) {
+            return { ...node, children: updateTreeNode(node.children) }
+          }
+          return node
+        })
+      }
+
+      setFolders(updateTreeNode(folders))
+    } catch (error) {
+      console.error('Failed to load folder contents:', error)
+    }
+  }
+
+  const renderFolder = (folder: FileNode, level: number = 0) => {
+    const isExpanded = expandedFolders.has(folder.path)
+    const hasChildren = folder.children && folder.children.length > 0
+
+    return (
+      <div key={folder.path} className="folder-tree-item">
+        <div
+          className="folder-item"
+          style={{ paddingLeft: `${level * 16 + 8}px` }}
+          onClick={() => onOpenResource?.('files', folder.path)}
+        >
+          {folder.type === 'folder' && (
+            <span className="folder-chevron" onClick={(e) => toggleFolder(folder.path, e)}>
+              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </span>
+          )}
+          {folder.type === 'folder' ? (
+            isExpanded ? <FolderOpen size={16} /> : <Folder size={16} />
+          ) : null}
+          <span className="folder-name">{folder.name}</span>
+        </div>
+        {isExpanded && hasChildren && (
+          <div className="folder-children">
+            {folder.children!.map(child => renderFolder(child, level + 1))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <div className="dashboard-greeting">
+          <h1>Good Morning, {userName}</h1>
+          <p>{activeComputers} active instances. {runningTerminals} terminals running.</p>
+        </div>
+        <div className="dashboard-search">
+          <input
+            type="text"
+            placeholder="Search files, commands, URLs, or servers... (Ctrl+K)"
+            className="dashboard-search-input"
+          />
+          <button className="viewers-btn">
+            <span>Viewers</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="dashboard-content">
+        {/* FOLDERS Section */}
+        <section className="dashboard-section">
+          <div className="section-header">
+            <Folder size={16} />
+            <h2>FOLDERS</h2>
+          </div>
+          <div className="resource-grid folder-tree">
+            {folders.length > 0 ? (
+              <>
+                {folders.map((folder) => renderFolder(folder))}
+                <div className="resource-card new-resource">
+                  <Plus size={20} />
+                  <span>New Folder</span>
+                </div>
+              </>
+            ) : (
+              <div className="resource-card new-resource">
+                <Plus size={20} />
+                <span>New Folder</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* WEB PAGES Section */}
+        <section className="dashboard-section">
+          <div className="section-header">
+            <Globe size={16} />
+            <h2>WEB PAGES</h2>
+            {webPages.length > 0 && <span className="badge">{webPages.length} Active</span>}
+          </div>
+          <div className="resource-grid">
+            {webPages.map((page) => (
+              <div key={page.id} className="resource-card" onClick={() => onOpenResource?.('web', page.id)}>
+                <div className="card-icon">
+                  <span>{page.icon || '🌐'}</span>
+                </div>
+                <div className="card-info">
+                  <div className="card-title">{page.title}</div>
+                  <div className="card-subtitle">{page.url}</div>
+                </div>
+                <button className="card-close">×</button>
+              </div>
+            ))}
+            <div className="resource-card new-resource dashed">
+              <span>🔗</span>
+              <span>New Tab</span>
+            </div>
+          </div>
+        </section>
+
+        {/* COMPUTERS Section */}
+        <section className="dashboard-section">
+          <div className="section-header">
+            <Monitor size={16} />
+            <h2>COMPUTERS</h2>
+            {activeComputers > 0 && <span className="badge">{activeComputers} Active</span>}
+          </div>
+          <div className="resource-grid">
+            {/* Live Computer Preview */}
+            <div className="resource-card computer-preview-card" onClick={() => onOpenResource?.('computer', 'main')}>
+              <ComputerPanel />
+            </div>
+
+            {computers.map((computer) => (
+              <div key={computer.id} className="resource-card" onClick={() => onOpenResource?.('computer', computer.id)}>
+                <div className="card-icon">
+                  <span>{computer.icon || '💻'}</span>
+                </div>
+                <div className="card-info">
+                  <div className="card-title">{computer.name}</div>
+                  <div className="card-subtitle">{computer.os} • {computer.status}</div>
+                </div>
+                <div className={`card-indicator ${computer.status}`}></div>
+              </div>
+            ))}
+            {computers.length === 0 && (
+              <div className="resource-card suspended">
+                <span>No computers available</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* TERMINALS Section */}
+        <section className="dashboard-section">
+          <div className="section-header">
+            <Terminal size={16} />
+            <h2>TERMINALS</h2>
+            {runningTerminals > 0 && <span className="badge running">{runningTerminals} Running</span>}
+          </div>
+          <div className="resource-grid">
+            {terminals.map((terminal) => (
+              <div key={terminal.id} className="resource-card terminal-card" onClick={() => onOpenResource?.('terminal', terminal.id)}>
+                <div className={`card-indicator ${terminal.status}`}></div>
+                <div className="card-info">
+                  <div className="card-title">{terminal.title}</div>
+                  <div className="terminal-preview">
+                    {terminal.preview}
+                  </div>
+                </div>
+                <button className="card-external">⧉</button>
+              </div>
+            ))}
+            {terminals.length === 0 && (
+              <div className="resource-card suspended">
+                <span>No terminals running</span>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* UNIFIED TAB HISTORY */}
+        <section className="dashboard-section full-width">
+          <div className="section-header">
+            <span>🕐</span>
+            <h2>UNIFIED TAB HISTORY</h2>
+            <a href="#" className="view-all">View Full History</a>
+          </div>
+          <div className="history-list">
+            {history.length > 0 ? (
+              history.map((item) => (
+                <div key={item.id} className="history-item">
+                  <div className="history-icon">{item.icon || '📄'}</div>
+                  <div className="history-info">
+                    <div className="history-title">{item.title}</div>
+                    <div className="history-subtitle">{item.subtitle}</div>
+                  </div>
+                  <div className="history-time">{item.time}</div>
+                </div>
+              ))
+            ) : (
+              <div className="history-item">
+                <div className="history-icon">📭</div>
+                <div className="history-info">
+                  <div className="history-title">No history available</div>
+                  <div className="history-subtitle">Start browsing to build your history</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}

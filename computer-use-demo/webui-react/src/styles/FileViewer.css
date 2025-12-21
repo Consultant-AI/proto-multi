@@ -35,6 +35,35 @@
 .file-viewer-title {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.show-explorer-title-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.show-explorer-title-btn:hover {
+  background: var(--hover);
+  color: var(--accent);
+}
+
+.file-viewer-title-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .file-viewer-header h2 {
