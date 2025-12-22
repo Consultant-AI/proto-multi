@@ -7,7 +7,7 @@ Enables agents to create, update, and query tasks within projects.
 from pathlib import Path
 from typing import Any, Optional
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ...planning.project_manager import ProjectManager
 from ...planning.task_manager import TaskManager, TaskPriority, TaskStatus
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult

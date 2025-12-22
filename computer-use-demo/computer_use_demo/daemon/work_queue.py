@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import uuid4
 
-from ..logging import get_logger
+from ..proto_logging import get_logger
 
 
 class WorkStatus(str, Enum):

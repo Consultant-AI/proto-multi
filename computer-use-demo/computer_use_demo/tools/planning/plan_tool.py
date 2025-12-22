@@ -7,7 +7,7 @@ Enables agents to create and manage planning documents for complex tasks.
 from anthropic import Anthropic
 from anthropic.types.beta import BetaMessageParam
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ...planning import DocumentType, PlanningDocuments, ProjectManager, TaskComplexityAnalyzer
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 

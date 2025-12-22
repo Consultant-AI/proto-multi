@@ -4,7 +4,7 @@ Read Planning Tool for Proto Multi-Agent System.
 Enables agents to read and access planning documents and project context.
 """
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ...planning import DocumentType, ProjectManager
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 

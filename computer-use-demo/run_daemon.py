@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from computer_use_demo.daemon import CompanyOrchestrator, WorkPriority
-from computer_use_demo.logging import get_logger
+from computer_use_demo.proto_logging import get_logger
 
 
 async def run_daemon(

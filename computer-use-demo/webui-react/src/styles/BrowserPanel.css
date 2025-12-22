@@ -110,6 +110,19 @@
     color: #858585;
 }
 
+.connection-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 107, 107, 0.9);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 100;
+}
+
 .spin {
     animation: spin 2s linear infinite;
 }

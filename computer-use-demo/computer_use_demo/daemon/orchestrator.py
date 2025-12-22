@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from ..agents import create_agent_by_name
-from ..logging import get_logger
+from ..proto_logging import get_logger
 from ..planning import ProjectManager
 from .work_queue import WorkItem, WorkPriority, WorkQueue, WorkStatus
 

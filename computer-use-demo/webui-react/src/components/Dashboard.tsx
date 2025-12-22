@@ -21,7 +21,6 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
   const [computers, setComputers] = useState<any[]>([])
   const [terminals, setTerminals] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
-  const [userName, setUserName] = useState('User')
 
   // Helper to filter out paths that are already contained within another path in the list
   const filterRedundantPaths = (nodes: FileNode[]): FileNode[] => {
@@ -135,13 +134,6 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
         // Fetch history
         const historyRes = await fetch('/api/tab-history')
         if (historyRes.ok) setHistory(await historyRes.json())
-
-        // Fetch user name
-        const userRes = await fetch('/api/user')
-        if (userRes.ok) {
-          const userData = await userRes.json()
-          setUserName(userData.name || 'User')
-        }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error)
       }
@@ -241,23 +233,6 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
 
   return (
     <div className="dashboard">
-      <div className="dashboard-header">
-        <div className="dashboard-greeting">
-          <h1>Good Morning, {userName}</h1>
-          <p>{activeComputers} active instances. {runningTerminals} terminals running.</p>
-        </div>
-        <div className="dashboard-search">
-          <input
-            type="text"
-            placeholder="Search files, commands, URLs, or servers... (Ctrl+K)"
-            className="dashboard-search-input"
-          />
-          <button className="viewers-btn">
-            <span>Viewers</span>
-          </button>
-        </div>
-      </div>
-
       <div className="dashboard-content">
         {/* FOLDERS Section */}
         <section className="dashboard-section">
@@ -271,13 +246,13 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                 {folders.map((folder) => renderFolder(folder))}
                 <div className="resource-card new-resource">
                   <Plus size={20} />
-                  <span>New Folder</span>
+                  <span>New File/Folder</span>
                 </div>
               </>
             ) : (
               <div className="resource-card new-resource">
                 <Plus size={20} />
-                <span>New Folder</span>
+                <span>New File/Folder</span>
               </div>
             )}
           </div>
@@ -304,8 +279,8 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
               </div>
             ))}
             <div className="resource-card new-resource dashed">
-              <span>🔗</span>
-              <span>New Tab</span>
+              <Plus size={20} />
+              <span>New Website</span>
             </div>
           </div>
         </section>
@@ -335,11 +310,10 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                 <div className={`card-indicator ${computer.status}`}></div>
               </div>
             ))}
-            {computers.length === 0 && (
-              <div className="resource-card suspended">
-                <span>No computers available</span>
-              </div>
-            )}
+            <div className="resource-card new-resource">
+              <Plus size={20} />
+              <span>New Computer</span>
+            </div>
           </div>
         </section>
 
@@ -363,19 +337,18 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                 <button className="card-external">⧉</button>
               </div>
             ))}
-            {terminals.length === 0 && (
-              <div className="resource-card suspended">
-                <span>No terminals running</span>
-              </div>
-            )}
+            <div className="resource-card new-resource">
+              <Plus size={20} />
+              <span>New Terminal</span>
+            </div>
           </div>
         </section>
 
-        {/* UNIFIED TAB HISTORY */}
+        {/* TAB HISTORY */}
         <section className="dashboard-section full-width">
           <div className="section-header">
             <span>🕐</span>
-            <h2>UNIFIED TAB HISTORY</h2>
+            <h2>TAB HISTORY</h2>
             <a href="#" className="view-all">View Full History</a>
           </div>
           <div className="history-list">
@@ -391,12 +364,8 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                 </div>
               ))
             ) : (
-              <div className="history-item">
-                <div className="history-icon">📭</div>
-                <div className="history-info">
-                  <div className="history-title">No history available</div>
-                  <div className="history-subtitle">Start browsing to build your history</div>
-                </div>
+              <div className="no-history-message">
+                No history yet
               </div>
             )}
           </div>

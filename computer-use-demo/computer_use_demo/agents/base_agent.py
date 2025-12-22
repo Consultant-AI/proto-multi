@@ -11,7 +11,7 @@ from typing import Any, Literal
 from anthropic import Anthropic
 from anthropic.types import Message, TextBlock
 
-from ..logging import get_logger
+from ..proto_logging import get_logger
 from ..tools.collection import ToolCollection
 
 AgentRole = Literal["ceo", "marketing", "development", "design", "analytics", "content", "research"]

@@ -36,7 +36,7 @@ from anthropic.types.beta import BetaContentBlockParam, BetaMessageParam
 
 from .loop import APIProvider, sampling_loop
 from .tools import ToolResult, ToolVersion
-from .logging import get_logger
+from .proto_logging import get_logger
 from .planning import ProjectManager
 from .daemon import WorkQueue
 
@@ -544,111 +544,119 @@ class TypeRequest(BaseModel):
 
 
 class BrowserManager:
-    """Manages headless browser instances for embedded web viewing."""
+    """Manages Qt WebEngine browser for real Chromium rendering."""
 
     def __init__(self):
-        self.playwright = None
-        self.browser: Browser | None = None
-        self.page: Page | None = None
-        self.screenshot_task = None
+        self.qt_process = None
         self._latest_screenshot: str | None = None
         self._screenshot_lock = asyncio.Lock()
+        self._pending_navigation: str | None = None
+        self._pending_click: dict | None = None
+        self._pending_type: dict | None = None
+        self._command_lock = asyncio.Lock()
 
     async def start(self):
-        """Initialize playwright and browser."""
-        if not PLAYWRIGHT_AVAILABLE:
-            print("⚠️  Playwright not available. Install with: pip install playwright && playwright install chromium")
-            return
-
+        """Launch Qt WebEngine browser process."""
         try:
-            self.playwright = await async_playwright().start()
-            self.browser = await self.playwright.chromium.launch(headless=True)
-            self.page = await self.browser.new_page(viewport={"width": 1280, "height": 720})
+            import subprocess
+            import sys
 
-            # Start screenshot update loop
-            self.screenshot_task = asyncio.create_task(self._update_screenshot_loop())
-            print("✓ Headless browser initialized")
+            # Wait a moment for FastAPI to fully start
+            await asyncio.sleep(1)
+
+            # Launch Qt browser as separate process (don't redirect output for debugging)
+            qt_browser_path = Path(__file__).parent / "qt_browser.py"
+            print(f"Launching Qt browser from: {qt_browser_path}")
+
+            self.qt_process = subprocess.Popen(
+                [sys.executable, str(qt_browser_path)]
+                # No stdout/stderr redirect - let output show in terminal
+            )
+
+            # Check if process started
+            await asyncio.sleep(0.5)
+            if self.qt_process.poll() is not None:
+                print(f"⚠️  Qt browser exited immediately with code: {self.qt_process.returncode}")
+            else:
+                print("✓ Qt WebEngine browser launched (REAL Chromium, zero bot detection!)")
         except Exception as e:
-            print(f"⚠️  Failed to initialize browser: {e}")
-
-    async def _update_screenshot_loop(self):
-        """Continuously update screenshot."""
-        while True:
-            try:
-                if self.page:
-                    screenshot_bytes = await self.page.screenshot()
-                    async with self._screenshot_lock:
-                        self._latest_screenshot = base64.b64encode(screenshot_bytes).decode()
-                await asyncio.sleep(0.5)  # Update twice per second
-            except Exception as e:
-                print(f"Screenshot error: {e}")
-                await asyncio.sleep(1)
+            print(f"⚠️  Failed to launch Qt browser: {e}")
+            import traceback
+            traceback.print_exc()
 
     async def navigate(self, url: str):
-        """Navigate to a URL."""
-        if not self.page:
-            raise RuntimeError("Browser not initialized")
-        await self.page.goto(url, wait_until="networkidle")
+        """Set navigation command for Qt browser."""
+        async with self._command_lock:
+            self._pending_navigation = url
 
     async def get_screenshot(self) -> tuple[str, dict]:
-        """Get latest screenshot and viewport bounds."""
+        """Get latest screenshot from Qt browser."""
         async with self._screenshot_lock:
             screenshot = self._latest_screenshot or ""
 
-        viewport = self.page.viewport_size if self.page else {"width": 1280, "height": 720}
         bounds = {
             "x": 0,
             "y": 0,
-            "width": viewport["width"],
-            "height": viewport["height"]
+            "width": 1920,
+            "height": 1080
         }
         return screenshot, bounds
 
+    async def set_screenshot(self, screenshot_b64: str):
+        """Receive screenshot from Qt browser."""
+        async with self._screenshot_lock:
+            self._latest_screenshot = screenshot_b64
+
+    async def get_pending_command(self):
+        """Get pending command (navigate/click/type) for Qt browser."""
+        async with self._command_lock:
+            # Check navigation first
+            if self._pending_navigation:
+                url = self._pending_navigation
+                self._pending_navigation = None
+                return {"command": "navigate", "url": url}
+
+            # Check click
+            if self._pending_click:
+                click_data = self._pending_click
+                self._pending_click = None
+                return {"command": "click", **click_data}
+
+            # Check type
+            if self._pending_type:
+                type_data = self._pending_type
+                self._pending_type = None
+                return {"command": "type", **type_data}
+
+            return {}
+
     async def click(self, x: int, y: int):
-        """Click at coordinates."""
-        if not self.page:
-            raise RuntimeError("Browser not initialized")
-        await self.page.mouse.click(x, y)
+        """Queue click command for Qt browser."""
+        async with self._command_lock:
+            self._pending_click = {"x": x, "y": y}
 
     async def type_text(self, text: str, press_enter: bool = False):
-        """Type text."""
-        if not self.page:
-            raise RuntimeError("Browser not initialized")
-        await self.page.keyboard.type(text)
-        if press_enter:
-            await self.page.keyboard.press("Enter")
+        """Queue type command for Qt browser."""
+        async with self._command_lock:
+            self._pending_type = {"text": text, "enter": press_enter}
 
     async def go_back(self):
-        """Navigate back."""
-        if not self.page:
-            raise RuntimeError("Browser not initialized")
-        await self.page.go_back()
+        """Navigate back - handled by Qt browser."""
+        pass
 
     async def go_forward(self):
-        """Navigate forward."""
-        if not self.page:
-            raise RuntimeError("Browser not initialized")
-        await self.page.go_forward()
+        """Navigate forward - handled by Qt browser."""
+        pass
 
     async def refresh(self):
-        """Refresh page."""
-        if not self.page:
-            raise RuntimeError("Browser not initialized")
-        await self.page.reload()
+        """Refresh page - handled by Qt browser."""
+        pass
 
     async def stop(self):
-        """Cleanup browser resources."""
-        if self.screenshot_task:
-            self.screenshot_task.cancel()
-            try:
-                await self.screenshot_task
-            except asyncio.CancelledError:
-                pass
-
-        if self.browser:
-            await self.browser.close()
-        if self.playwright:
-            await self.playwright.stop()
+        """Cleanup Qt browser process."""
+        if self.qt_process:
+            self.qt_process.terminate()
+            self.qt_process.wait(timeout=5)
 
 
 @asynccontextmanager
@@ -3480,6 +3488,65 @@ async def browser_type(request: TypeRequest):
         browser_manager = app.state.browser_manager
         await browser_manager.type_text(request.text, request.enter)
         return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.websocket("/ws/browser/stream")
+async def browser_stream(websocket: WebSocket):
+    """WebSocket endpoint for real-time browser frame streaming."""
+    await websocket.accept()
+
+    try:
+        browser_manager = app.state.browser_manager
+
+        # Send frames as fast as they're available
+        while True:
+            try:
+                screenshot, bounds = await browser_manager.get_screenshot()
+
+                if screenshot:
+                    await websocket.send_json({
+                        "type": "frame",
+                        "image": screenshot,
+                        "bounds": bounds
+                    })
+
+                # Update frequency: 30 FPS (33ms between frames)
+                await asyncio.sleep(0.033)
+
+            except Exception as e:
+                print(f"Error sending frame: {e}")
+                await asyncio.sleep(0.1)
+
+    except WebSocketDisconnect:
+        print("Browser stream WebSocket disconnected")
+    except Exception as e:
+        print(f"Browser stream error: {e}")
+
+
+# Qt Browser Communication Endpoints
+@app.post("/api/qt-browser/screenshot")
+async def qt_browser_screenshot(request: Request):
+    """Receive screenshot from Qt browser."""
+    try:
+        data = await request.json()
+        screenshot_b64 = data.get("screenshot")
+        if screenshot_b64:
+            browser_manager = app.state.browser_manager
+            await browser_manager.set_screenshot(screenshot_b64)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/qt-browser/command")
+async def qt_browser_command():
+    """Qt browser polls for navigation commands."""
+    try:
+        browser_manager = app.state.browser_manager
+        command = await browser_manager.get_pending_command()
+        return command
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

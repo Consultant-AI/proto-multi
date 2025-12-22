@@ -442,13 +442,15 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
         </div>
 
         <div className="viewer-header-controls">
-          <button
-            className="toggle-chat-btn"
-            onClick={onToggleChat}
-            title={chatVisible ? 'Hide Chat' : 'Show Chat'}
-          >
-            <MessageSquare size={16} />
-          </button>
+          {!chatVisible && (
+            <button
+              className="toggle-chat-btn"
+              onClick={onToggleChat}
+              title="Show Chat"
+            >
+              <MessageSquare size={16} />
+            </button>
+          )}
           {onClose && (
             <button className="viewer-close-btn" onClick={onClose} title="Close Viewer">
               <X size={16} />

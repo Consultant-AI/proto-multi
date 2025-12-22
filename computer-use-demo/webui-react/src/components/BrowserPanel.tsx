@@ -18,25 +18,56 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
     const [bounds, setBounds] = useState<ScreenBounds | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const imageRef = useRef<HTMLImageElement>(null)
+    const wsRef = useRef<WebSocket | null>(null)
     const [hasNavigated, setHasNavigated] = useState(false)
+    const [connected, setConnected] = useState(false)
 
-    const fetchScreenshot = async () => {
-        try {
-            const response = await fetch('/api/computer/browser/screenshot')
-            if (response.ok) {
-                const data = await response.json()
-                setScreenshot(data.image)
-                setBounds(data.bounds)
-            }
-        } catch (error) {
-            console.error('Failed to fetch browser screenshot:', error)
-        }
-    }
-
+    // WebSocket connection for real-time frame streaming
     useEffect(() => {
-        fetchScreenshot()
-        const interval = setInterval(fetchScreenshot, 1000) // Fast refresh for interaction
-        return () => clearInterval(interval)
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        const wsUrl = `${protocol}//${window.location.host}/ws/browser/stream`
+
+        const connectWebSocket = () => {
+            const ws = new WebSocket(wsUrl)
+
+            ws.onopen = () => {
+                console.log('Browser WebSocket connected')
+                setConnected(true)
+            }
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data)
+                    if (data.type === 'frame') {
+                        setScreenshot(data.image)
+                        setBounds(data.bounds)
+                    }
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error)
+                }
+            }
+
+            ws.onerror = (error) => {
+                console.error('Browser WebSocket error:', error)
+            }
+
+            ws.onclose = () => {
+                console.log('Browser WebSocket closed, reconnecting...')
+                setConnected(false)
+                // Reconnect after 1 second
+                setTimeout(connectWebSocket, 1000)
+            }
+
+            wsRef.current = ws
+        }
+
+        connectWebSocket()
+
+        return () => {
+            if (wsRef.current) {
+                wsRef.current.close()
+            }
+        }
     }, [])
 
     // Auto-navigate when URL prop changes
@@ -109,16 +140,21 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
                     <div className="browser-canvas">
                         <img
                             ref={imageRef}
-                            src={`data:image/png;base64,${screenshot}`}
-                            alt="Chromium Viewport"
+                            src={`data:image/jpeg;base64,${screenshot}`}
+                            alt="Chromium Browser"
                             onClick={handleInteraction}
                             draggable={false}
                         />
+                        {!connected && (
+                            <div className="connection-status">
+                                <span>Reconnecting...</span>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="browser-loading">
                         <RotateCw size={48} className="spin" />
-                        <p>Connecting to Chromium...</p>
+                        <p>Connecting to Real Chromium Browser...</p>
                     </div>
                 )}
             </div>

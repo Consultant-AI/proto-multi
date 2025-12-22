@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Type
 
 from ..agents.base_agent import BaseAgent
-from ..logging import get_logger
+from ..proto_logging import get_logger
 from .test_case import TestResult, TestStatus, TestSuite
 
 

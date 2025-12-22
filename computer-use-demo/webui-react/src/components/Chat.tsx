@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { PanelLeftClose, PanelLeftOpen, User, Square, Send, Plus, X } from 'lucide-react'
+import { PanelLeftOpen, User, Square, Send, Plus, X, Mic } from 'lucide-react'
 import { Message } from '../types'
 import SessionHistory from './SessionHistory'
 import AgentTree from './AgentTree'
@@ -29,8 +29,13 @@ export default function Chat({
   const [isStreaming, setIsStreaming] = useState(false)
   const [_currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [sessionRefreshTrigger, setSessionRefreshTrigger] = useState(0)
+  const [selectedComputer, setSelectedComputer] = useState('local')
+  const [selectedMode, setSelectedMode] = useState('edit-auto')
+  const [selectedTools, setSelectedTools] = useState<string[]>(['files', 'bash', 'computer', 'mouse', 'keyboard'])
+  const [toolsDropdownOpen, setToolsDropdownOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const websocketRef = useRef<WebSocket | null>(null)
+  const toolsDropdownRef = useRef<HTMLDivElement>(null)
 
   // Establish persistent WebSocket connection on mount
   useEffect(() => {
@@ -191,6 +196,31 @@ export default function Chat({
     scrollToBottom()
   }, [messages])
 
+  // Close tools dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(event.target as Node)) {
+        setToolsDropdownOpen(false)
+      }
+    }
+
+    if (toolsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [toolsDropdownOpen])
+
+  const toggleTool = (tool: string) => {
+    setSelectedTools(prev =>
+      prev.includes(tool)
+        ? prev.filter(t => t !== tool)
+        : [...prev, tool]
+    )
+  }
+
   const handleSend = async () => {
     if (!input.trim() || isStreaming) return
 
@@ -294,14 +324,16 @@ export default function Chat({
       {/* Header */}
       <div className="chat-header">
         <div className="chat-header-left">
-          <button
-            type="button"
-            className="toggle-viewer-btn"
-            onClick={onToggleViewer}
-            title={viewerVisible ? 'Hide Viewer' : 'Show Viewer'}
-          >
-            {viewerVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
-          </button>
+          {!viewerVisible && (
+            <button
+              type="button"
+              className="toggle-viewer-btn"
+              onClick={onToggleViewer}
+              title="Show Viewer"
+            >
+              <PanelLeftOpen size={18} />
+            </button>
+          )}
           <div className="chat-agent-info">
             <span className="chat-agent-icon">{selectedAgentIcon}</span>
             <div className="chat-agent-name">{selectedAgentName}</div>
@@ -395,29 +427,164 @@ export default function Chat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder="Ask Codex to do anything"
             disabled={isStreaming}
             rows={1}
           />
-          {isStreaming ? (
+          <div className="chat-input-buttons">
             <button
               type="button"
-              className="stop-btn"
-              onClick={handleStop}
-              title="Stop"
+              className="input-action-btn"
+              title="Add attachment"
             >
-              <Square size={18} />
+              <Plus size={20} />
             </button>
-          ) : (
+            <div className="input-dropdown-group">
+              <select
+                className="input-dropdown"
+                value={selectedComputer}
+                onChange={(e) => setSelectedComputer(e.target.value)}
+              >
+                <option value="local">Local Computer</option>
+                <option value="remote1">Remote Computer 1</option>
+                <option value="remote2">Remote Computer 2</option>
+              </select>
+              <select
+                className="input-dropdown"
+                value={selectedMode}
+                onChange={(e) => setSelectedMode(e.target.value)}
+              >
+                <option value="planning">Planning</option>
+                <option value="edit-auto">Edit automatically</option>
+                <option value="ask-before-edit">Ask before edit</option>
+              </select>
+              <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
+                <button
+                  type="button"
+                  className="input-dropdown tools-dropdown-button"
+                  onClick={() => setToolsDropdownOpen(!toolsDropdownOpen)}
+                >
+                  Tools ({selectedTools.length})
+                </button>
+                {toolsDropdownOpen && (
+                  <div className="tools-dropdown-menu">
+                    <div className="tools-section">
+                      <div className="tools-section-label">Core Tools</div>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('files')}
+                          onChange={() => toggleTool('files')}
+                        />
+                        <span>Modifying Files</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('bash')}
+                          onChange={() => toggleTool('bash')}
+                        />
+                        <span>Bash Commands</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('computer')}
+                          onChange={() => toggleTool('computer')}
+                        />
+                        <span>Computer Vision</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('mouse')}
+                          onChange={() => toggleTool('mouse')}
+                        />
+                        <span>Mouse Control</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('keyboard')}
+                          onChange={() => toggleTool('keyboard')}
+                        />
+                        <span>Keyboard Control</span>
+                      </label>
+                    </div>
+                    <div className="tools-section">
+                      <div className="tools-section-label">Apps</div>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('drive')}
+                          onChange={() => toggleTool('drive')}
+                        />
+                        <span>Google Drive</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('notion')}
+                          onChange={() => toggleTool('notion')}
+                        />
+                        <span>Notion</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('calendar')}
+                          onChange={() => toggleTool('calendar')}
+                        />
+                        <span>Calendar</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('gmail')}
+                          onChange={() => toggleTool('gmail')}
+                        />
+                        <span>Gmail</span>
+                      </label>
+                      <label className="tool-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedTools.includes('mcp')}
+                          onChange={() => toggleTool('mcp')}
+                        />
+                        <span>Custom MCP</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             <button
               type="button"
-              className="send-btn"
-              onClick={handleSend}
-              disabled={!input.trim()}
+              className="mic-btn"
+              title="Voice input"
             >
-              <Send size={18} />
+              <Mic size={18} />
             </button>
-          )}
+            {isStreaming ? (
+              <button
+                type="button"
+                className="send-btn"
+                onClick={handleStop}
+                title="Stop"
+              >
+                <Square size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="send-btn"
+                onClick={handleSend}
+                disabled={!input.trim()}
+              >
+                <Send size={18} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

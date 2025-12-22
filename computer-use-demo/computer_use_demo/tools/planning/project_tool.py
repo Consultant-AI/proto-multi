@@ -6,7 +6,7 @@ Enables agents to list, select, and manage projects.
 
 from typing import Any, Optional
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ...planning.project_manager import ProjectManager
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 

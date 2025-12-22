@@ -7,7 +7,7 @@ Enables agents to store and retrieve knowledge within projects.
 from pathlib import Path
 from typing import Any, Optional
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ...planning.knowledge_store import KnowledgeStore, KnowledgeType
 from ...planning.project_manager import ProjectManager
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult

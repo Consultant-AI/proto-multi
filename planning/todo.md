@@ -48,6 +48,8 @@
 
 make it like on stich the design there is good and with real data
 
+add tool selection
+image support in the chat + files
  
 fix chromium 
 

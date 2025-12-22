@@ -6,7 +6,7 @@ Enables CEO agent to delegate tasks to specialist agents.
 
 from typing import TYPE_CHECKING, Any
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ...planning import ProjectManager
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 

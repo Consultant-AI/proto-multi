@@ -6,7 +6,7 @@ Enables agents to add work to the continuous operation queue.
 
 from typing import Any, Optional, TYPE_CHECKING
 
-from ...logging import get_logger
+from ...proto_logging import get_logger
 from ..base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 
 if TYPE_CHECKING:
