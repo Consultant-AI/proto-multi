@@ -229,14 +229,28 @@ async def sampling_loop(
     tool_group = TOOL_GROUPS_BY_VERSION[tool_version]
 
     # Instantiate tools, passing api_key and progress callback to tools that need it
+    # For DelegateTaskTool, we need to pass tools after they're all created
     tools = []
-    for ToolCls in tool_group.tools:
+    delegate_tool_index = None
+
+    for i, ToolCls in enumerate(tool_group.tools):
         if ToolCls.__name__ == "PlanningTool":
             tools.append(ToolCls(api_key=api_key, progress_callback=planning_progress_callback))
         elif ToolCls.__name__ == "DelegateTaskTool":
-            tools.append(ToolCls(api_key=api_key))
+            # Placeholder - we'll replace it after all tools are created
+            tools.append(None)
+            delegate_tool_index = i
         else:
             tools.append(ToolCls())
+
+    # Now create DelegateTaskTool with all tools (including itself for recursive delegation)
+    if delegate_tool_index is not None:
+        from .tools.planning import DelegateTaskTool
+        tools[delegate_tool_index] = DelegateTaskTool(
+            available_tools=tools,
+            api_key=api_key,
+            delegation_depth=0,  # CEO starts at depth 0 (used for tracking/visualization only, no limits)
+        )
 
     tool_collection = ToolCollection(*tools)
 
@@ -303,22 +317,29 @@ Your responsibilities:
 - Creates: requirements.md, technical.md
 - Execute with minimal delegation
 
-**Complex tasks** (e.g., "build a dashboard", "create a SaaS product"):
-- **MUST use `create_planning_docs` tool first** - this is critical!
-- Creates file-based planning structure in `~/Proto/{project-name}/.proto/planning/`
-- Documents created: project_overview.md, requirements.md, technical_spec.md, roadmap.md
-- Also creates knowledge folders: context/, learnings/, patterns/, references/, technical/
-- Use `read_planning` tool to review planning docs during execution
-- Delegate to specialists (e.g., designer for UI, developer for implementation)
-- Coordinate handoffs between specialists
+**Complex tasks** (e.g., "build a dashboard", "create a SaaS product", "make a Slack clone"):
+- **STEP 1**: Use `create_planning_docs` tool first (REQUIRED!)
+  - Creates file-based planning structure in `~/Proto/{project-name}/.proto/planning/`
+  - Documents: project_overview.md, requirements.md, technical_spec.md, roadmap.md
+- **STEP 2**: Use `read_planning` tool to review the generated plans
+- **STEP 3**: **IMMEDIATELY use `delegate_task` to assign implementation work** (REQUIRED!)
+  - UI/UX work → delegate to ux-designer
+  - Code implementation → delegate to senior-developer
+  - Testing → delegate to qa-testing
+  - **DO NOT stop after planning! You MUST delegate actual work!**
+- **STEP 4**: Coordinate handoffs between specialists
 
 **Project-level tasks** (e.g., "create a company", "build a platform"):
-- **ALWAYS use `create_planning_docs` tool** - never skip this!
-- Creates full planning suite with all documents and knowledge structure
-- Creates specialist plans for each domain (stored as separate files)
-- Use `delegate_task` tool to assign work to specialists
-- Orchestrate multi-agent workflow
-- Track progress using the file-based system
+- **CRITICAL: Planning + Delegation is MANDATORY - Not just planning!**
+- **STEP 1**: Use `create_planning_docs` tool (REQUIRED!)
+  - Creates full planning suite with all documents and knowledge structure
+- **STEP 2**: **Use `delegate_task` tool IMMEDIATELY after planning** (REQUIRED!)
+  - Example: delegate_task(specialist="senior-developer", task="Implement backend per TECHNICAL_SPEC.md", project_name="my-project")
+  - Example: delegate_task(specialist="ux-designer", task="Create UI mockups per REQUIREMENTS.md", project_name="my-project")
+  - **Planning docs alone are NOT enough - you MUST delegate implementation!**
+- **STEP 3**: Orchestrate multi-agent workflow and track progress
+
+**REMEMBER**: Your role is ORCHESTRATION. Planning is step 1. Delegation is step 2. Both are MANDATORY!
 
 **CRITICAL: File-based Planning vs Todos**
 - TodoWrite: Only for simple task tracking (1-5 steps, quick tasks)

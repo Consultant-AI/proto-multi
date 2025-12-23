@@ -28,17 +28,20 @@ class DelegateTaskTool(BaseAnthropicTool):
     name: str = "delegate_task"
     api_type: str = "custom"
 
-    def __init__(self, available_tools: list[Any] | None = None, api_key: str | None = None):
+    def __init__(self, available_tools: list[Any] | None = None, api_key: str | None = None, delegation_depth: int = 0):
         """
         Initialize delegation tool.
 
         Args:
             available_tools: Tools that can be passed to specialist agents
             api_key: Optional Anthropic API key
+            delegation_depth: Current delegation depth (0 = CEO, 1 = first specialist, etc.)
+                             Used for tracking and visualization, not limiting
         """
         super().__init__()
         self.available_tools = available_tools or []
         self.api_key = api_key
+        self.delegation_depth = delegation_depth
 
     def to_params(self):
         """Return tool parameter schema for Anthropic API."""
@@ -118,14 +121,17 @@ Returns the specialist's output and execution details.""",
         logger = get_logger()
 
         try:
-            # Log delegation
+            # Log delegation with depth info (no limits - delegate freely to specialists!)
+            delegation_chain = "→".join(["CEO"] + ["Specialist"] * self.delegation_depth + [specialist])
             logger.log_event(
                 event_type="agent_delegated",
-                session_id="ceo-agent",
+                session_id="delegation-tool",
                 data={
                     "specialist": specialist,
                     "task": task,
                     "project_name": project_name,
+                    "delegation_depth": self.delegation_depth,
+                    "delegation_chain": delegation_chain,
                 },
             )
 
@@ -173,12 +179,16 @@ Returns the specialist's output and execution details.""",
                 },
             )
 
-            # Format output
+            # Format output with delegation depth indicator for visualization
+            depth_indicator = "  " * self.delegation_depth + "└─"
+            delegation_level = f"[Level {self.delegation_depth + 1}]"
+
             if result.success:
                 output_lines = [
-                    f"Delegation to {specialist} specialist completed successfully!",
+                    f"{depth_indicator} {delegation_level} Delegation to {specialist} specialist completed successfully!",
                     f"\nTask: {task}",
                     f"Iterations: {result.iterations}",
+                    f"Delegation Depth: {self.delegation_depth + 1}",
                     f"\n--- {specialist.upper()} SPECIALIST OUTPUT ---",
                     result.output,
                     f"--- END {specialist.upper()} SPECIALIST OUTPUT ---",
@@ -188,9 +198,10 @@ Returns the specialist's output and execution details.""",
             else:
                 error_msg = result.error or "Unknown error"
                 output_lines = [
-                    f"Delegation to {specialist} specialist failed.",
+                    f"{depth_indicator} {delegation_level} Delegation to {specialist} specialist failed.",
                     f"\nTask: {task}",
                     f"Iterations: {result.iterations}",
+                    f"Delegation Depth: {self.delegation_depth + 1}",
                     f"Error: {error_msg}",
                     f"\nPartial output:",
                     result.output,
@@ -221,8 +232,23 @@ Returns the specialist's output and execution details.""",
                 f"Unknown specialist '{specialist}'. Available specialists: {', '.join(available)}"
             )
 
+        # Create tools with incremented delegation depth for the specialist
+        specialist_tools = []
+        for tool in self.available_tools:
+            if hasattr(tool, 'name') and tool.name == 'delegate_task':
+                # Create new DelegateTaskTool with incremented depth (for tracking only)
+                specialist_tools.append(
+                    DelegateTaskTool(
+                        available_tools=self.available_tools,
+                        api_key=self.api_key,
+                        delegation_depth=self.delegation_depth + 1,
+                    )
+                )
+            else:
+                specialist_tools.append(tool)
+
         agent_class = AGENT_REGISTRY[specialist]
-        return agent_class(tools=self.available_tools, api_key=self.api_key)
+        return agent_class(tools=specialist_tools, api_key=self.api_key)
 
     def _enhance_task_with_context(self, task: str, context: dict, specialist: str) -> str:
         """
