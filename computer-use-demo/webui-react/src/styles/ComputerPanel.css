@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: var(--bg-panel);
+  color: var(--text-primary);
   overflow: hidden;
 }
 
@@ -12,8 +12,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #252526;
-  border-bottom: 1px solid #333;
+  background: var(--bg-panel-header);
+  border-bottom: 1px solid var(--border);
   min-height: 50px;
   height: 50px;
   flex-shrink: 0;
@@ -32,7 +32,7 @@
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #9cdcfe;
+  color: var(--accent);
   line-height: 26px;
 }
 
@@ -46,7 +46,7 @@
 .refresh-btn {
   background: transparent;
   border: none;
-  color: #858585;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -60,8 +60,8 @@
 }
 
 .refresh-btn:hover:not(:disabled) {
-  background: #37373d;
-  color: #ffffff;
+  background: var(--hover);
+  color: var(--text-primary);
 }
 
 .refresh-btn:disabled {
@@ -82,7 +82,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #858585;
+  color: var(--text-secondary);
   cursor: pointer;
   height: 26px;
   white-space: nowrap;
@@ -104,14 +104,14 @@
   align-items: center;
   padding: 20px;
   overflow: auto;
-  background: #000000;
+  background: var(--bg-main);
 }
 
 .screen-container {
   max-width: 100%;
   max-height: 100%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  border: 1px solid #333;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
   position: relative;
@@ -141,11 +141,11 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  color: #454545;
+  color: var(--text-tertiary);
 }
 
 .init-btn {
-  background: #0e639c;
+  background: var(--accent);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -156,7 +156,7 @@
 }
 
 .init-btn:hover:not(:disabled) {
-  background: #1177bb;
+  background: var(--accent-hover);
 }
 
 .init-btn:disabled {

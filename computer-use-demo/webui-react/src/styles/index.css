@@ -61,6 +61,53 @@
   --font-mono: 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace;
 }
 
+/* Light Theme */
+.light-theme {
+  /* Light Color Palette */
+  --bg-main: #ffffff;
+  --bg-sidebar: #f9fafb;
+  --bg-chat: #ffffff;
+  --bg-panel: #f3f4f6;
+  --bg-panel-header: #f9fafb;
+  --bg-message-in: #f3f4f6;
+  --bg-message-out: #eff6ff;
+  --bg-input: #f9fafb;
+  --bg-hover: #f3f4f6;
+
+  /* Text Colors */
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-muted: #d1d5db;
+
+  /* Border & Divider */
+  --border: #e5e7eb;
+  --border-light: #d1d5db;
+  --divider: #f3f4f6;
+
+  /* Accent Colors */
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-subtle: rgba(59, 130, 246, 0.1);
+
+  /* Status Colors */
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+
+  /* Interactive States */
+  --hover: #f3f4f6;
+  --active: #e5e7eb;
+  --resizer: #e5e7eb;
+  --resizer-hover: #d1d5db;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.2);
+}
+
 * {
   margin: 0;
   padding: 0;

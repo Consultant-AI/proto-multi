@@ -427,7 +427,7 @@ export default function Chat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Codex to do anything"
+            placeholder="Ask to do anything"
             disabled={isStreaming}
             rows={1}
           />

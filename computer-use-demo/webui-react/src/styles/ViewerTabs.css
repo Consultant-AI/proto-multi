@@ -166,6 +166,7 @@
 }
 
 .toggle-chat-btn,
+.toggle-theme-btn,
 .viewer-close-btn {
   padding: 8px;
   background: transparent;
@@ -180,6 +181,7 @@
 }
 
 .toggle-chat-btn:hover,
+.toggle-theme-btn:hover,
 .viewer-close-btn:hover {
   background: var(--hover);
   color: var(--text-primary);

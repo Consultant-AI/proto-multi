@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw, Sun, Moon } from 'lucide-react'
 import { Tab, TabType } from '../types/tabs'
 import Dashboard from './Dashboard'
 import FileExplorer from './FileExplorer'
@@ -56,6 +56,22 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
     { tabId: '1', history: [{ id: '1', type: 'newtab', title: 'New Tab', icon: <Plus size={14} /> }], currentIndex: 0 }
   ])
   const [addressBarInput, setAddressBarInput] = useState('')
+  const [isDarkTheme, setIsDarkTheme] = useState(true)
+
+  // Apply theme on mount and when it changes
+  useEffect(() => {
+    if (isDarkTheme) {
+      document.documentElement.classList.remove('light-theme')
+      document.documentElement.classList.add('dark-theme')
+    } else {
+      document.documentElement.classList.remove('dark-theme')
+      document.documentElement.classList.add('light-theme')
+    }
+  }, [isDarkTheme])
+
+  const toggleTheme = () => {
+    setIsDarkTheme(prev => !prev)
+  }
 
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const activeTabHistory = tabHistories.find(h => h.tabId === activeTabId)
@@ -451,6 +467,13 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
               <MessageSquare size={16} />
             </button>
           )}
+          <button
+            className="toggle-theme-btn"
+            onClick={toggleTheme}
+            title={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          >
+            {isDarkTheme ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           {onClose && (
             <button className="viewer-close-btn" onClick={onClose} title="Close Viewer">
               <X size={16} />

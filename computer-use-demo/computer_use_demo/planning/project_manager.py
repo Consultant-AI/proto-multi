@@ -57,12 +57,11 @@ class ProjectManager:
         - ~/Proto/{project}/planning/ for planning documents and task management
           - planning/materials/ for source materials and references
           - planning/reports/ for generated reports and internal documentation
-        - ~/Proto/{project}/deliverable/ for the actual project output (empty initially)
+        - ~/Proto/{project}/ (root) for the actual project files (code, assets, etc.)
 
         Additional folders created on-demand:
         - planning/agents/ when specialist plans are added
         - planning/tasks/ when task tree is generated
-        - deliverable/releases/ when project needs build artifacts (optional)
 
         Args:
             project_name: Name of the project (will be slugified)
@@ -85,14 +84,12 @@ class ProjectManager:
         (planning_path / "materials").mkdir(exist_ok=True)
         (planning_path / "reports").mkdir(exist_ok=True)
 
-        # Create deliverable/ folder (empty initially - agents fill it with actual project output)
-        deliverable_path = project_root / "deliverable"
-        deliverable_path.mkdir(parents=True, exist_ok=True)
+        # The rest of the project files go directly in project_root
+        # Agents will create their own structure (backend/, frontend/, etc.)
 
         # Other folders created on-demand:
         # - planning/agents/ when specialist plans are added
         # - planning/tasks/ when task tree is generated
-        # - deliverable/releases/ when project needs build artifacts (optional)
 
         # Create metadata file in planning folder
         metadata = {
@@ -101,9 +98,8 @@ class ProjectManager:
             "created_at": datetime.utcnow().isoformat() + "Z",
             "updated_at": datetime.utcnow().isoformat() + "Z",
             "status": "active",
-            "structure": "standard",  # Standard planning/ + deliverable/ structure
+            "structure": "standard",  # Standard planning/ folder, rest in root
             "planning_path": str(planning_path),
-            "deliverable_path": str(deliverable_path),
             "project_root": str(project_root),
         }
         self._save_metadata(planning_path, metadata)
@@ -168,26 +164,22 @@ class ProjectManager:
 
         return None
 
-    def get_deliverable_path(self, project_name: str) -> Path | None:
+    def get_project_root(self, project_name: str) -> Path | None:
         """
-        Get path to deliverable folder for a project.
+        Get path to project root folder where agents create project files.
+
+        The project root is where agents create their own structure
+        (backend/, frontend/, etc.) - everything except the planning/ folder.
 
         Args:
             project_name: Name of the project
 
         Returns:
-            Path to deliverable folder or None if doesn't exist
+            Path to project root or None if doesn't exist
         """
         slug = self._slugify(project_name)
         project_root = self.base_path / slug
 
-        # Check for standard deliverable/ structure
-        deliverable_path = project_root / "deliverable"
-        if deliverable_path.exists():
-            return deliverable_path
-
-        # For backwards compatibility with old projects, return project_root
-        # (agents can create their own structure there)
         if project_root.exists():
             return project_root
 
@@ -379,44 +371,57 @@ class ProjectManager:
             )
         else:
             root_task = root_tasks[0]
+            # Clear existing child tasks to avoid duplicates when regenerating
+            child_tasks = task_manager.get_children(root_task.id)
+            for child in child_tasks:
+                task_manager.delete_task(child.id)
 
         # Parse roadmap for task structure
         lines = roadmap_content.split('\n')
         current_phase = None
         current_phase_task = None
+        phase_tasks = {}  # Track phases by title to avoid duplicates
 
         for line in lines:
-            # Match phase headers like "### **Phase 1: Project Setup & Architecture (Week 1)**"
-            phase_match = re.match(r'^###\s+\*\*Phase\s+\d+:\s+(.+?)\s*\((.+?)\)\*\*', line)
+            # Match phase headers like "### **Phase 1: Project Setup & Architecture** (Weeks 1-2)"
+            phase_match = re.match(r'^###\s+\*\*Phase\s+\d+:\s+(.+?)\*\*\s*\((.+?)\)', line)
             if phase_match:
                 phase_title = phase_match.group(1)
                 phase_duration = phase_match.group(2)
 
-                # Create phase task
-                current_phase_task = task_manager.create_task(
-                    title=phase_title,
-                    description=f"Duration: {phase_duration}",
-                    priority=TaskPriority.HIGH,
-                    parent_id=root_task.id,
-                )
+                # Check if phase already exists (to avoid duplicates in TOC)
+                if phase_title not in phase_tasks:
+                    # Create phase task
+                    current_phase_task = task_manager.create_task(
+                        title=phase_title,
+                        description=f"Duration: {phase_duration}",
+                        priority=TaskPriority.HIGH,
+                        parent_id=root_task.id,
+                    )
+                    phase_tasks[phase_title] = current_phase_task
+                else:
+                    # Use existing phase task
+                    current_phase_task = phase_tasks[phase_title]
                 continue
 
-            # Match task items like "- [ ] **2.1** Database setup and migrations"
-            task_match = re.match(r'^-\s+\[\s*([x ])\s*\]\s+\*\*([^*]+)\*\*\s+(.+)$', line)
+            # Match task items like "- [ ] **Task Name**" (without task ID)
+            task_match = re.match(r'^-\s+\[\s*([x ])\s*\]\s+\*\*([^*]+)\*\*', line)
             if task_match and current_phase_task:
                 is_done = task_match.group(1).lower() == 'x'
-                task_id = task_match.group(2).strip()
-                task_title = task_match.group(3).strip()
+                task_title = task_match.group(2).strip()
 
                 # Create task
-                status = TaskStatus.COMPLETED if is_done else TaskStatus.PENDING
-                task_manager.create_task(
-                    title=f"{task_id} {task_title}",
+                new_task = task_manager.create_task(
+                    title=task_title,
                     description="",
                     priority=TaskPriority.MEDIUM,
                     parent_id=current_phase_task.id,
                 )
-                task_manager.update_task(task_manager.tasks[list(task_manager.tasks.keys())[-1]].id, status=status)
+
+                # Update status if completed
+                if is_done:
+                    task_manager.update_task(new_task.id, status=TaskStatus.COMPLETED)
+                continue
 
         # Generate TASKS.md from the task tree
         tasks_md = self._generate_tasks_markdown(task_manager, root_task)
