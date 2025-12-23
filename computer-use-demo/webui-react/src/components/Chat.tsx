@@ -520,6 +520,7 @@ export default function Chat({
                           onChange={() => toggleTool('drive')}
                         />
                         <span>Google Drive</span>
+                        <button className="tool-configure-btn">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -528,6 +529,7 @@ export default function Chat({
                           onChange={() => toggleTool('notion')}
                         />
                         <span>Notion</span>
+                        <button className="tool-configure-btn">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -536,6 +538,7 @@ export default function Chat({
                           onChange={() => toggleTool('calendar')}
                         />
                         <span>Calendar</span>
+                        <button className="tool-configure-btn">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -544,6 +547,7 @@ export default function Chat({
                           onChange={() => toggleTool('gmail')}
                         />
                         <span>Gmail</span>
+                        <button className="tool-configure-btn">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -552,6 +556,7 @@ export default function Chat({
                           onChange={() => toggleTool('mcp')}
                         />
                         <span>Custom MCP</span>
+                        <button className="tool-configure-btn">Configure</button>
                       </label>
                     </div>
                   </div>

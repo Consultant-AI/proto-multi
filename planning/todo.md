@@ -44,49 +44,41 @@
 
 ### 🚧 Active Tasks
 
-**High Priority:**
 
-make it like on stich the design there is good and with real data
+qa + write tasks based on bugs and requirment to make it until self improve
 
-add tool selection
-image support in the chat + files
- 
-fix chromium 
-
-new tab
-bar, files from all computers, all computers previews, terminal 
-bar with url/ file / terminal / computer viewer and under it files, computers, terminals, history of chrome, history of files, history of terminal
-
-one bar for url, file, terminal computer
-
-make tab system browser with tabs for computer view / file view / web view / terminal
-
-one unified tab with all options computer, files, website, terminal
-
-explorer in file
-in the chat you 
-
-choose computer, in chat, in files there is seperations by computers / one to all, to computer viewer choose vm, browser only local, terminal also choose computer, history of chats from all computers
+bugs
+api calls for browser and computer when not shown
+when i run the software the browser not working, it should be start with the system
+proto folder should be called proto and not proto project
+stuck when i ask it to do slack task
+when changing folder file it should change the address
+need to delegate to other boths and need to see it in the chat
+continue conversation if context finish like claude code
 
 
-proto
-
-write sinply in bulltes all archtecure ideas and requirments -> then make tasks from it
-
-think of ultimate ui with seeing computers files folders and web
-
-
-qa and fixes to be stable
 all files should be openned and editable like vscode
 in the web ui also can see vms and other chrome
-
 good planning and files
-
 delegations to sub
-
 good context engenriing
 parrallel work on same computer
 using multiple computers like any desk and they control each other
+
+*Client Improvements *
+new tab make look better for smaller screen
+make tool selection functional
+image and file selection on chat
+fix web, support multitab
+support terminal + choose computer
+history
+address bar fixes + back, forward, refresh
+files there is seperations by computers / one to all
+history of chat from all computers
+connect to another computer and change
+make microphone works
+
+
 
 
 - [ ] System stability for autonomous operation and self-monitoring
@@ -94,29 +86,22 @@ using multiple computers like any desk and they control each other
 - [ ] Subagents calling each other directly
 - [ ] Add newest models (Claude 3.7, etc.)
 - [ ] Add alternative models (Gemini, GPT-4, etc.)
-- [ ] Theme Overhaul - Slick, minimal, high-end design
-- [ ] Computer Target Selector - Dropdown to choose computer/server
 - [ ] Remote Computer Connection - SSH/API to Ubuntu servers
 - [ ] Multi-Agent Single Computer - Parallel agents on one machine
 - [ ] Multi-Computer Orchestration - Agents across multiple computers
 - [ ] Agent Delegation System - Smart task distribution
-
-**Medium Priority:**
 - [ ] WebSocket Status Updates - Real-time multi-computer status
 - [ ] Resource Monitoring - CPU, RAM, disk, network tracking
 - [ ] Task Progress Tracking - Distributed task monitoring
 - [ ] Error Handling & Retry - Robust failure recovery
 - [ ] Multi-project orchestration enhancements
 - [ ] Delegate to human, admin or other from pool
-
-**Low Priority:**
 - [ ] Computer groups/clusters for logical organization
 - [ ] Load balancing across multiple computers
 - [ ] Agent performance analytics per computer
 - [ ] Cost tracking for cloud-hosted computers
 - [ ] Automated computer provisioning and scaling
 
-**Next Phase:**
 - Architecture resilience improvements
 - Agent parallelization across multiple computers
 - Cloud computer control & provisioning
@@ -128,12 +113,26 @@ using multiple computers like any desk and they control each other
 - Advanced metrics & analytics dashboard
 - ML-based pattern recognition
 - Enhanced verification with visual regression testing
-
-### Future Improvements
 - [ ] Agent marketplace - download/install new specialist agents
 - [ ] Kubernetes integration for auto-scaling compute resources
 - [ ] Agent learning/improvement from task outcomes
 - [ ] Team presets (pre-configured agent + computer combinations for common workflows)
 
----
-*Last updated: 2025-12-19*
+** Requirments **
+
+software run on client and controlling computer
+this clients (on cloud) can control each other
+network of instances can run many projects like compnies
+system for self improve during a project + parralel system that improves.
+hosted website version can control other computers
+views - tabs system - show computers and can control them, files from computers / unified file system, terminals, urls,
+chat - agents with same base agent but with special code/prompts to be reliable
+agent call each other for special tasks.
+tools - reading files, modify files, run bash, write and run code, computer vision + mouse + keyboard, apps like drive, notion, slack..., adding mcps, adding apis, adding custom code.
+planning - each conversation create or part of existing project folder and each project has its planning files that get updated and the results like code, art ect
+multimodal, in+out - text, files, audio, images, video.
+project would make task in parallel when possible inside a computer or between many computers.
+user and agent could create more cloud computers if needed
+context system that knows what data to retrive in the right time
+make the system to make reliablie piplines to make it more deterministic and reliable
+resource optimisation

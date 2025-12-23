@@ -40,7 +40,7 @@ class PlanningDocuments:
     TEMPLATES = {
         "project_overview": DocumentTemplate(
             doc_type="project_overview",
-            filename="00_PROJECT_OVERVIEW.md",
+            filename="PROJECT_OVERVIEW.md",
             title="Project Overview",
             generation_prompt="""
 Generate a comprehensive project overview for the following task:
@@ -98,7 +98,7 @@ Keep it concise but comprehensive. Focus on the "what" and "why", not implementa
         ),
         "requirements": DocumentTemplate(
             doc_type="requirements",
-            filename="01_REQUIREMENTS.md",
+            filename="REQUIREMENTS.md",
             title="Requirements Document",
             generation_prompt="""
 Generate a detailed requirements document (PRD-style) for the following task:
@@ -160,7 +160,7 @@ Be specific and measurable. Use "must", "should", "could" to indicate priority.
         ),
         "technical_spec": DocumentTemplate(
             doc_type="technical_spec",
-            filename="02_TECHNICAL_SPEC.md",
+            filename="TECHNICAL_SPEC.md",
             title="Technical Specification",
             generation_prompt="""
 Generate a technical specification document for the following task:
@@ -259,7 +259,7 @@ project/
         ),
         "roadmap": DocumentTemplate(
             doc_type="roadmap",
-            filename="03_ROADMAP.md",
+            filename="ROADMAP.md",
             title="Project Roadmap",
             generation_prompt="""
 Generate a project roadmap for the following task:
@@ -323,7 +323,7 @@ Week 5-6: [Phase 3]
         ),
         "knowledge_base": DocumentTemplate(
             doc_type="knowledge_base",
-            filename="04_KNOWLEDGE_BASE.md",
+            filename="KNOWLEDGE_BASE.md",
             title="Knowledge Base",
             generation_prompt="""
 Generate a knowledge base document for the following task:
@@ -386,7 +386,7 @@ This serves as a reference guide for agents working on this project.
         ),
         "decisions": DocumentTemplate(
             doc_type="decisions",
-            filename="05_DECISIONS.md",
+            filename="DECISIONS.md",
             title="Decision Log",
             generation_prompt="""
 Create a decision log template for tracking key decisions during this project.

@@ -26,8 +26,9 @@ class PlanningTool(BaseAnthropicTool):
     name: str = "create_planning_docs"
     api_type: str = "custom"
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None, progress_callback=None):
         self.api_key = api_key
+        self.progress_callback = progress_callback
         super().__init__()
 
     def to_params(self):
@@ -98,6 +99,10 @@ Returns paths to created planning documents.""",
             client = Anthropic(api_key=self.api_key)
 
             # Analyze task complexity
+            print(f"\n{'='*60}")
+            print(f"PLANNING STARTED: {project_name}")
+            print(f"{'='*60}\n")
+
             logger.log_event(
                 event_type="planning_started",
                 session_id="planning-tool",
@@ -108,6 +113,7 @@ Returns paths to created planning documents.""",
             )
 
             analysis = analyzer.analyze(task, context)
+            print(f"Complexity analyzed: {analysis.complexity}")
 
             logger.log_event(
                 event_type="complexity_analyzed",
@@ -164,8 +170,23 @@ Returns paths to created planning documents.""",
             # Generate each document
             planning_context = {"task": task, "context": context, "analysis": analysis}
 
+            # Track progress for output
+            progress_log = []
+            progress_log.append(f"Starting planning for project '{project_name}'...")
+            progress_log.append(f"Complexity: {analysis.complexity}")
+            progress_log.append(f"Estimated steps: {analysis.estimated_steps}")
+            progress_log.append(f"Required specialists: {', '.join(analysis.required_specialists)}")
+            progress_log.append(f"\nCreating {len(docs_to_create)} planning documents...")
+
             for doc_type in docs_to_create:
                 try:
+                    # Print progress to terminal (visible immediately)
+                    progress_msg = f"📝 Generating {doc_type} document..."
+                    print(progress_msg)
+                    progress_log.append(progress_msg)
+                    if self.progress_callback:
+                        self.progress_callback(progress_msg)
+
                     content = await self._generate_document_content(
                         client, doc_type, planning_context  # type: ignore
                     )
@@ -174,6 +195,13 @@ Returns paths to created planning documents.""",
 
                     created_docs.append({"type": doc_type, "path": str(doc_path)})
 
+                    # Print completion to terminal (visible immediately)
+                    completion_msg = f"✓ Created {doc_type}"
+                    print(completion_msg)
+                    progress_log.append(completion_msg)
+                    if self.progress_callback:
+                        self.progress_callback(completion_msg)
+
                     logger.log_event(
                         event_type="document_generated",
                         session_id="planning-tool",
@@ -181,14 +209,27 @@ Returns paths to created planning documents.""",
                     )
 
                 except Exception as e:
+                    error_msg = f"✗ Failed to generate {doc_type}: {str(e)}"
+                    print(error_msg)
+                    progress_log.append(error_msg)
+                    if self.progress_callback:
+                        self.progress_callback(error_msg)
                     logger.log_error("planning-tool", e)
                     # Continue with other documents even if one fails
                     continue
 
             # Generate specialist plans if needed
             if analysis.planning_strategy.get("specialist_plans"):
+                progress_log.append(f"\nCreating {len(analysis.required_specialists)} specialist plans...")
                 for specialist in analysis.required_specialists:
                     try:
+                        # Print progress to terminal (visible immediately)
+                        progress_msg = f"📝 Generating specialist plan for {specialist}..."
+                        print(progress_msg)
+                        progress_log.append(progress_msg)
+                        if self.progress_callback:
+                            self.progress_callback(progress_msg)
+
                         specialist_context = planning_context.copy()
                         specialist_context["specialist"] = specialist
 
@@ -202,6 +243,13 @@ Returns paths to created planning documents.""",
 
                         created_docs.append({"type": f"{specialist}_plan", "path": str(doc_path)})
 
+                        # Print completion to terminal (visible immediately)
+                        completion_msg = f"✓ Created {specialist} plan"
+                        print(completion_msg)
+                        progress_log.append(completion_msg)
+                        if self.progress_callback:
+                            self.progress_callback(completion_msg)
+
                         logger.log_event(
                             event_type="document_generated",
                             session_id="planning-tool",
@@ -213,8 +261,38 @@ Returns paths to created planning documents.""",
                         )
 
                     except Exception as e:
+                        error_msg = f"✗ Failed to generate {specialist} plan: {str(e)}"
+                        print(error_msg)
+                        progress_log.append(error_msg)
+                        if self.progress_callback:
+                            self.progress_callback(error_msg)
                         logger.log_error("planning-tool", e)
                         continue
+
+            # Generate task tree from roadmap
+            if any(doc["type"] == "roadmap" for doc in created_docs):
+                try:
+                    progress_msg = "📝 Creating task tree from roadmap..."
+                    print(progress_msg)
+                    progress_log.append(progress_msg)
+                    if self.progress_callback:
+                        self.progress_callback(progress_msg)
+
+                    tasks_path = project_manager.create_task_tree_from_roadmap(project_name)
+                    if tasks_path:
+                        created_docs.append({"type": "tasks", "path": str(tasks_path)})
+                        completion_msg = "✓ Created TASKS.md with task tree"
+                        print(completion_msg)
+                        progress_log.append(completion_msg)
+                        if self.progress_callback:
+                            self.progress_callback(completion_msg)
+                except Exception as e:
+                    error_msg = f"✗ Failed to create task tree: {str(e)}"
+                    print(error_msg)
+                    progress_log.append(error_msg)
+                    if self.progress_callback:
+                        self.progress_callback(error_msg)
+                    logger.log_error("planning-tool", e)
 
             logger.log_event(
                 event_type="planning_completed",
@@ -226,18 +304,32 @@ Returns paths to created planning documents.""",
                 },
             )
 
-            # Format output
+            print(f"\n{'='*60}")
+            print(f"PLANNING COMPLETED: {len(created_docs)} documents created")
+            print(f"{'='*60}\n")
+
+            # Format output with progress log
             output_lines = [
-                f"Planning documents created for project '{project_name}':",
-                f"\nProject path: {project_path}",
-                f"\nComplexity: {analysis.complexity}",
-                f"Estimated steps: {analysis.estimated_steps}",
-                f"Required specialists: {', '.join(analysis.required_specialists)}",
-                f"\nCreated {len(created_docs)} documents:",
+                "=" * 60,
+                "PLANNING PROGRESS",
+                "=" * 60,
+                "",
             ]
+            output_lines.extend(progress_log)
+            output_lines.extend([
+                "",
+                "=" * 60,
+                "PLANNING COMPLETE",
+                "=" * 60,
+                "",
+                f"Project: {project_name}",
+                f"Path: {project_path}",
+                f"Documents created: {len(created_docs)}",
+                "",
+            ])
 
             for doc in created_docs:
-                output_lines.append(f"  - {doc['type']}: {doc['path']}")
+                output_lines.append(f"  ✓ {doc['type']}")
 
             return ToolResult(output="\n".join(output_lines))
 

@@ -13,7 +13,7 @@ from typing import Any, Optional
 from .documents import DocumentType, PlanningDocuments
 from .folder_task_manager import FolderTaskManager
 from .knowledge_store import KnowledgeStore
-from .task_manager import TaskManager
+from .task_manager import Task, TaskManager, TaskPriority, TaskStatus
 
 
 class ProjectManager:
@@ -51,17 +51,24 @@ class ProjectManager:
 
     def create_project(self, project_name: str) -> Path:
         """
-        Create a new project with dual-structure architecture.
+        Create a new project with standardized folder structure.
 
         Creates:
-        - ~/Proto/{project}/.proto/planning/ for planning/meta files
-        - ~/Proto/{project}/ for actual project code (empty initially)
+        - ~/Proto/{project}/planning/ for planning documents and task management
+          - planning/materials/ for source materials and references
+          - planning/reports/ for generated reports and internal documentation
+        - ~/Proto/{project}/deliverable/ for the actual project output (empty initially)
+
+        Additional folders created on-demand:
+        - planning/agents/ when specialist plans are added
+        - planning/tasks/ when task tree is generated
+        - deliverable/releases/ when project needs build artifacts (optional)
 
         Args:
             project_name: Name of the project (will be slugified)
 
         Returns:
-            Path to the planning folder (.proto/planning/)
+            Path to the planning folder (planning/)
         """
         # Slugify project name
         slug = self._slugify(project_name)
@@ -70,17 +77,22 @@ class ProjectManager:
         project_root = self.base_path / slug
         project_root.mkdir(parents=True, exist_ok=True)
 
-        # Create .proto/planning/ structure for planning/meta files
-        planning_path = project_root / ".proto" / "planning"
+        # Create planning/ folder for planning documents and task management
+        planning_path = project_root / "planning"
         planning_path.mkdir(parents=True, exist_ok=True)
 
-        # Create subdirectories in planning folder
-        (planning_path / "agents").mkdir(exist_ok=True)
-        (planning_path / "knowledge").mkdir(exist_ok=True)
-        (planning_path / "data").mkdir(exist_ok=True)
-        (planning_path / "data" / "inputs").mkdir(exist_ok=True)
-        (planning_path / "data" / "outputs").mkdir(exist_ok=True)
-        (planning_path / "data" / "artifacts").mkdir(exist_ok=True)
+        # Create standard planning subfolders
+        (planning_path / "materials").mkdir(exist_ok=True)
+        (planning_path / "reports").mkdir(exist_ok=True)
+
+        # Create deliverable/ folder (empty initially - agents fill it with actual project output)
+        deliverable_path = project_root / "deliverable"
+        deliverable_path.mkdir(parents=True, exist_ok=True)
+
+        # Other folders created on-demand:
+        # - planning/agents/ when specialist plans are added
+        # - planning/tasks/ when task tree is generated
+        # - deliverable/releases/ when project needs build artifacts (optional)
 
         # Create metadata file in planning folder
         metadata = {
@@ -89,8 +101,9 @@ class ProjectManager:
             "created_at": datetime.utcnow().isoformat() + "Z",
             "updated_at": datetime.utcnow().isoformat() + "Z",
             "status": "active",
-            "structure": "dual",  # Mark as dual-structure project
+            "structure": "standard",  # Standard planning/ + deliverable/ structure
             "planning_path": str(planning_path),
+            "deliverable_path": str(deliverable_path),
             "project_root": str(project_root),
         }
         self._save_metadata(planning_path, metadata)
@@ -99,7 +112,7 @@ class ProjectManager:
 
     def project_exists(self, project_name: str) -> bool:
         """
-        Check if a project already exists (dual-structure or legacy).
+        Check if a project already exists (simple planning/ or legacy structures).
 
         Args:
             project_name: Name of the project
@@ -110,9 +123,14 @@ class ProjectManager:
         slug = self._slugify(project_name)
         project_root = self.base_path / slug
 
-        # Check for dual-structure project (.proto/planning/)
-        dual_planning_path = project_root / ".proto" / "planning"
-        if dual_planning_path.exists() and (dual_planning_path / ".project_metadata.json").exists():
+        # Check for simple planning/ structure (current)
+        simple_planning_path = project_root / "planning"
+        if simple_planning_path.exists() and (simple_planning_path / ".project_metadata.json").exists():
+            return True
+
+        # Check for old .proto/planning/ structure (backwards compatibility)
+        old_planning_path = project_root / ".proto" / "planning"
+        if old_planning_path.exists() and (old_planning_path / ".project_metadata.json").exists():
             return True
 
         # Check for legacy project structure (backwards compatibility)
@@ -129,15 +147,20 @@ class ProjectManager:
             project_name: Name of the project
 
         Returns:
-            Path to planning folder (.proto/planning/) or None if doesn't exist
+            Path to planning folder (planning/) or None if doesn't exist
         """
         slug = self._slugify(project_name)
         project_root = self.base_path / slug
 
-        # Check for dual-structure project (.proto/planning/)
-        dual_planning_path = project_root / ".proto" / "planning"
-        if dual_planning_path.exists() and (dual_planning_path / ".project_metadata.json").exists():
-            return dual_planning_path
+        # Check for simple planning/ structure (current)
+        simple_planning_path = project_root / "planning"
+        if simple_planning_path.exists() and (simple_planning_path / ".project_metadata.json").exists():
+            return simple_planning_path
+
+        # Check for old .proto/planning/ structure (backwards compatibility)
+        old_planning_path = project_root / ".proto" / "planning"
+        if old_planning_path.exists() and (old_planning_path / ".project_metadata.json").exists():
+            return old_planning_path
 
         # Check for legacy project structure (backwards compatibility)
         if project_root.exists() and (project_root / ".project_metadata.json").exists():
@@ -145,9 +168,34 @@ class ProjectManager:
 
         return None
 
+    def get_deliverable_path(self, project_name: str) -> Path | None:
+        """
+        Get path to deliverable folder for a project.
+
+        Args:
+            project_name: Name of the project
+
+        Returns:
+            Path to deliverable folder or None if doesn't exist
+        """
+        slug = self._slugify(project_name)
+        project_root = self.base_path / slug
+
+        # Check for standard deliverable/ structure
+        deliverable_path = project_root / "deliverable"
+        if deliverable_path.exists():
+            return deliverable_path
+
+        # For backwards compatibility with old projects, return project_root
+        # (agents can create their own structure there)
+        if project_root.exists():
+            return project_root
+
+        return None
+
     def list_projects(self) -> list[dict[str, Any]]:
         """
-        List all existing projects (dual-structure and legacy).
+        List all existing projects (simple planning/, old .proto/planning/, and legacy).
 
         Returns:
             List of project metadata dicts
@@ -158,10 +206,17 @@ class ProjectManager:
         projects = []
         for project_dir in self.base_path.iterdir():
             if project_dir.is_dir():
-                # Check for dual-structure project
-                dual_metadata_file = project_dir / ".proto" / "planning" / ".project_metadata.json"
-                if dual_metadata_file.exists():
-                    metadata = json.loads(dual_metadata_file.read_text())
+                # Check for simple planning/ structure (current)
+                simple_metadata_file = project_dir / "planning" / ".project_metadata.json"
+                if simple_metadata_file.exists():
+                    metadata = json.loads(simple_metadata_file.read_text())
+                    projects.append(metadata)
+                    continue
+
+                # Check for old .proto/planning/ structure
+                old_metadata_file = project_dir / ".proto" / "planning" / ".project_metadata.json"
+                if old_metadata_file.exists():
+                    metadata = json.loads(old_metadata_file.read_text())
                     projects.append(metadata)
                     continue
 
@@ -284,6 +339,126 @@ class ProjectManager:
             self._knowledge_stores[project_name] = KnowledgeStore(project_path)
 
         return self._knowledge_stores[project_name]
+
+    def create_task_tree_from_roadmap(self, project_name: str) -> Optional[Path]:
+        """
+        Create a TASKS.md file from the roadmap document.
+
+        This file shows the hierarchical task structure with status tracking.
+
+        Args:
+            project_name: Name of the project
+
+        Returns:
+            Path to TASKS.md or None if roadmap doesn't exist
+        """
+        # Load roadmap
+        roadmap_content = self.load_document(project_name, "roadmap")
+        if not roadmap_content:
+            return None
+
+        project_path = self.get_project_path(project_name)
+        if not project_path:
+            return None
+
+        # Get task manager
+        task_manager = self.get_task_manager(project_name)
+        if not task_manager:
+            return None
+
+        # Parse roadmap and extract tasks
+        import re
+
+        # Create root project task if it doesn't exist
+        root_tasks = task_manager.get_root_tasks()
+        if not root_tasks:
+            root_task = task_manager.create_task(
+                title=project_name,
+                description=f"Root project task for {project_name}",
+                priority=TaskPriority.HIGH,
+            )
+        else:
+            root_task = root_tasks[0]
+
+        # Parse roadmap for task structure
+        lines = roadmap_content.split('\n')
+        current_phase = None
+        current_phase_task = None
+
+        for line in lines:
+            # Match phase headers like "### **Phase 1: Project Setup & Architecture (Week 1)**"
+            phase_match = re.match(r'^###\s+\*\*Phase\s+\d+:\s+(.+?)\s*\((.+?)\)\*\*', line)
+            if phase_match:
+                phase_title = phase_match.group(1)
+                phase_duration = phase_match.group(2)
+
+                # Create phase task
+                current_phase_task = task_manager.create_task(
+                    title=phase_title,
+                    description=f"Duration: {phase_duration}",
+                    priority=TaskPriority.HIGH,
+                    parent_id=root_task.id,
+                )
+                continue
+
+            # Match task items like "- [ ] **2.1** Database setup and migrations"
+            task_match = re.match(r'^-\s+\[\s*([x ])\s*\]\s+\*\*([^*]+)\*\*\s+(.+)$', line)
+            if task_match and current_phase_task:
+                is_done = task_match.group(1).lower() == 'x'
+                task_id = task_match.group(2).strip()
+                task_title = task_match.group(3).strip()
+
+                # Create task
+                status = TaskStatus.COMPLETED if is_done else TaskStatus.PENDING
+                task_manager.create_task(
+                    title=f"{task_id} {task_title}",
+                    description="",
+                    priority=TaskPriority.MEDIUM,
+                    parent_id=current_phase_task.id,
+                )
+                task_manager.update_task(task_manager.tasks[list(task_manager.tasks.keys())[-1]].id, status=status)
+
+        # Generate TASKS.md from the task tree
+        tasks_md = self._generate_tasks_markdown(task_manager, root_task)
+
+        # Save TASKS.md
+        tasks_path = project_path / "TASKS.md"
+        tasks_path.write_text(tasks_md)
+
+        return tasks_path
+
+    def _generate_tasks_markdown(self, task_manager: TaskManager, root_task: Task, level: int = 0) -> str:
+        """Generate markdown for task tree."""
+        indent = "  " * level
+        status_emoji = {
+            TaskStatus.PENDING: "⏳",
+            TaskStatus.IN_PROGRESS: "🔄",
+            TaskStatus.COMPLETED: "✅",
+            TaskStatus.BLOCKED: "🚫",
+        }
+
+        lines = []
+
+        if level == 0:
+            lines.append(f"# {root_task.title} - Task Tree")
+            lines.append("")
+            lines.append("Status Legend: ⏳ Pending | 🔄 In Progress | ✅ Completed | 🚫 Blocked")
+            lines.append("")
+
+        emoji = status_emoji.get(root_task.status, "❓")
+        lines.append(f"{indent}- {emoji} **{root_task.title}**")
+        if root_task.description:
+            lines.append(f"{indent}  - {root_task.description}")
+        if root_task.assigned_agent:
+            lines.append(f"{indent}  - Assigned: {root_task.assigned_agent}")
+
+        # Get children
+        children = task_manager.get_children(root_task.id)
+        for child in children:
+            child_md = self._generate_tasks_markdown(task_manager, child, level + 1)
+            lines.append(child_md)
+
+        return "\n".join(lines) if level > 0 else "\n".join(lines)
 
     def get_project_context(self, project_name: str) -> dict[str, Any]:
         """

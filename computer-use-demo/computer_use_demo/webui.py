@@ -320,6 +320,22 @@ class ChatSession:
                         },
                     )
 
+            def planning_progress_callback(progress_message: str):
+                """Callback for planning tool to send progress updates to chat UI."""
+                # Add progress message to display
+                self.display_messages.append(
+                    DisplayMessage(
+                        id=str(uuid.uuid4()),
+                        role="tool",
+                        label="Planning Progress",
+                        text=progress_message,
+                    )
+                )
+                # Broadcast update to frontend immediately
+                loop.call_soon_threadsafe(
+                    lambda: asyncio.create_task(self._broadcast_sse_update())
+                )
+
             # Run sampling_loop in thread pool to avoid blocking web server
             # This allows dashboard to stay responsive during agent execution
             loop = asyncio.get_event_loop()
@@ -340,6 +356,7 @@ class ChatSession:
                     tool_version=self.tool_version,
                     thinking_budget=self.thinking_budget,
                     stop_flag=lambda: self._stop_requested,
+                    planning_progress_callback=planning_progress_callback,
                 ))
 
             # Get thread pool executor from app state
@@ -366,6 +383,7 @@ class ChatSession:
                     only_n_most_recent_images=self.only_n_images,
                     max_tokens=self.max_tokens,
                     tool_version=self.tool_version,
+                    planning_progress_callback=planning_progress_callback,
                     thinking_budget=self.thinking_budget,
                     stop_flag=lambda: self._stop_requested,
                 )
@@ -553,7 +571,9 @@ class BrowserManager:
         self._pending_navigation: str | None = None
         self._pending_click: dict | None = None
         self._pending_type: dict | None = None
+        self._pending_pause_resume: str | None = None  # "pause" or "resume"
         self._command_lock = asyncio.Lock()
+        self._active_connections = 0
 
     async def start(self):
         """Launch Qt WebEngine browser process."""
@@ -608,9 +628,15 @@ class BrowserManager:
             self._latest_screenshot = screenshot_b64
 
     async def get_pending_command(self):
-        """Get pending command (navigate/click/type) for Qt browser."""
+        """Get pending command (navigate/click/type/pause/resume) for Qt browser."""
         async with self._command_lock:
-            # Check navigation first
+            # Check pause/resume first (highest priority)
+            if self._pending_pause_resume:
+                command = self._pending_pause_resume
+                self._pending_pause_resume = None
+                return {"command": command}
+
+            # Check navigation
             if self._pending_navigation:
                 url = self._pending_navigation
                 self._pending_navigation = None
@@ -629,6 +655,22 @@ class BrowserManager:
                 return {"command": "type", **type_data}
 
             return {}
+
+    async def connection_opened(self):
+        """Track when a WebSocket connection opens."""
+        self._active_connections += 1
+        if self._active_connections == 1:
+            # First connection - resume capture
+            async with self._command_lock:
+                self._pending_pause_resume = "resume"
+
+    async def connection_closed(self):
+        """Track when a WebSocket connection closes."""
+        self._active_connections = max(0, self._active_connections - 1)
+        if self._active_connections == 0:
+            # Last connection closed - pause capture
+            async with self._command_lock:
+                self._pending_pause_resume = "pause"
 
     async def click(self, x: int, y: int):
         """Queue click command for Qt browser."""
@@ -1754,12 +1796,13 @@ async def browse_folder(path: str):
 
             try:
                 for item in sorted(folder_path.iterdir()):
-                    # Skip hidden files
+                    # Skip hidden files (planning documents are now in regular planning/ folder)
                     if item.name.startswith('.'):
                         continue
                     try:
                         if item.is_dir():
                             try:
+                                # Count children, excluding hidden files
                                 child_count = len([x for x in item.iterdir() if not x.name.startswith('.')])
                             except:
                                 child_count = 0
@@ -3500,6 +3543,9 @@ async def browser_stream(websocket: WebSocket):
     try:
         browser_manager = app.state.browser_manager
 
+        # Notify that a connection opened
+        await browser_manager.connection_opened()
+
         # Send frames as fast as they're available
         while True:
             try:
@@ -3523,6 +3569,9 @@ async def browser_stream(websocket: WebSocket):
         print("Browser stream WebSocket disconnected")
     except Exception as e:
         print(f"Browser stream error: {e}")
+    finally:
+        # Notify that a connection closed
+        await browser_manager.connection_closed()
 
 
 # Qt Browser Communication Endpoints

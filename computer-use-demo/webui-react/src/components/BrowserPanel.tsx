@@ -21,13 +21,50 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
     const wsRef = useRef<WebSocket | null>(null)
     const [hasNavigated, setHasNavigated] = useState(false)
     const [connected, setConnected] = useState(false)
+    const [isVisible, setIsVisible] = useState(true)
+    const reconnectTimeoutRef = useRef<number | null>(null)
+
+    // Track visibility of the component
+    useEffect(() => {
+        if (!containerRef.current) return
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setIsVisible(entry.isIntersecting)
+            },
+            { threshold: 0.1 }
+        )
+
+        observer.observe(containerRef.current)
+
+        return () => {
+            observer.disconnect()
+        }
+    }, [])
 
     // WebSocket connection for real-time frame streaming
     useEffect(() => {
+        // Only connect if visible
+        if (!isVisible) {
+            if (wsRef.current) {
+                console.log('Browser panel not visible, closing WebSocket')
+                wsRef.current.close()
+                wsRef.current = null
+            }
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current)
+                reconnectTimeoutRef.current = null
+            }
+            return
+        }
+
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
         const wsUrl = `${protocol}//${window.location.host}/ws/browser/stream`
 
         const connectWebSocket = () => {
+            // Don't reconnect if not visible
+            if (!isVisible) return
+
             const ws = new WebSocket(wsUrl)
 
             ws.onopen = () => {
@@ -52,10 +89,13 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
             }
 
             ws.onclose = () => {
-                console.log('Browser WebSocket closed, reconnecting...')
+                console.log('Browser WebSocket closed')
                 setConnected(false)
-                // Reconnect after 1 second
-                setTimeout(connectWebSocket, 1000)
+                // Only reconnect if still visible
+                if (isVisible) {
+                    console.log('Reconnecting in 1 second...')
+                    reconnectTimeoutRef.current = window.setTimeout(connectWebSocket, 1000)
+                }
             }
 
             wsRef.current = ws
@@ -66,9 +106,14 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
         return () => {
             if (wsRef.current) {
                 wsRef.current.close()
+                wsRef.current = null
+            }
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current)
+                reconnectTimeoutRef.current = null
             }
         }
-    }, [])
+    }, [isVisible])
 
     // Auto-navigate when URL prop changes
     useEffect(() => {
