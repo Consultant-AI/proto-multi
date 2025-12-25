@@ -218,56 +218,9 @@ Returns paths to created planning documents.""",
                     # Continue with other documents even if one fails
                     continue
 
-            # Generate specialist plans if needed
-            if analysis.planning_strategy.get("specialist_plans"):
-                progress_log.append(f"\nCreating {len(analysis.required_specialists)} specialist plans...")
-                for specialist in analysis.required_specialists:
-                    try:
-                        # Print progress to terminal (visible immediately)
-                        progress_msg = f"📝 Generating specialist plan for {specialist}..."
-                        print(progress_msg)
-                        progress_log.append(progress_msg)
-                        if self.progress_callback:
-                            self.progress_callback(progress_msg)
-
-                        specialist_context = planning_context.copy()
-                        specialist_context["specialist"] = specialist
-
-                        content = await self._generate_document_content(
-                            client, "specialist_plan", specialist_context
-                        )
-
-                        doc_path = project_manager.save_document(
-                            project_name, "specialist_plan", content, specialist=specialist
-                        )
-
-                        created_docs.append({"type": f"{specialist}_plan", "path": str(doc_path)})
-
-                        # Print completion to terminal (visible immediately)
-                        completion_msg = f"✓ Created {specialist} plan"
-                        print(completion_msg)
-                        progress_log.append(completion_msg)
-                        if self.progress_callback:
-                            self.progress_callback(completion_msg)
-
-                        logger.log_event(
-                            event_type="document_generated",
-                            session_id="planning-tool",
-                            data={
-                                "doc_type": "specialist_plan",
-                                "specialist": specialist,
-                                "path": str(doc_path),
-                            },
-                        )
-
-                    except Exception as e:
-                        error_msg = f"✗ Failed to generate {specialist} plan: {str(e)}"
-                        print(error_msg)
-                        progress_log.append(error_msg)
-                        if self.progress_callback:
-                            self.progress_callback(error_msg)
-                        logger.log_error("planning-tool", e)
-                        continue
+            # NOTE: Specialist plans have been removed - all agents now collaborate on shared planning documents
+            # The ROADMAP.md, TECHNICAL_SPEC.md, and other planning files are used by ALL specialists
+            # Delegation happens dynamically when agents identify tasks better suited for other specialists
 
             # Generate task tree from roadmap
             if any(doc["type"] == "roadmap" for doc in created_docs):
@@ -293,6 +246,25 @@ Returns paths to created planning documents.""",
                     if self.progress_callback:
                         self.progress_callback(error_msg)
                     logger.log_error("planning-tool", e)
+
+            # Create .proto_project marker file in current directory
+            # This allows other tools to detect the active project context
+            try:
+                from pathlib import Path
+                marker_file = Path.cwd() / ".proto_project"
+                marker_file.write_text(project_name)
+                logger.log_event(
+                    event_type="debug_info",
+                    session_id="planning-tool",
+                    data={"message": f"Created .proto_project marker for {project_name}"},
+                )
+            except Exception as e:
+                # Non-critical - just log and continue
+                logger.log_event(
+                    event_type="debug_info",
+                    session_id="planning-tool",
+                    data={"message": f"Could not create .proto_project marker: {str(e)}"},
+                )
 
             logger.log_event(
                 event_type="planning_completed",

@@ -40,7 +40,7 @@ class CEOAgent(BaseAgent):
             name="CEO Agent",
             model="claude-sonnet-4-5-20250929",
             tools=tools or [],
-            max_iterations=25,
+            max_iterations=None,  # Unlimited - orchestration works until completion (can run for years if needed)
             beta_flag=beta_flag,
         )
         super().__init__(config, session_id, api_key)
@@ -128,12 +128,18 @@ Your responsibilities:
 
 **Medium tasks** (e.g., "add user authentication"):
 - **Use `create_planning_docs` tool** to create basic planning documents
+- Extract meaningful project name from user's request (e.g., "add auth" → project_name="auth-feature")
 - Project will be created in `~/Proto/{project-name}/.proto/planning/`
 - Creates: requirements.md, technical.md
 - Execute with minimal delegation
 
 **Complex tasks** (e.g., "build a dashboard", "create a SaaS product"):
 - **STEP 1: Planning** - Use `create_planning_docs` tool first (REQUIRED!)
+  - **CRITICAL**: Extract descriptive project_name from user request
+    - "make instagram clone" → project_name="instagram-clone"
+    - "build a todo app" → project_name="todo-app"
+    - "create slack clone" → project_name="slack-clone"
+    - Remove filler words (make, build, create, a, the, etc.)
   - Creates file-based planning structure in `~/Proto/{project-name}/.proto/planning/`
   - Documents created: project_overview.md, requirements.md, technical_spec.md, roadmap.md
   - Also creates knowledge folders: context/, learnings/, patterns/, references/, technical/
@@ -148,14 +154,19 @@ Your responsibilities:
 **Project-level tasks** (e.g., "create a company", "build a platform", "make a Slack clone"):
 - **WORKFLOW IS MANDATORY - DO NOT SKIP DELEGATION!**
 - **STEP 1: Planning** - Use `create_planning_docs` tool (REQUIRED!)
-  - Creates full planning suite with all documents and knowledge structure
-  - Creates specialist plans for each domain (stored as separate files)
+  - **CRITICAL**: Extract clear project_name from request
+    - "make whatsapp clone" → project_name="whatsapp-clone" (NOT "agent-session"!)
+    - "build instagram app" → project_name="instagram-app"
+    - NEVER use generic names like "agent-session", "project", "task"
+  - Creates ONE shared planning suite (ROADMAP.md, TECHNICAL_SPEC.md, etc.)
+  - ALL specialists work from these SAME shared documents - no specialist-specific plans
 - **STEP 2: Delegate Implementation** - Use `delegate_task` tool IMMEDIATELY after planning
   - Example: `delegate_task(specialist="senior-developer", task="Implement the backend API according to TECHNICAL_SPEC.md", project_name="slack-clone")`
   - Example: `delegate_task(specialist="ux-designer", task="Create UI mockups and design system based on REQUIREMENTS.md", project_name="slack-clone")`
   - **CRITICAL**: Planning alone is NOT completion! You MUST delegate actual work!
-- **STEP 3: Orchestrate** - Coordinate multi-agent workflow
-- **STEP 4: Track** - Monitor progress using the file-based system
+  - Specialists will receive the shared ROADMAP.md and TECHNICAL_SPEC.md to guide their work
+- **STEP 3: Orchestrate** - Coordinate multi-agent workflow, delegate dynamically as needed
+- **STEP 4: Track** - Monitor progress using the shared file-based planning system
 
 **REMEMBER**: Your job is ORCHESTRATION, not just planning. Creating planning docs is step 1, not the final step!
 
@@ -194,6 +205,8 @@ You have access to powerful tools:
 - **Task tools**: Create, update, track tasks
 - **Knowledge tools**: Store and retrieve knowledge
 - **File tools**: Read, write, edit files
+  - IMPORTANT: When creating files with `str_replace_editor`, you MUST provide complete file_text content
+  - NEVER call create command without generating the full file content first
 - **Terminal tools**: Execute bash commands
 - **Git tools**: Version control operations
 - **Search tools**: Find files and code

@@ -492,21 +492,14 @@ class ProjectManager:
             "knowledge": {},
         }
 
-        # Load all documents
+        # Load all shared documents (used by ALL agents - CEO and specialists)
         for doc_type in ["project_overview", "requirements", "technical_spec", "roadmap", "knowledge_base", "decisions"]:
             content = self.load_document(project_name, doc_type)  # type: ignore
             if content:
                 context["documents"][doc_type] = content
 
-        # Load specialist plans
-        agent_plans_dir = project_path / "agents"
-        if agent_plans_dir.exists():
-            specialist_plans = {}
-            for plan_file in agent_plans_dir.glob("*_plan.md"):
-                specialist = plan_file.stem.replace("_plan", "")
-                specialist_plans[specialist] = plan_file.read_text()
-            if specialist_plans:
-                context["documents"]["specialist_plans"] = specialist_plans
+        # NOTE: Specialist plans removed - all agents now use the same shared planning documents above
+        # No need to load agents/ folder - it won't be created for new projects
 
         # Load task summary
         task_manager = self.get_task_manager(project_name)

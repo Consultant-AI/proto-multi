@@ -47,6 +47,8 @@
 
 qa + write tasks based on bugs and requirment to make it until self improve
 
+best models + use less strong when needed
+
 bugs
 api calls for browser and computer when not shown
 when i run the software the browser not working, it should be start with the system

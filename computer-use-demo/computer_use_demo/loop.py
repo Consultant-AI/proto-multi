@@ -129,9 +129,10 @@ def get_system_prompt():
    ✅ Installing packages (pip install)
 
 **3. EDIT TOOL - Use for FILE CONTENT:**
-   ✅ **Creating new files** (always provide `file_text`)
+   ✅ **Creating new files** (MUST provide complete `file_text` with full file content)
    ✅ **Editing code** (use `str_replace` or `insert`)
    ✅ **Reading files** (to understand current project)
+   ⚠️ CRITICAL: When using command='create', ALWAYS generate the complete file content first, then pass it in file_text parameter. NEVER call create with empty file_text!
 
 **🚨 CRITICAL RULES:**
 - User asks for browser/GUI → Use **computer** tool
@@ -246,10 +247,50 @@ async def sampling_loop(
     # Now create DelegateTaskTool with all tools (including itself for recursive delegation)
     if delegate_tool_index is not None:
         from .tools.planning import DelegateTaskTool
+
+        # Create progress callback wrapper for delegation streaming
+        async def delegation_progress_callback(response, tool_results):
+            """Forward specialist agent progress to UI via tool_output_callback."""
+            # Extract tool use blocks from response and report them
+            if hasattr(response, 'content'):
+                for block in response.content:
+                    if hasattr(block, 'type') and block.type == 'tool_use':
+                        # Extract tool details
+                        tool_name = block.name if hasattr(block, 'name') else 'unknown'
+                        tool_input = block.input if hasattr(block, 'input') else {}
+                        tool_id = block.id if hasattr(block, 'id') else 'unknown'
+
+                        # Find the corresponding result from tool_results
+                        tool_result = None
+                        if isinstance(tool_results, list):
+                            for result_block in tool_results:
+                                if (hasattr(result_block, 'type') and
+                                    result_block.type == 'tool_result' and
+                                    hasattr(result_block, 'tool_use_id') and
+                                    result_block.tool_use_id == tool_id):
+                                    # Extract the ToolResult from the block content
+                                    if hasattr(result_block, 'content'):
+                                        # The content should be the ToolResult output
+                                        tool_result = ToolResult(
+                                            output=str(result_block.content) if result_block.content else "",
+                                            error=None,
+                                            base64_image=None
+                                        )
+                                    break
+
+                        # If we didn't find the result, create a placeholder
+                        if tool_result is None:
+                            tool_result = ToolResult(output="", error=None, base64_image=None)
+
+                        # Call the tool_output_callback to stream this to the UI
+                        tool_output_callback(tool_result, tool_id, tool_name, tool_input)
+
         tools[delegate_tool_index] = DelegateTaskTool(
             available_tools=tools,
             api_key=api_key,
             delegation_depth=0,  # CEO starts at depth 0 (used for tracking/visualization only, no limits)
+            stop_flag=stop_flag,  # Pass stop_flag so delegated specialists can be stopped
+            progress_callback=delegation_progress_callback,  # Pass progress callback for streaming
         )
 
     tool_collection = ToolCollection(*tools)

@@ -43,6 +43,7 @@ class EditTool20250124(BaseAnthropicTool):
             "type": "custom",
             "description": "A filesystem editor tool that allows the agent to view, create, and edit files. "
                            "CRITICAL: When using 'create', you MUST provide the 'file_text' parameter with the FULL content of the file. "
+                           "NEVER call create without file_text - always generate the complete file content first. "
                            "When using 'str_replace', you MUST provide 'old_str' and 'new_str'.",
             "input_schema": {
                 "type": "object",
@@ -58,7 +59,7 @@ class EditTool20250124(BaseAnthropicTool):
                     },
                     "file_text": {
                         "type": "string",
-                        "description": "The content of the file. This parameter is MANDATORY when command is 'create'.",
+                        "description": "The content of the file. This parameter is REQUIRED when command is 'create'. You must provide the complete file content - do not leave this empty.",
                     },
                     "view_range": {
                         "type": "array",
@@ -356,7 +357,10 @@ class EditTool20250429(BaseAnthropicTool):
         return {
             "name": self.name,
             "type": "custom",
-            "description": "An filesystem editor tool that allows the agent to view, create, and edit files.",
+            "description": "An filesystem editor tool that allows the agent to view, create, and edit files. "
+                           "CRITICAL: When using 'create', you MUST provide the 'file_text' parameter with the FULL content of the file. "
+                           "NEVER call create without file_text - always generate the complete file content first. "
+                           "When using 'str_replace', you MUST provide 'old_str' and 'new_str'.",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -371,7 +375,7 @@ class EditTool20250429(BaseAnthropicTool):
                     },
                     "file_text": {
                         "type": "string",
-                        "description": "The content of the file. This parameter is MANDATORY when command is 'create'.",
+                        "description": "The content of the file. This parameter is REQUIRED when command is 'create'. You must provide the complete file content - do not leave this empty.",
                     },
                     "view_range": {
                         "type": "array",

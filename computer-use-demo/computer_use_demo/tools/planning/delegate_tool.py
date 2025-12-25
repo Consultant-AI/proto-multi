@@ -28,7 +28,14 @@ class DelegateTaskTool(BaseAnthropicTool):
     name: str = "delegate_task"
     api_type: str = "custom"
 
-    def __init__(self, available_tools: list[Any] | None = None, api_key: str | None = None, delegation_depth: int = 0):
+    def __init__(
+        self,
+        available_tools: list[Any] | None = None,
+        api_key: str | None = None,
+        delegation_depth: int = 0,
+        stop_flag: Any = None,
+        progress_callback: Any = None
+    ):
         """
         Initialize delegation tool.
 
@@ -37,11 +44,15 @@ class DelegateTaskTool(BaseAnthropicTool):
             api_key: Optional Anthropic API key
             delegation_depth: Current delegation depth (0 = CEO, 1 = first specialist, etc.)
                              Used for tracking and visualization, not limiting
+            stop_flag: Optional callable that returns True when execution should stop
+            progress_callback: Optional callable to report progress during delegation
         """
         super().__init__()
         self.available_tools = available_tools or []
         self.api_key = api_key
         self.delegation_depth = delegation_depth
+        self.stop_flag = stop_flag
+        self.progress_callback = progress_callback
 
     def to_params(self):
         """Return tool parameter schema for Anthropic API."""
@@ -165,7 +176,13 @@ Returns the specialist's output and execution details.""",
                 data={"message": f"Executing task with {specialist} specialist"},
             )
 
-            result = await specialist_agent.execute(enhanced_task, full_context)
+            # Pass stop_flag and progress_callback to specialist so it can be stopped and report progress
+            result = await specialist_agent.execute(
+                enhanced_task,
+                full_context,
+                stop_flag=self.stop_flag,
+                progress_callback=self.progress_callback
+            )
 
             # Log specialist response
             logger.log_event(
@@ -233,17 +250,24 @@ Returns the specialist's output and execution details.""",
             )
 
         # Create tools with incremented delegation depth for the specialist
+        # Filter out computer tool which causes API errors with specialist agents
         specialist_tools = []
         for tool in self.available_tools:
             if hasattr(tool, 'name') and tool.name == 'delegate_task':
                 # Create new DelegateTaskTool with incremented depth (for tracking only)
+                # Pass stop_flag and progress_callback so they propagate through the delegation chain
                 specialist_tools.append(
                     DelegateTaskTool(
                         available_tools=self.available_tools,
                         api_key=self.api_key,
                         delegation_depth=self.delegation_depth + 1,
+                        stop_flag=self.stop_flag,
+                        progress_callback=self.progress_callback,
                     )
                 )
+            elif hasattr(tool, 'api_type') and tool.api_type == 'computer_20250124':
+                # Skip computer tool for specialists - they don't need it and it causes API errors
+                continue
             else:
                 specialist_tools.append(tool)
 
@@ -264,7 +288,7 @@ Returns the specialist's output and execution details.""",
         """
         enhanced_parts = [task]
 
-        # Add planning documents if available
+        # Add shared planning documents (available to ALL specialists)
         documents = context.get("documents", {})
 
         if documents.get("project_overview"):
@@ -275,11 +299,14 @@ Returns the specialist's output and execution details.""",
             enhanced_parts.append("\n## Key Requirements")
             enhanced_parts.append(documents["requirements"][:500] + "...")
 
-        # Add specialist-specific plan if available
-        specialist_plans = documents.get("specialist_plans", {})
-        if specialist in specialist_plans:
-            enhanced_parts.append(f"\n## Your {specialist.title()} Plan")
-            enhanced_parts.append(specialist_plans[specialist][:500] + "...")
+        # Add ROADMAP and TECHNICAL_SPEC for all specialists to reference
+        if documents.get("roadmap"):
+            enhanced_parts.append("\n## Project Roadmap (Shared Plan)")
+            enhanced_parts.append(documents["roadmap"][:1000] + "...")
+
+        if documents.get("technical_spec"):
+            enhanced_parts.append("\n## Technical Specification")
+            enhanced_parts.append(documents["technical_spec"][:800] + "...")
 
         # Add project metadata
         metadata = context.get("metadata", {})

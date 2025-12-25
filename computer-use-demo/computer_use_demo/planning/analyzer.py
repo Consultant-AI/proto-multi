@@ -215,17 +215,17 @@ class TaskComplexityAnalyzer:
                 "technical_spec": True,
                 "roadmap": True,
                 "knowledge_base": False,
-                "specialist_plans": len(specialists) > 1,
+                "specialist_plans": False,  # All agents use shared planning documents
             }
 
-        # Project level - full planning
+        # Project level - full planning (shared by all agents)
         return {
             "project_overview": True,
             "requirements": True,
             "technical_spec": True,
             "roadmap": True,
             "knowledge_base": True,
-            "specialist_plans": True,
+            "specialist_plans": False,  # All agents collaborate on ONE shared plan
         }
 
     def _generate_reasoning(

@@ -8,6 +8,7 @@ from .plan_tool import PlanningTool
 from .project_tool import ProjectTool
 from .read_plan_tool import ReadPlanningTool
 from .task_tool import TaskTool
+from .update_plan_tool import UpdatePlanningDocTool
 from .work_queue_tool import WorkQueueTool
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "TaskTool",
     "KnowledgeTool",
     "ProjectTool",
+    "UpdatePlanningDocTool",
     "WorkQueueTool",
 ]

@@ -47,7 +47,7 @@ class BaseSpecialist(BaseAgent):
             name=name,
             model=model,
             tools=tools or [],
-            max_iterations=25,
+            max_iterations=None,  # Unlimited - agents work until task completion (can run for years if needed)
         )
         super().__init__(config, session_id, api_key)
 
@@ -83,7 +83,7 @@ As a specialist, you:
 1. **Focus on your domain**: Apply deep expertise in your specific area
 2. **Deliver quality**: Produce high-quality work that meets professional standards
 3. **Collaborate**: Work with other specialists when needed
-4. **Follow planning**: Use planning documents provided by the CEO agent
+4. **Follow and UPDATE shared planning**: Use the shared ROADMAP.md, TECHNICAL_SPEC.md, and other planning documents. All specialists work from the SAME documents - there are no specialist-specific plans
 5. **Communicate clearly**: Explain your work and decisions
 6. **Delegate when appropriate**: Use `delegate_task` when work requires expertise outside your domain
 
@@ -99,6 +99,9 @@ There are NO limits on delegation depth. If you encounter work that another spec
 - Quality depends on another specialist's judgment (e.g., as a developer, delegate UX decisions to ux-designer)
 - Another specialist is better equipped to handle specific work
 - You're unsure about best practices in another domain - delegate to the expert!
+- **You're repeating the same actions without progress** - delegate to get unstuck
+- **You've hit errors multiple times** - delegate to a specialist who might have a different approach
+- **Task is too large for one agent** - break it down and delegate parts
 
 **Examples:**
 - **senior-developer** encounters UI/UX decision → delegate to **ux-designer**
@@ -147,7 +150,10 @@ When receiving a task:
 ## Available Tools
 
 You have access to the same powerful tools as other agents:
-- File operations (read, write, edit)
+- **File operations** (read, write, edit):
+  - IMPORTANT: When creating files with `str_replace_editor`, you MUST provide the complete file_text content
+  - NEVER call create command without generating the full file content first
+  - Always think through what the file should contain, then provide it in the file_text parameter
 - Terminal commands
 - Code search and navigation
 - Git operations

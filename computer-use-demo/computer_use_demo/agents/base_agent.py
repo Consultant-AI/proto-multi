@@ -26,7 +26,7 @@ class AgentConfig:
     model: str = "claude-sonnet-4-5-20250929"
     system_prompt: str = ""
     tools: list[Any] = field(default_factory=list)
-    max_iterations: int = 25
+    max_iterations: int | None = None  # None = unlimited iterations, will run until task completion
     temperature: float = 1.0
     max_self_correction_attempts: int = 3  # Max retry attempts with self-correction
     beta_flag: str | None = None  # Anthropic API beta flag (e.g. "computer-use-2025-01-24")
@@ -83,6 +83,8 @@ class BaseAgent(ABC):
         self.logger = get_logger()
         self.messages: list[dict[str, Any]] = []
         self.iteration_count = 0
+        self.stop_flag: Any = None  # Function that returns True when execution should stop
+        self.progress_callback: Any = None  # Function to report progress during execution
 
         # Log agent creation
         self.logger.log_event(
@@ -107,7 +109,13 @@ class BaseAgent(ABC):
         """
         pass
 
-    async def execute(self, task: str, context: dict[str, Any] | None = None) -> AgentResult:
+    async def execute(
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
+        stop_flag: Any = None,
+        progress_callback: Any = None
+    ) -> AgentResult:
         """
         Execute a task with self-healing retry loop.
 
@@ -122,11 +130,19 @@ class BaseAgent(ABC):
         Args:
             task: The task to execute
             context: Optional context (planning docs, project info, etc.)
+            stop_flag: Optional callable that returns True when execution should stop
+            progress_callback: Optional callable to report progress during execution
 
         Returns:
             AgentResult with execution outcome
         """
         context = context or {}
+
+        # Store stop_flag and progress_callback for use in execution loop
+        if stop_flag is not None:
+            self.stop_flag = stop_flag
+        if progress_callback is not None:
+            self.progress_callback = progress_callback
 
         # Self-healing retry loop
         for retry_attempt in range(self.config.max_self_correction_attempts):
@@ -230,8 +246,31 @@ class BaseAgent(ABC):
         task_start_time = datetime.utcnow()
 
         try:
-            # Execution loop
-            while self.iteration_count < self.config.max_iterations:
+            # Execution loop - runs until task completion (or error)
+            while True:
+                # Check if stop was requested
+                if self.stop_flag and callable(self.stop_flag) and self.stop_flag():
+                    return AgentResult(
+                        success=False,
+                        output=self._extract_text(self.messages[-1]["content"]) if self.messages else "",
+                        agent_role=self.config.role,
+                        iterations=self.iteration_count,
+                        messages=self.messages,
+                        error="Execution stopped by user",
+                    )
+
+                # Check iteration limit only if one is set
+                if self.config.max_iterations is not None and self.iteration_count >= self.config.max_iterations:
+                    # Max iterations reached (only if limit was explicitly set)
+                    return AgentResult(
+                        success=False,
+                        output=self._extract_text(self.messages[-1]["content"]) if self.messages else "",
+                        agent_role=self.config.role,
+                        iterations=self.iteration_count,
+                        messages=self.messages,
+                        error=f"Max iterations ({self.config.max_iterations}) reached",
+                    )
+
                 self.iteration_count += 1
 
                 # Call Anthropic API
@@ -269,6 +308,10 @@ class BaseAgent(ABC):
                         {"role": "user", "content": tool_results}
                     )
 
+                    # Report progress if callback is provided
+                    if self.progress_callback and callable(self.progress_callback):
+                        await self.progress_callback(response, tool_results)
+
                 elif stop_reason == "max_tokens":
                     # Hit token limit, continue
                     self.messages.append(
@@ -288,16 +331,6 @@ class BaseAgent(ABC):
                         messages=self.messages,
                         error=f"Unexpected stop reason: {stop_reason}",
                     )
-
-            # Max iterations reached
-            return AgentResult(
-                success=False,
-                output=self._extract_text(self.messages[-1]["content"]) if self.messages else "",
-                agent_role=self.config.role,
-                iterations=self.iteration_count,
-                messages=self.messages,
-                error=f"Max iterations ({self.config.max_iterations}) reached",
-            )
 
         except Exception as e:
             self.logger.log_error(self.session_id, e)
@@ -614,7 +647,7 @@ Iterations: {result.iterations}
 Error: {error_msg}
 
 Context:
-- Max iterations: {self.config.max_iterations}
+- Max iterations: {self.config.max_iterations if self.config.max_iterations is not None else 'Unlimited'}
 - Tools available: {len(self.config.tools)}
 
 Recommendation: Review task complexity and tool availability. Consider breaking into smaller subtasks or delegating to specialist agent.""",

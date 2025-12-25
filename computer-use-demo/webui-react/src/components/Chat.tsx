@@ -253,8 +253,28 @@ export default function Chat({
       // Connect to SSE stream for updates
       const eventSource = new EventSource('/api/stream')
 
+      // Add timeout to detect hung streams (30 seconds of no activity)
+      let streamTimeout: number | null = null
+      const resetStreamTimeout = () => {
+        if (streamTimeout) clearTimeout(streamTimeout)
+        streamTimeout = setTimeout(() => {
+          console.warn('Stream timeout - no data received for 30 seconds')
+          eventSource.close()
+          setIsStreaming(false)
+          // Add error message to chat
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: '⚠️ Stream timeout - the response stopped updating. You may need to try again or click Stop.',
+            timestamp: new Date().toISOString()
+          }])
+        }, 30000) // 30 second timeout
+      }
+
+      resetStreamTimeout() // Start timeout immediately
+
       eventSource.onmessage = (event) => {
         try {
+          resetStreamTimeout() // Reset timeout on each message
           const data = JSON.parse(event.data)
 
           // Handle different message types
@@ -284,6 +304,7 @@ export default function Chat({
             setIsStreaming(data.running || false)
 
             if (!data.running) {
+              if (streamTimeout) clearTimeout(streamTimeout)
               eventSource.close()
             }
           }
@@ -293,6 +314,7 @@ export default function Chat({
       }
 
       eventSource.onerror = () => {
+        if (streamTimeout) clearTimeout(streamTimeout)
         eventSource.close()
         setIsStreaming(false)
       }
