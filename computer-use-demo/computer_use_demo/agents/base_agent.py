@@ -348,6 +348,77 @@ class BaseAgent(ABC):
 
             return result
 
+    def _validate_and_clean_messages(self) -> list[dict[str, Any]]:
+        """
+        Validate and clean message history to prevent API errors.
+
+        Ensures that every tool_use block has a corresponding tool_result in the next message.
+        If not, removes the incomplete tool_use blocks.
+
+        Returns:
+            Cleaned messages list
+        """
+        if not self.messages:
+            return self.messages
+
+        cleaned_messages = []
+
+        for i, msg in enumerate(self.messages):
+            if msg["role"] == "assistant" and isinstance(msg.get("content"), list):
+                # Check if this message has tool_use blocks
+                tool_use_ids = {
+                    block.get("id")
+                    for block in msg["content"]
+                    if isinstance(block, dict) and block.get("type") == "tool_use"
+                }
+
+                if tool_use_ids:
+                    # Check if next message has corresponding tool_results
+                    if i + 1 < len(self.messages):
+                        next_msg = self.messages[i + 1]
+                        if next_msg["role"] == "user" and isinstance(next_msg.get("content"), list):
+                            tool_result_ids = {
+                                block.get("tool_use_id")
+                                for block in next_msg["content"]
+                                if isinstance(block, dict) and block.get("type") == "tool_result"
+                            }
+
+                            # If all tool_use blocks have results, keep as is
+                            if tool_use_ids.issubset(tool_result_ids):
+                                cleaned_messages.append(msg)
+                            else:
+                                # Remove tool_use blocks that don't have results
+                                cleaned_content = [
+                                    block for block in msg["content"]
+                                    if not (isinstance(block, dict) and
+                                           block.get("type") == "tool_use" and
+                                           block.get("id") not in tool_result_ids)
+                                ]
+                                if cleaned_content:
+                                    cleaned_messages.append({**msg, "content": cleaned_content})
+                        else:
+                            # Next message is not tool_result, remove all tool_use blocks
+                            cleaned_content = [
+                                block for block in msg["content"]
+                                if not (isinstance(block, dict) and block.get("type") == "tool_use")
+                            ]
+                            if cleaned_content:
+                                cleaned_messages.append({**msg, "content": cleaned_content})
+                    else:
+                        # No next message, remove all tool_use blocks from last message
+                        cleaned_content = [
+                            block for block in msg["content"]
+                            if not (isinstance(block, dict) and block.get("type") == "tool_use")
+                        ]
+                        if cleaned_content:
+                            cleaned_messages.append({**msg, "content": cleaned_content})
+                else:
+                    cleaned_messages.append(msg)
+            else:
+                cleaned_messages.append(msg)
+
+        return cleaned_messages
+
     async def _call_api(self) -> Message:
         """
         Call Anthropic API with current messages.
@@ -360,6 +431,9 @@ class BaseAgent(ABC):
         # Prepare tools if any
         tools = [tool.to_params() for tool in self.config.tools] if self.config.tools else []
 
+        # Validate and clean messages before sending to API
+        cleaned_messages = self._validate_and_clean_messages()
+
         # Log API request
         self.logger.log_event(
             event_type="api_request",
@@ -367,8 +441,10 @@ class BaseAgent(ABC):
             data={
                 "agent_role": self.config.role,
                 "iteration": self.iteration_count,
-                "message_count": len(self.messages),
+                "message_count": len(cleaned_messages),
+                "original_message_count": len(self.messages),
                 "has_tools": len(tools) > 0,
+                "messages_cleaned": len(cleaned_messages) != len(self.messages),
             },
         )
 
@@ -378,7 +454,7 @@ class BaseAgent(ABC):
             "max_tokens": 4096,
             "temperature": self.config.temperature,
             "system": system_prompt,
-            "messages": self.messages,
+            "messages": cleaned_messages,  # Use cleaned messages
         }
 
         if tools:  # Only add tools parameter if there are actual tools

@@ -83,6 +83,8 @@ class DisplayMessage:
     text: str
     label: str | None = None
     images: list[str] = field(default_factory=list)
+    agent_name: str | None = None      # ✅ Display name of agent (e.g., "Senior Developer")
+    agent_role: str | None = None      # ✅ Agent role/type (e.g., "senior-developer")
 
 
 class ChatSession:
@@ -114,6 +116,10 @@ class ChatSession:
         self.enable_verification = False  # Disabled for faster, direct tool usage
         self.use_ceo_agent = os.getenv("PROTO_USE_CEO_AGENT", "true").lower() == "true"  # CEO agent with planning/delegation
         self.session_stats: dict[str, Any] = {}
+
+        # ✅ Agent identity tracking for delegation visibility
+        self._current_agent_name: str | None = None     # Current specialist name (e.g., "Senior Developer")
+        self._current_agent_role: str | None = None     # Current specialist role (e.g., "senior-developer")
 
         # SSE streaming for real-time updates
         self._sse_queues: list[asyncio.Queue] = []
@@ -175,6 +181,9 @@ class ChatSession:
                 raise HTTPException(status_code=409, detail="Agent is already running.")
             self._busy = True
             self._stop_requested = False
+            # ✅ Set CEO Agent identity at start (will be updated during delegation if specialists work)
+            self._current_agent_name = "CEO Agent"
+            self._current_agent_role = "ceo"
 
         try:
             self.last_active = datetime.now()
@@ -221,6 +230,34 @@ class ChatSession:
                     )
 
             def tool_output_callback(result: ToolResult, tool_id: str, tool_name: str, tool_input: dict[str, Any]):
+                # ✅ Track delegation for agent identity display
+                if tool_name == "delegate_task" and "specialist" in tool_input:
+                    specialist_role = tool_input["specialist"]
+                    # Map specialist role to display name
+                    specialist_names = {
+                        "senior-developer": "Senior Developer",
+                        "devops": "DevOps Engineer",
+                        "qa-testing": "QA Tester",
+                        "security": "Security Specialist",
+                        "technical-writer": "Technical Writer",
+                        "product-manager": "Product Manager",
+                        "product-strategy": "Product Strategist",
+                        "ux-designer": "UX Designer",
+                        "data-analyst": "Data Analyst",
+                        "growth-analytics": "Growth Analyst",
+                        "sales": "Sales Specialist",
+                        "customer-success": "Customer Success",
+                        "marketing-strategy": "Marketing Strategist",
+                        "content-marketing": "Content Marketer",
+                        "finance": "Finance Specialist",
+                        "legal-compliance": "Legal & Compliance",
+                        "hr-people": "HR Specialist",
+                        "business-operations": "Business Operations",
+                        "admin-coordinator": "Admin Coordinator"
+                    }
+                    self._current_agent_role = specialist_role
+                    self._current_agent_name = specialist_names.get(specialist_role, specialist_role.replace("-", " ").title())
+
                 # Format tool name nicely
                 tool_display_name = tool_name.replace("_", " ").title()
 
@@ -269,6 +306,8 @@ class ChatSession:
                         label=tool_display_name,
                         text=final_text,
                         images=images,
+                        agent_name=self._current_agent_name,  # ✅ Show which specialist is working
+                        agent_role=self._current_agent_role,  # ✅ Include role for tracking
                     )
                 )
 
@@ -308,6 +347,8 @@ class ChatSession:
                             role="assistant",
                             label="API Error",
                             text=str(error),
+                            agent_name=self._current_agent_name,  # ✅ Show which specialist encountered error
+                            agent_role=self._current_agent_role,  # ✅ Include role for tracking
                         )
                     )
                     # Log API error
@@ -329,6 +370,26 @@ class ChatSession:
                         role="tool",
                         label="Planning Progress",
                         text=progress_message,
+                        agent_name=self._current_agent_name,  # ✅ Show which specialist is planning
+                        agent_role=self._current_agent_role,  # ✅ Include role for tracking
+                    )
+                )
+                # Broadcast update to frontend immediately
+                loop.call_soon_threadsafe(
+                    lambda: asyncio.create_task(self._broadcast_sse_update())
+                )
+
+            def delegation_status_callback(status_message: str):
+                """Callback for delegation tool to send status updates to chat UI."""
+                # Add delegation status message to display
+                self.display_messages.append(
+                    DisplayMessage(
+                        id=str(uuid.uuid4()),
+                        role="tool",
+                        label="Delegation Status",
+                        text=status_message,
+                        agent_name=self._current_agent_name,  # ✅ Show which specialist is delegating
+                        agent_role=self._current_agent_role,  # ✅ Include role for tracking
                     )
                 )
                 # Broadcast update to frontend immediately
@@ -357,6 +418,7 @@ class ChatSession:
                     thinking_budget=self.thinking_budget,
                     stop_flag=lambda: self._stop_requested,
                     planning_progress_callback=planning_progress_callback,
+                    delegation_status_callback=delegation_status_callback,
                 ))
 
             # Get thread pool executor from app state
@@ -384,6 +446,7 @@ class ChatSession:
                     max_tokens=self.max_tokens,
                     tool_version=self.tool_version,
                     planning_progress_callback=planning_progress_callback,
+                    delegation_status_callback=delegation_status_callback,
                     thinking_budget=self.thinking_budget,
                     stop_flag=lambda: self._stop_requested,
                 )
@@ -393,12 +456,16 @@ class ChatSession:
             assistant_text = "".join(self._pending_assistant_chunks).strip()
             self._pending_assistant_chunks.clear()
             if assistant_text:
+                # ✅ Use current agent identity if available (from delegation)
+                agent_label = self._current_agent_name or "Proto"
                 self.display_messages.append(
                     DisplayMessage(
                         id=str(uuid.uuid4()),
                         role="assistant",
-                        label="Proto",
+                        label=agent_label,
                         text=assistant_text,
+                        agent_name=self._current_agent_name,    # ✅ Include for frontend
+                        agent_role=self._current_agent_role,    # ✅ Include for frontend
                     )
                 )
 
@@ -535,6 +602,8 @@ class ChatSession:
                     "label": msg.label,
                     "text": msg.text,
                     "images": msg.images,
+                    "agent_name": msg.agent_name,    # ✅ Include agent identity
+                    "agent_role": msg.agent_role,    # ✅ Include agent role
                 }
                 for msg in self.display_messages
             ],

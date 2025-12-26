@@ -44,8 +44,13 @@
 
 ### 🚧 Active Tasks
 
+maybe branch off the kanban
 
 qa + write tasks based on bugs and requirment to make it until self improve
+
+make good planning and following planning + delegation
+
+
 
 best models + use less strong when needed
 

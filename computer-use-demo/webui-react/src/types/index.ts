@@ -40,6 +40,9 @@ export interface Message {
   content: string;
   timestamp: string;
   images?: string[];
+  agent_role?: string;  // Which specialist is responding (ceo, senior-developer, etc.)
+  agent_name?: string;  // Display name of the agent
+  label?: string;       // Message label (e.g., "Delegation Status", "Tool Result")
 }
 
 export interface Session {

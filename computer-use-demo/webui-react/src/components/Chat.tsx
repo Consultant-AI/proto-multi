@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { PanelLeftOpen, User, Square, Send, Plus, X, Mic } from 'lucide-react'
+import { PanelLeftOpen, Square, Send, Plus, X, Mic } from 'lucide-react'
 import { Message } from '../types'
 import SessionHistory from './SessionHistory'
 import AgentTree from './AgentTree'
@@ -10,8 +10,6 @@ interface ChatProps {
   onToggleViewer: () => void
   onHideChat?: () => void
   selectedAgentId: string | null
-  selectedAgentName: string
-  selectedAgentIcon: string
   onSelectAgent: (agentId: string, agentName: string, agentIcon: string) => void
 }
 
@@ -20,8 +18,6 @@ export default function Chat({
   onToggleViewer,
   onHideChat,
   selectedAgentId,
-  selectedAgentName,
-  selectedAgentIcon,
   onSelectAgent
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -77,7 +73,10 @@ export default function Chat({
                 role: msg.role === 'tool' ? 'assistant' : msg.role,
                 content: content,
                 timestamp: new Date().toISOString(),
-                images: msg.images || []
+                images: msg.images || [],
+                agent_name: msg.agent_name,    // ✅ Include agent identity
+                agent_role: msg.agent_role,     // ✅ Include agent role
+                label: msg.label                // ✅ Include message label (e.g., "Delegation Status")
               }
             })
 
@@ -116,7 +115,10 @@ export default function Chat({
             role: msg.role === 'tool' ? 'assistant' : msg.role,
             content: msg.content || msg.text || '',
             timestamp: new Date().toISOString(),
-            images: msg.images || []
+            images: msg.images || [],
+            agent_name: msg.agent_name,    // ✅ Include agent identity
+            agent_role: msg.agent_role,     // ✅ Include agent role
+            label: msg.label                // ✅ Include message label (e.g., "Delegation Status")
           }))
           setMessages(formattedMessages)
         }
@@ -153,7 +155,10 @@ export default function Chat({
           role: msg.role === 'tool' ? 'assistant' : msg.role,
           content: msg.content || msg.text || '',
           timestamp: new Date().toISOString(),
-          images: msg.images || []
+          images: msg.images || [],
+          agent_name: msg.agent_name,    // ✅ Include agent identity
+          agent_role: msg.agent_role,     // ✅ Include agent role
+          label: msg.label                // ✅ Include message label (e.g., "Delegation Status")
         }))
         setMessages(formattedMessages)
       } else {
@@ -253,28 +258,8 @@ export default function Chat({
       // Connect to SSE stream for updates
       const eventSource = new EventSource('/api/stream')
 
-      // Add timeout to detect hung streams (30 seconds of no activity)
-      let streamTimeout: number | null = null
-      const resetStreamTimeout = () => {
-        if (streamTimeout) clearTimeout(streamTimeout)
-        streamTimeout = setTimeout(() => {
-          console.warn('Stream timeout - no data received for 30 seconds')
-          eventSource.close()
-          setIsStreaming(false)
-          // Add error message to chat
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: '⚠️ Stream timeout - the response stopped updating. You may need to try again or click Stop.',
-            timestamp: new Date().toISOString()
-          }])
-        }, 30000) // 30 second timeout
-      }
-
-      resetStreamTimeout() // Start timeout immediately
-
       eventSource.onmessage = (event) => {
         try {
-          resetStreamTimeout() // Reset timeout on each message
           const data = JSON.parse(event.data)
 
           // Handle different message types
@@ -296,7 +281,10 @@ export default function Chat({
                 role: msg.role === 'tool' ? 'assistant' : msg.role,
                 content: content,
                 timestamp: new Date().toISOString(),
-                images: msg.images || []
+                images: msg.images || [],
+                agent_name: msg.agent_name,    // ✅ Include agent identity
+                agent_role: msg.agent_role,     // ✅ Include agent role
+                label: msg.label                // ✅ Include message label (e.g., "Delegation Status")
               }
             })
 
@@ -304,7 +292,6 @@ export default function Chat({
             setIsStreaming(data.running || false)
 
             if (!data.running) {
-              if (streamTimeout) clearTimeout(streamTimeout)
               eventSource.close()
             }
           }
@@ -314,7 +301,6 @@ export default function Chat({
       }
 
       eventSource.onerror = () => {
-        if (streamTimeout) clearTimeout(streamTimeout)
         eventSource.close()
         setIsStreaming(false)
       }
@@ -357,8 +343,9 @@ export default function Chat({
             </button>
           )}
           <div className="chat-agent-info">
-            <span className="chat-agent-icon">{selectedAgentIcon}</span>
-            <div className="chat-agent-name">{selectedAgentName}</div>
+            <div className="chat-agent-name">
+              {messages.length > 0 ? messages[0].content : 'New conversation'}
+            </div>
           </div>
         </div>
         <div className="chat-header-right">
@@ -406,11 +393,20 @@ export default function Chat({
                 key={index}
                 className={`message message-${message.role}`}
               >
-                <div className="message-avatar">
-                  {message.role === 'user' ? <User size={18} /> : selectedAgentIcon}
-                </div>
                 <div className="message-content">
-                  <div className="message-text">{message.content}</div>
+                  {message.role === 'assistant' && message.agent_name && (
+                    <div className="message-agent-name-above">
+                      {message.agent_name}
+                    </div>
+                  )}
+                  <div className="message-text">
+                    {message.role === 'assistant' && message.label && message.label !== message.agent_name && (
+                      <div className="message-tool-name">
+                        {message.label}
+                      </div>
+                    )}
+                    {message.content}
+                  </div>
                   {message.images && message.images.length > 0 && (
                     <div className="message-images">
                       {message.images.map((img, i) => (
@@ -426,7 +422,6 @@ export default function Chat({
             ))}
             {isStreaming && (
               <div className="message message-assistant">
-                <div className="message-avatar">{selectedAgentIcon}</div>
                 <div className="message-content">
                   <div className="message-text loading-indicator">
                     <span className="loading-dot"></span>

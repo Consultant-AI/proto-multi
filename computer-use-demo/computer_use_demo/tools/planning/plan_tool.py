@@ -193,6 +193,11 @@ Returns paths to created planning documents.""",
 
                     doc_path = project_manager.save_document(project_name, doc_type, content)  # type: ignore
 
+                    # CRITICAL: Validate that file was actually created
+                    from pathlib import Path
+                    if not Path(doc_path).exists():
+                        raise ToolError(f"Failed to create {doc_type} - file not found at {doc_path}")
+
                     created_docs.append({"type": doc_type, "path": str(doc_path)})
 
                     # Print completion to terminal (visible immediately)
@@ -215,8 +220,8 @@ Returns paths to created planning documents.""",
                     if self.progress_callback:
                         self.progress_callback(error_msg)
                     logger.log_error("planning-tool", e)
-                    # Continue with other documents even if one fails
-                    continue
+                    # CRITICAL: Don't continue - fail immediately so CEO knows planning failed
+                    raise ToolError(f"Planning failed while creating {doc_type}: {str(e)}")
 
             # NOTE: Specialist plans have been removed - all agents now collaborate on shared planning documents
             # The ROADMAP.md, TECHNICAL_SPEC.md, and other planning files are used by ALL specialists
@@ -232,13 +237,20 @@ Returns paths to created planning documents.""",
                         self.progress_callback(progress_msg)
 
                     tasks_path = project_manager.create_task_tree_from_roadmap(project_name)
-                    if tasks_path:
-                        created_docs.append({"type": "tasks", "path": str(tasks_path)})
-                        completion_msg = "✓ Created TASKS.md with task tree"
-                        print(completion_msg)
-                        progress_log.append(completion_msg)
-                        if self.progress_callback:
-                            self.progress_callback(completion_msg)
+                    if not tasks_path:
+                        raise ToolError("Failed to create tasks.json - path is None")
+
+                    # CRITICAL: Validate that tasks.json was actually created
+                    from pathlib import Path
+                    if not Path(tasks_path).exists():
+                        raise ToolError(f"Failed to create tasks.json - file not found at {tasks_path}")
+
+                    created_docs.append({"type": "tasks", "path": str(tasks_path)})
+                    completion_msg = "✓ Created tasks.json with task tree"
+                    print(completion_msg)
+                    progress_log.append(completion_msg)
+                    if self.progress_callback:
+                        self.progress_callback(completion_msg)
                 except Exception as e:
                     error_msg = f"✗ Failed to create task tree: {str(e)}"
                     print(error_msg)
@@ -246,6 +258,8 @@ Returns paths to created planning documents.""",
                     if self.progress_callback:
                         self.progress_callback(error_msg)
                     logger.log_error("planning-tool", e)
+                    # CRITICAL: Fail immediately so CEO knows tasks.json creation failed
+                    raise ToolError(f"Planning failed while creating tasks.json: {str(e)}")
 
             # Create .proto_project marker file in current directory
             # This allows other tools to detect the active project context
@@ -266,6 +280,17 @@ Returns paths to created planning documents.""",
                     data={"message": f"Could not create .proto_project marker: {str(e)}"},
                 )
 
+            # CRITICAL: Final validation - ensure planning folder exists with all files
+            from pathlib import Path
+            planning_folder = Path(project_path)
+            if not planning_folder.exists():
+                raise ToolError(f"Planning folder does not exist at {project_path}")
+
+            # Verify tasks.json was created (required for progress tracking)
+            tasks_json_path = planning_folder / "tasks.json"
+            if not tasks_json_path.exists():
+                raise ToolError(f"tasks.json not found at {tasks_json_path} - cannot track progress without it")
+
             logger.log_event(
                 event_type="planning_completed",
                 session_id="planning-tool",
@@ -279,6 +304,13 @@ Returns paths to created planning documents.""",
             print(f"\n{'='*60}")
             print(f"PLANNING COMPLETED: {len(created_docs)} documents created")
             print(f"{'='*60}\n")
+
+            # Determine recommended specialist based on analysis
+            recommended_specialist = "senior-developer"  # Default
+            if "design" in analysis.required_specialists or "ux" in analysis.required_specialists:
+                recommended_specialist = "ux-designer"
+            elif "development" in analysis.required_specialists or "coding" in analysis.required_specialists:
+                recommended_specialist = "senior-developer"
 
             # Format output with progress log
             output_lines = [
@@ -302,6 +334,30 @@ Returns paths to created planning documents.""",
 
             for doc in created_docs:
                 output_lines.append(f"  ✓ {doc['type']}")
+
+            # Add NEXT STEPS guidance
+            output_lines.extend([
+                "",
+                "=" * 60,
+                "NEXT STEPS - DELEGATION REQUIRED",
+                "=" * 60,
+                "",
+                "Planning is complete. Now you MUST delegate to the appropriate specialist:",
+                "",
+                f"1. Review TASKS.md at: {tasks_md_path}",
+                f"2. Delegate to specialist: {recommended_specialist}",
+                "",
+                "Example delegation command:",
+                f"  delegate_task(",
+                f"    specialist=\"{recommended_specialist}\",",
+                f"    task=\"Implement {project_name} per planning documents\",",
+                f"    project_name=\"{project_name}\"",
+                f"  )",
+                "",
+                "⚠️  DO NOT implement this project yourself - delegation is REQUIRED!",
+                "⚠️  The specialist will use TASKS.md to track progress.",
+                "",
+            ])
 
             return ToolResult(output="\n".join(output_lines))
 

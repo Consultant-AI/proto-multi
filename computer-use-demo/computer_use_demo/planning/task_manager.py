@@ -3,6 +3,8 @@ Task Management System for Project Tracking.
 
 This module provides task management capabilities for projects, enabling
 agents to create, track, update, and complete tasks throughout project execution.
+
+Tasks are stored in ~/Proto/{project}/planning/tasks.json as the single source of truth.
 """
 
 import json
@@ -137,6 +139,107 @@ class Task:
         if status == TaskStatus.COMPLETED:
             self.completed_at = self.updated_at
 
+    # Specification Workflow Methods (Auto-Claude inspired)
+
+    def start_specification(self) -> None:
+        """Initialize specification phase for this task."""
+        if "implementation_plan" not in self.metadata:
+            self.metadata["implementation_plan"] = {}
+
+        self.metadata["implementation_plan"]["spec_status"] = "in_progress"
+        self.metadata["implementation_plan"]["spec_started_at"] = datetime.utcnow().isoformat()
+        self.metadata["implementation_plan"]["specification"] = {
+            "context": "",
+            "acceptance_criteria": [],
+            "implementation_checklist": [],
+            "notes": []
+        }
+        self.updated_at = datetime.utcnow().isoformat()
+
+    def update_specification(
+        self,
+        context: Optional[str] = None,
+        acceptance_criteria: Optional[list[str]] = None,
+        checklist: Optional[list[str]] = None,
+        notes: Optional[str] = None
+    ) -> None:
+        """Update specification details."""
+        if "implementation_plan" not in self.metadata:
+            self.start_specification()
+
+        spec = self.metadata["implementation_plan"]["specification"]
+
+        if context is not None:
+            spec["context"] = context
+        if acceptance_criteria is not None:
+            spec["acceptance_criteria"] = acceptance_criteria
+        if checklist is not None:
+            spec["implementation_checklist"] = checklist
+        if notes is not None:
+            spec["notes"].append({
+                "timestamp": datetime.utcnow().isoformat(),
+                "text": notes
+            })
+
+        self.updated_at = datetime.utcnow().isoformat()
+
+    def complete_specification(self) -> None:
+        """Mark specification phase as complete."""
+        if "implementation_plan" not in self.metadata:
+            self.start_specification()
+
+        self.metadata["implementation_plan"]["spec_status"] = "completed"
+        self.metadata["implementation_plan"]["spec_completed_at"] = datetime.utcnow().isoformat()
+        self.updated_at = datetime.utcnow().isoformat()
+
+    def start_implementation(self) -> None:
+        """Mark task as starting implementation phase."""
+        if "implementation_plan" not in self.metadata:
+            self.metadata["implementation_plan"] = {}
+
+        self.metadata["implementation_plan"]["started_at"] = datetime.utcnow().isoformat()
+        if "commits" not in self.metadata["implementation_plan"]:
+            self.metadata["implementation_plan"]["commits"] = []
+        if "test_results" not in self.metadata["implementation_plan"]:
+            self.metadata["implementation_plan"]["test_results"] = []
+
+        self.updated_at = datetime.utcnow().isoformat()
+
+    def add_commit(self, commit_hash: str, message: str) -> None:
+        """Track a git commit for this task."""
+        if "implementation_plan" not in self.metadata:
+            self.metadata["implementation_plan"] = {}
+        if "commits" not in self.metadata["implementation_plan"]:
+            self.metadata["implementation_plan"]["commits"] = []
+
+        self.metadata["implementation_plan"]["commits"].append({
+            "hash": commit_hash,
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        self.updated_at = datetime.utcnow().isoformat()
+
+    def add_test_result(self, test_name: str, passed: bool, details: str = "") -> None:
+        """Track test results for this task."""
+        if "implementation_plan" not in self.metadata:
+            self.metadata["implementation_plan"] = {}
+        if "test_results" not in self.metadata["implementation_plan"]:
+            self.metadata["implementation_plan"]["test_results"] = []
+
+        self.metadata["implementation_plan"]["test_results"].append({
+            "test_name": test_name,
+            "passed": passed,
+            "details": details,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        self.updated_at = datetime.utcnow().isoformat()
+
+    def get_spec_status(self) -> str:
+        """Get current specification status."""
+        if "implementation_plan" not in self.metadata:
+            return "not_started"
+        return self.metadata["implementation_plan"].get("spec_status", "not_started")
+
     def __repr__(self) -> str:
         """String representation of task."""
         return f"Task(id={self.id[:8]}, title={self.title}, status={self.status.value})"
@@ -150,7 +253,7 @@ class TaskManager:
         Initialize task manager for a project.
 
         Args:
-            project_path: Path to project directory
+            project_path: Path to project PLANNING directory (already points to ~/Proto/{project}/planning/)
         """
         self.project_path = Path(project_path)
         self.tasks_file = self.project_path / "tasks.json"
@@ -175,6 +278,7 @@ class TaskManager:
 
     def _save_tasks(self) -> None:
         """Save tasks to disk."""
+        # Ensure project path exists (should already exist as it's the planning folder)
         self.project_path.mkdir(parents=True, exist_ok=True)
         data = {
             "version": "1.0",
@@ -194,6 +298,7 @@ class TaskManager:
         tags: Optional[list[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
         parent_id: Optional[str] = None,
+        task_id: Optional[str] = None,
     ) -> Task:
         """
         Create a new task.
@@ -207,6 +312,7 @@ class TaskManager:
             tags: Task tags
             metadata: Additional metadata
             parent_id: ID of parent task/project
+            task_id: Optional custom task ID (auto-generated UUID if not provided)
 
         Returns:
             Created task
@@ -220,6 +326,7 @@ class TaskManager:
             tags=tags,
             metadata=metadata,
             parent_id=parent_id,
+            task_id=task_id,
         )
         self.tasks[task.id] = task
         self._save_tasks()

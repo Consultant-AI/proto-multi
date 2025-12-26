@@ -308,7 +308,9 @@ class ProjectManager:
 
         # Cache task managers
         if project_name not in self._task_managers:
-            self._task_managers[project_name] = FolderTaskManager(project_path)
+            # Use simple TaskManager (creates tasks.json) instead of FolderTaskManager (creates tasks/ folder)
+            # This gives us ONE clean task file instead of folder structure
+            self._task_managers[project_name] = TaskManager(project_path)
 
         return self._task_managers[project_name]
 
@@ -334,15 +336,16 @@ class ProjectManager:
 
     def create_task_tree_from_roadmap(self, project_name: str) -> Optional[Path]:
         """
-        Create a TASKS.md file from the roadmap document.
+        Create tasks in planning/tasks.json from the roadmap document.
 
-        This file shows the hierarchical task structure with status tracking.
+        Parses the roadmap and creates a hierarchical task structure with friendly IDs.
+        All tasks are stored in ~/Proto/{project}/planning/tasks.json.
 
         Args:
             project_name: Name of the project
 
         Returns:
-            Path to TASKS.md or None if roadmap doesn't exist
+            Path to planning/tasks.json or None if roadmap doesn't exist
         """
         # Load roadmap
         roadmap_content = self.load_document(project_name, "roadmap")
@@ -368,6 +371,7 @@ class ProjectManager:
                 title=project_name,
                 description=f"Root project task for {project_name}",
                 priority=TaskPriority.HIGH,
+                task_id="ROOT",  # Friendly ID for root task
             )
         else:
             root_task = root_tasks[0]
@@ -381,22 +385,28 @@ class ProjectManager:
         current_phase = None
         current_phase_task = None
         phase_tasks = {}  # Track phases by title to avoid duplicates
+        phase_counter = 0  # Counter for phase IDs
 
         for line in lines:
             # Match phase headers like "### **Phase 1: Project Setup & Architecture** (Weeks 1-2)"
-            phase_match = re.match(r'^###\s+\*\*Phase\s+\d+:\s+(.+?)\*\*\s*\((.+?)\)', line)
+            # Note: The closing ** is BEFORE the (duration), not after
+            phase_match = re.match(r'^###\s+\*\*Phase\s+(\d+):\s+(.+?)\*\*\s*\((.+?)\)', line)
             if phase_match:
-                phase_title = phase_match.group(1)
-                phase_duration = phase_match.group(2)
+                phase_num = phase_match.group(1)
+                phase_title = phase_match.group(2)
+                phase_duration = phase_match.group(3)
 
                 # Check if phase already exists (to avoid duplicates in TOC)
                 if phase_title not in phase_tasks:
-                    # Create phase task
+                    phase_counter += 1
+                    # Create phase task with friendly ID: PHASE1, PHASE2, etc.
+                    phase_id = f"PHASE{phase_num}"
                     current_phase_task = task_manager.create_task(
                         title=phase_title,
                         description=f"Duration: {phase_duration}",
                         priority=TaskPriority.HIGH,
                         parent_id=root_task.id,
+                        task_id=phase_id,  # Friendly ID like "PHASE1"
                     )
                     phase_tasks[phase_title] = current_phase_task
                 else:
@@ -404,18 +414,44 @@ class ProjectManager:
                     current_phase_task = phase_tasks[phase_title]
                 continue
 
-            # Match task items like "- [ ] **Task Name**" (without task ID)
-            task_match = re.match(r'^-\s+\[\s*([x ])\s*\]\s+\*\*([^*]+)\*\*', line)
+            # Match task items like "- [ ] **1.1** Task Name or "- [ ] Task Name"
+            # Match task ID format like "**1.1**" or "**2.3**"
+            task_match = re.match(r'^-\s+\[\s*([x ])\s*\]\s+(?:\*\*([0-9.]+)\*\*\s+)?(.+?)$', line)
             if task_match and current_phase_task:
                 is_done = task_match.group(1).lower() == 'x'
-                task_title = task_match.group(2).strip()
+                task_num = task_match.group(2)  # Like "1.1" or "2.3" (optional)
+                full_text = task_match.group(3).strip()
 
-                # Create task
+                # Separate task title from description (content in parentheses)
+                # Format: "Task Name (optional details)" -> title: "Task Name", description: "optional details"
+                paren_pos = full_text.find('(')
+                if paren_pos > 0:
+                    task_title = full_text[:paren_pos].strip()
+                    # Extract description from parentheses
+                    desc_match = re.search(r'\((.+?)\)$', full_text)
+                    task_description = desc_match.group(1) if desc_match else ""
+                else:
+                    task_title = full_text
+                    task_description = ""
+
+                # Generate friendly task ID from phase and task number
+                # Format: PHASE1-1.1 or PHASE1-TASK-{counter}
+                if task_num:
+                    # Use task number from roadmap (e.g., "1.1" → "PHASE1-1.1")
+                    task_id = f"{current_phase_task.id}-{task_num.replace('.', '-')}"
+                else:
+                    # Count tasks in this phase for ID
+                    phase_children = task_manager.get_children(current_phase_task.id)
+                    task_counter = len(phase_children) + 1
+                    task_id = f"{current_phase_task.id}-TASK{task_counter}"
+
+                # Create task with friendly ID
                 new_task = task_manager.create_task(
                     title=task_title,
-                    description="",
+                    description=task_description,
                     priority=TaskPriority.MEDIUM,
                     parent_id=current_phase_task.id,
+                    task_id=task_id,  # Friendly ID like "PHASE1-1-1" or "PHASE1-TASK1"
                 )
 
                 # Update status if completed
@@ -423,47 +459,22 @@ class ProjectManager:
                     task_manager.update_task(new_task.id, status=TaskStatus.COMPLETED)
                 continue
 
-        # Generate TASKS.md from the task tree
-        tasks_md = self._generate_tasks_markdown(task_manager, root_task)
+        # Validate that tasks were actually created
+        root_children = task_manager.get_children(root_task.id)
+        if not root_children:
+            # No phase tasks were created - roadmap format might be incompatible
+            import warnings
+            warnings.warn(
+                f"No phase tasks created from roadmap for project '{project_name}'. "
+                "The roadmap might not follow the expected format. "
+                "Expected format: '### **Phase N: Title** (Duration)' for phases "
+                "and '- [ ] Task name' or '- [ ] **N.N** Task name (details)' for tasks."
+            )
 
-        # Save TASKS.md
-        tasks_path = project_path / "TASKS.md"
-        tasks_path.write_text(tasks_md)
-
+        # Return path to tasks.json (the single source of truth)
+        # Note: project_path from get_project_path() already points to the planning folder
+        tasks_path = project_path / "tasks.json"
         return tasks_path
-
-    def _generate_tasks_markdown(self, task_manager: TaskManager, root_task: Task, level: int = 0) -> str:
-        """Generate markdown for task tree."""
-        indent = "  " * level
-        status_emoji = {
-            TaskStatus.PENDING: "⏳",
-            TaskStatus.IN_PROGRESS: "🔄",
-            TaskStatus.COMPLETED: "✅",
-            TaskStatus.BLOCKED: "🚫",
-        }
-
-        lines = []
-
-        if level == 0:
-            lines.append(f"# {root_task.title} - Task Tree")
-            lines.append("")
-            lines.append("Status Legend: ⏳ Pending | 🔄 In Progress | ✅ Completed | 🚫 Blocked")
-            lines.append("")
-
-        emoji = status_emoji.get(root_task.status, "❓")
-        lines.append(f"{indent}- {emoji} **{root_task.title}**")
-        if root_task.description:
-            lines.append(f"{indent}  - {root_task.description}")
-        if root_task.assigned_agent:
-            lines.append(f"{indent}  - Assigned: {root_task.assigned_agent}")
-
-        # Get children
-        children = task_manager.get_children(root_task.id)
-        for child in children:
-            child_md = self._generate_tasks_markdown(task_manager, child, level + 1)
-            lines.append(child_md)
-
-        return "\n".join(lines) if level > 0 else "\n".join(lines)
 
     def get_project_context(self, project_name: str) -> dict[str, Any]:
         """

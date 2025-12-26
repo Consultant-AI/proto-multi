@@ -8,7 +8,13 @@ from .local_computer import LocalComputerTool
 from .universal_computer import UniversalComputerTool
 from .edit import EditTool20241022, EditTool20250429, EditTool20250728
 from .coding import GlobTool, GrepTool, GitTool, TodoWriteTool, PythonExecutionTool
-from .planning import PlanningTool, DelegateTaskTool, ReadPlanningTool, WorkQueueTool
+from .planning import (
+    PlanningTool,
+    DelegateTaskTool,
+    ReadPlanningTool,
+    TaskTool,
+    WorkQueueTool,
+)
 
 ToolVersion = Literal[
     "computer_use_20250124",
@@ -60,10 +66,11 @@ TOOL_GROUPS: list[ToolGroup] = [
             GlobTool,
             GrepTool,
             GitTool,
-            TodoWriteTool,
+            # TodoWriteTool removed - all task tracking now done via TASKS.md using manage_tasks
             PlanningTool,
             DelegateTaskTool,
             ReadPlanningTool,
+            TaskTool,  # Enables manage_tasks for updating TASKS.md status
             WorkQueueTool,
         ],
         beta_flag="computer-use-2025-01-24",

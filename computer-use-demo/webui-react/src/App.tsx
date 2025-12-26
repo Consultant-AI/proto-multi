@@ -9,13 +9,9 @@ function App() {
   const [chatVisible, setChatVisible] = useState(true)
   const [viewerWidth, setViewerWidth] = useState(600)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
-  const [selectedAgentName, setSelectedAgentName] = useState<string>('CEO Agent')
-  const [selectedAgentIcon, setSelectedAgentIcon] = useState<string>('👔')
 
-  const handleSelectAgent = (agentId: string, agentName: string, agentIcon: string) => {
+  const handleSelectAgent = (agentId: string, _agentName: string, _agentIcon: string) => {
     setSelectedAgentId(agentId)
-    setSelectedAgentName(agentName)
-    setSelectedAgentIcon(agentIcon)
   }
 
   const handleViewerResize = (deltaX: number) => {
@@ -56,8 +52,6 @@ function App() {
             onToggleViewer={() => setViewerVisible(!viewerVisible)}
             onHideChat={viewerVisible ? () => setChatVisible(false) : undefined}
             selectedAgentId={selectedAgentId}
-            selectedAgentName={selectedAgentName}
-            selectedAgentIcon={selectedAgentIcon}
             onSelectAgent={handleSelectAgent}
           />
         </div>

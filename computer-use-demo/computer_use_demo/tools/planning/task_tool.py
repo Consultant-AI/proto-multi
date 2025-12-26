@@ -49,6 +49,12 @@ Operations:
 - summary: Get task statistics
 - add_note: Add a note to a task
 - add_dependency: Add a dependency between tasks
+- start_spec: Start specification phase for a task
+- update_spec: Update specification details
+- complete_spec: Complete specification phase
+- start_implementation: Begin implementation phase
+- add_commit: Track a git commit for a task
+- add_test_result: Track test results for a task
 
 Returns task information or list of tasks based on operation.""",
             "input_schema": {
@@ -67,6 +73,12 @@ Returns task information or list of tasks based on operation.""",
                             "summary",
                             "add_note",
                             "add_dependency",
+                            "start_spec",
+                            "update_spec",
+                            "complete_spec",
+                            "start_implementation",
+                            "add_commit",
+                            "add_test_result",
                         ],
                         "description": "The operation to perform",
                     },
@@ -121,6 +133,44 @@ Returns task information or list of tasks based on operation.""",
                         "type": "string",
                         "description": "Task ID that this task depends on (required for: add_dependency)",
                     },
+                    "spec_context": {
+                        "type": "string",
+                        "description": "Specification context/overview (optional for: update_spec)",
+                    },
+                    "acceptance_criteria": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of acceptance criteria (optional for: update_spec)",
+                    },
+                    "implementation_checklist": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Implementation checklist items (optional for: update_spec)",
+                    },
+                    "spec_notes": {
+                        "type": "string",
+                        "description": "Specification notes (optional for: update_spec)",
+                    },
+                    "commit_hash": {
+                        "type": "string",
+                        "description": "Git commit hash (required for: add_commit)",
+                    },
+                    "commit_message": {
+                        "type": "string",
+                        "description": "Git commit message (required for: add_commit)",
+                    },
+                    "test_name": {
+                        "type": "string",
+                        "description": "Test name (required for: add_test_result)",
+                    },
+                    "test_passed": {
+                        "type": "boolean",
+                        "description": "Whether test passed (required for: add_test_result)",
+                    },
+                    "test_details": {
+                        "type": "string",
+                        "description": "Test result details (optional for: add_test_result)",
+                    },
                 },
                 "required": ["operation", "project_name"],
             },
@@ -141,6 +191,15 @@ Returns task information or list of tasks based on operation.""",
         filter_tag: Optional[str] = None,
         note: Optional[str] = None,
         depends_on_task_id: Optional[str] = None,
+        spec_context: Optional[str] = None,
+        acceptance_criteria: Optional[list[str]] = None,
+        implementation_checklist: Optional[list[str]] = None,
+        spec_notes: Optional[str] = None,
+        commit_hash: Optional[str] = None,
+        commit_message: Optional[str] = None,
+        test_name: Optional[str] = None,
+        test_passed: Optional[bool] = None,
+        test_details: Optional[str] = None,
         **kwargs,
     ) -> ToolResult | CLIResult:
         """
@@ -160,6 +219,15 @@ Returns task information or list of tasks based on operation.""",
             filter_tag: Tag filter (for list)
             note: Note text (for add_note, block)
             depends_on_task_id: Dependency task ID (for add_dependency)
+            spec_context: Specification context (for update_spec)
+            acceptance_criteria: Acceptance criteria list (for update_spec)
+            implementation_checklist: Implementation checklist (for update_spec)
+            spec_notes: Specification notes (for update_spec)
+            commit_hash: Git commit hash (for add_commit)
+            commit_message: Git commit message (for add_commit)
+            test_name: Test name (for add_test_result)
+            test_passed: Test pass/fail status (for add_test_result)
+            test_details: Test result details (for add_test_result)
 
         Returns:
             ToolResult with task information
@@ -384,6 +452,120 @@ Returns task information or list of tasks based on operation.""",
                 return ToolResult(
                     output=f"Added dependency to task '{task.title}'",
                     system=f"Task {task_id} now depends on {depends_on_task_id}",
+                )
+
+            elif operation == "start_spec":
+                if not task_id:
+                    raise ToolError("task_id is required for start_spec operation")
+
+                task = task_manager.get_task(task_id)
+                if not task:
+                    raise ToolError(f"Task {task_id} not found")
+
+                task.start_specification()
+                task_manager.save_tasks()
+
+                return ToolResult(
+                    output=f"Started specification phase for task '{task.title}'",
+                    system=f"Task {task_id} specification is now in progress",
+                )
+
+            elif operation == "update_spec":
+                if not task_id:
+                    raise ToolError("task_id is required for update_spec operation")
+
+                task = task_manager.get_task(task_id)
+                if not task:
+                    raise ToolError(f"Task {task_id} not found")
+
+                task.update_specification(
+                    context=spec_context,
+                    acceptance_criteria=acceptance_criteria,
+                    checklist=implementation_checklist,
+                    notes=spec_notes,
+                )
+                task_manager.save_tasks()
+
+                return ToolResult(
+                    output=f"Updated specification for task '{task.title}'",
+                    system=f"Task {task_id} specification updated",
+                )
+
+            elif operation == "complete_spec":
+                if not task_id:
+                    raise ToolError("task_id is required for complete_spec operation")
+
+                task = task_manager.get_task(task_id)
+                if not task:
+                    raise ToolError(f"Task {task_id} not found")
+
+                task.complete_specification()
+                task_manager.save_tasks()
+
+                return ToolResult(
+                    output=f"Completed specification for task '{task.title}'",
+                    system=f"Task {task_id} specification is now complete. Ready for implementation.",
+                )
+
+            elif operation == "start_implementation":
+                if not task_id:
+                    raise ToolError("task_id is required for start_implementation operation")
+
+                task = task_manager.get_task(task_id)
+                if not task:
+                    raise ToolError(f"Task {task_id} not found")
+
+                # Verify spec is complete before starting implementation
+                spec_status = task.get_spec_status()
+                if spec_status != "completed":
+                    raise ToolError(
+                        f"Cannot start implementation for task {task_id}: "
+                        f"specification must be completed first (current status: {spec_status})"
+                    )
+
+                task.start_implementation()
+                task_manager.save_tasks()
+
+                return ToolResult(
+                    output=f"Started implementation for task '{task.title}'",
+                    system=f"Task {task_id} implementation phase has begun",
+                )
+
+            elif operation == "add_commit":
+                if not task_id or not commit_hash or not commit_message:
+                    raise ToolError(
+                        "task_id, commit_hash, and commit_message are required for add_commit operation"
+                    )
+
+                task = task_manager.get_task(task_id)
+                if not task:
+                    raise ToolError(f"Task {task_id} not found")
+
+                task.add_commit(commit_hash, commit_message)
+                task_manager.save_tasks()
+
+                return ToolResult(
+                    output=f"Tracked commit {commit_hash[:8]} for task '{task.title}'",
+                    system=f"Commit {commit_hash} added to task {task_id}",
+                )
+
+            elif operation == "add_test_result":
+                if not task_id or not test_name or test_passed is None:
+                    raise ToolError(
+                        "task_id, test_name, and test_passed are required for add_test_result operation"
+                    )
+
+                task = task_manager.get_task(task_id)
+                if not task:
+                    raise ToolError(f"Task {task_id} not found")
+
+                task.add_test_result(test_name, test_passed, test_details or "")
+                task_manager.save_tasks()
+
+                result_text = "passed" if test_passed else "failed"
+                return ToolResult(
+                    output=f"Recorded test result for task '{task.title}': {test_name} {result_text}",
+                    system=f"Test result added to task {task_id}",
                 )
 
             else:
