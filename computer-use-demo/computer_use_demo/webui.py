@@ -643,6 +643,22 @@ class BrowserManager:
         self._pending_pause_resume: str | None = None  # "pause" or "resume"
         self._command_lock = asyncio.Lock()
         self._active_connections = 0
+        self._qt_websocket: WebSocket | None = None  # WebSocket to Qt browser
+
+    async def set_qt_websocket(self, ws: WebSocket | None):
+        """Set the Qt browser WebSocket connection."""
+        self._qt_websocket = ws
+
+    async def send_command(self, command: dict):
+        """Send command to Qt browser via WebSocket (instant, no polling)."""
+        if self._qt_websocket:
+            try:
+                await self._qt_websocket.send_json(command)
+                return True
+            except Exception as e:
+                print(f"Failed to send command via WebSocket: {e}")
+                self._qt_websocket = None
+        return False
 
     async def start(self):
         """Launch Qt WebEngine browser process."""
@@ -674,9 +690,12 @@ class BrowserManager:
             traceback.print_exc()
 
     async def navigate(self, url: str):
-        """Set navigation command for Qt browser."""
-        async with self._command_lock:
-            self._pending_navigation = url
+        """Send navigation command to Qt browser."""
+        sent = await self.send_command({"command": "navigate", "url": url})
+        if not sent:
+            # Fallback to polling if WebSocket not connected
+            async with self._command_lock:
+                self._pending_navigation = url
 
     async def get_screenshot(self) -> tuple[str, dict]:
         """Get latest screenshot from Qt browser."""
@@ -730,26 +749,38 @@ class BrowserManager:
         self._active_connections += 1
         if self._active_connections == 1:
             # First connection - resume capture
-            async with self._command_lock:
-                self._pending_pause_resume = "resume"
+            sent = await self.send_command({"command": "resume"})
+            if not sent:
+                # Fallback to polling if WebSocket not connected
+                async with self._command_lock:
+                    self._pending_pause_resume = "resume"
 
     async def connection_closed(self):
         """Track when a WebSocket connection closes."""
         self._active_connections = max(0, self._active_connections - 1)
+        print(f"Browser stream closed. Active connections: {self._active_connections}")
         if self._active_connections == 0:
             # Last connection closed - pause capture
-            async with self._command_lock:
-                self._pending_pause_resume = "pause"
+            print("Sending PAUSE command to Qt browser...")
+            sent = await self.send_command({"command": "pause"})
+            print(f"PAUSE command sent via WebSocket: {sent}")
+            if not sent:
+                async with self._command_lock:
+                    self._pending_pause_resume = "pause"
 
     async def click(self, x: int, y: int):
-        """Queue click command for Qt browser."""
-        async with self._command_lock:
-            self._pending_click = {"x": x, "y": y}
+        """Send click command to Qt browser."""
+        sent = await self.send_command({"command": "click", "x": x, "y": y})
+        if not sent:
+            async with self._command_lock:
+                self._pending_click = {"x": x, "y": y}
 
     async def type_text(self, text: str, press_enter: bool = False):
-        """Queue type command for Qt browser."""
-        async with self._command_lock:
-            self._pending_type = {"text": text, "enter": press_enter}
+        """Send type command to Qt browser."""
+        sent = await self.send_command({"command": "type", "text": text, "enter": press_enter})
+        if not sent:
+            async with self._command_lock:
+                self._pending_type = {"text": text, "enter": press_enter}
 
     async def go_back(self):
         """Navigate back - handled by Qt browser."""
@@ -831,6 +862,18 @@ if static_path.exists() and (static_path / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(static_path / "assets")), name="static_assets")
 
 
+# Middleware to prevent caching of static files
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    # Add no-cache headers for JS and CSS files
+    if request.url.path.startswith("/assets/") or request.url.path == "/":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 # Middleware to ensure event loop responsiveness
 @app.middleware("http")
 async def ensure_responsive_middleware(request: Request, call_next):
@@ -855,7 +898,20 @@ async def home_page():
     """Serve React app or fallback to old UI."""
     static_index = Path(__file__).parent.parent / "static" / "index.html"
     if static_index.exists():
-        return FileResponse(static_index)
+        # Read and inject cache-busting timestamp to force fresh JS/CSS
+        import time
+        content = static_index.read_text()
+        cache_bust = f"?v={int(time.time())}"
+        content = content.replace('.js"', f'.js{cache_bust}"')
+        content = content.replace('.css">', f'.css{cache_bust}">')
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     # Fallback to old UI if React build doesn't exist
     return HTMLResponse(content=_html_shell(), status_code=200)
 
@@ -3608,38 +3664,34 @@ async def browser_type(request: TypeRequest):
 async def browser_stream(websocket: WebSocket):
     """WebSocket endpoint for real-time browser frame streaming."""
     await websocket.accept()
+    browser_manager = app.state.browser_manager
+    print(f">>> Browser stream CONNECTED from {websocket.client}")
 
     try:
-        browser_manager = app.state.browser_manager
-
         # Notify that a connection opened
         await browser_manager.connection_opened()
 
         # Send frames as fast as they're available
         while True:
-            try:
-                screenshot, bounds = await browser_manager.get_screenshot()
+            screenshot, bounds = await browser_manager.get_screenshot()
 
-                if screenshot:
-                    await websocket.send_json({
-                        "type": "frame",
-                        "image": screenshot,
-                        "bounds": bounds
-                    })
+            if screenshot:
+                await websocket.send_json({
+                    "type": "frame",
+                    "image": screenshot,
+                    "bounds": bounds
+                })
 
-                # Update frequency: 30 FPS (33ms between frames)
-                await asyncio.sleep(0.033)
-
-            except Exception as e:
-                print(f"Error sending frame: {e}")
-                await asyncio.sleep(0.1)
+            # Update frequency: 10 FPS (100ms between frames)
+            await asyncio.sleep(0.1)
 
     except WebSocketDisconnect:
-        print("Browser stream WebSocket disconnected")
+        pass  # Normal disconnect - no error logging
     except Exception as e:
-        print(f"Browser stream error: {e}")
+        if "close message" not in str(e):
+            print(f"Browser stream error: {e}")
     finally:
-        # Notify that a connection closed
+        # Notify that a connection closed - this triggers pause
         await browser_manager.connection_closed()
 
 
@@ -3660,13 +3712,40 @@ async def qt_browser_screenshot(request: Request):
 
 @app.get("/api/qt-browser/command")
 async def qt_browser_command():
-    """Qt browser polls for navigation commands."""
+    """Qt browser polls for navigation commands (fallback if WebSocket fails)."""
     try:
         browser_manager = app.state.browser_manager
         command = await browser_manager.get_pending_command()
         return command
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.websocket("/ws/qt-browser/commands")
+async def qt_browser_websocket(websocket: WebSocket):
+    """WebSocket for pushing commands to Qt browser instantly (no polling)."""
+    await websocket.accept()
+    browser_manager = app.state.browser_manager
+
+    try:
+        # Register this WebSocket for command push
+        await browser_manager.set_qt_websocket(websocket)
+        print("✓ Qt browser connected via WebSocket (no polling needed)")
+
+        # Keep connection alive - just wait for disconnect
+        while True:
+            try:
+                # Wait for any message (ping/pong or close)
+                await websocket.receive_text()
+            except Exception:
+                break
+
+    except WebSocketDisconnect:
+        print("Qt browser WebSocket disconnected")
+    except Exception as e:
+        print(f"Qt browser WebSocket error: {e}")
+    finally:
+        await browser_manager.set_qt_websocket(None)
 
 
 def main():

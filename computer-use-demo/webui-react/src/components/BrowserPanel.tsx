@@ -11,9 +11,10 @@ interface ScreenBounds {
 
 interface BrowserPanelProps {
     url?: string;
+    isActive?: boolean;  // Explicit control from parent
 }
 
-export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
+export default function BrowserPanel({ url: initialUrl, isActive = false }: BrowserPanelProps) {
     const [screenshot, setScreenshot] = useState<string | null>(null)
     const [bounds, setBounds] = useState<ScreenBounds | null>(null)
     const containerRef = useRef<HTMLDivElement>(null)
@@ -21,33 +22,17 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
     const wsRef = useRef<WebSocket | null>(null)
     const [hasNavigated, setHasNavigated] = useState(false)
     const [connected, setConnected] = useState(false)
-    const [isVisible, setIsVisible] = useState(true)
     const reconnectTimeoutRef = useRef<number | null>(null)
+    // Start with Qt browser streaming - only fall back to iframe if streaming fails
+    const [useIframeFallback, setUseIframeFallback] = useState(false)
+    const fallbackTimeoutRef = useRef<number | null>(null)
 
-    // Track visibility of the component
+    // WebSocket connection for real-time frame streaming with iframe fallback
     useEffect(() => {
-        if (!containerRef.current) return
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsVisible(entry.isIntersecting)
-            },
-            { threshold: 0.1 }
-        )
-
-        observer.observe(containerRef.current)
-
-        return () => {
-            observer.disconnect()
-        }
-    }, [])
-
-    // WebSocket connection for real-time frame streaming
-    useEffect(() => {
-        // Only connect if visible
-        if (!isVisible) {
+        // Only connect if active (from parent) and not using iframe fallback
+        if (!isActive || useIframeFallback) {
             if (wsRef.current) {
-                console.log('Browser panel not visible, closing WebSocket')
+                console.log('Browser panel not visible or using fallback, closing WebSocket')
                 wsRef.current.close()
                 wsRef.current = null
             }
@@ -55,15 +40,27 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
                 clearTimeout(reconnectTimeoutRef.current)
                 reconnectTimeoutRef.current = null
             }
+            if (fallbackTimeoutRef.current) {
+                clearTimeout(fallbackTimeoutRef.current)
+                fallbackTimeoutRef.current = null
+            }
             return
         }
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
         const wsUrl = `${protocol}//${window.location.host}/ws/browser/stream`
 
+        // Set a fallback timeout - if no frames received after 3 seconds, use iframe
+        fallbackTimeoutRef.current = window.setTimeout(() => {
+            if (!screenshot && initialUrl) {
+                console.log('No frames received, switching to iframe fallback')
+                setUseIframeFallback(true)
+            }
+        }, 3000)
+
         const connectWebSocket = () => {
-            // Don't reconnect if not visible
-            if (!isVisible) return
+            // Don't reconnect if not active or using fallback
+            if (!isActive || useIframeFallback) return
 
             const ws = new WebSocket(wsUrl)
 
@@ -78,6 +75,11 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
                     if (data.type === 'frame') {
                         setScreenshot(data.image)
                         setBounds(data.bounds)
+                        // Clear fallback timeout since we got a frame
+                        if (fallbackTimeoutRef.current) {
+                            clearTimeout(fallbackTimeoutRef.current)
+                            fallbackTimeoutRef.current = null
+                        }
                     }
                 } catch (error) {
                     console.error('Error parsing WebSocket message:', error)
@@ -91,11 +93,7 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
             ws.onclose = () => {
                 console.log('Browser WebSocket closed')
                 setConnected(false)
-                // Only reconnect if still visible
-                if (isVisible) {
-                    console.log('Reconnecting in 1 second...')
-                    reconnectTimeoutRef.current = window.setTimeout(connectWebSocket, 1000)
-                }
+                // Don't auto-reconnect - parent controls lifecycle via isActive
             }
 
             wsRef.current = ws
@@ -112,8 +110,12 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
                 clearTimeout(reconnectTimeoutRef.current)
                 reconnectTimeoutRef.current = null
             }
+            if (fallbackTimeoutRef.current) {
+                clearTimeout(fallbackTimeoutRef.current)
+                fallbackTimeoutRef.current = null
+            }
         }
-    }, [isVisible])
+    }, [isActive, useIframeFallback, screenshot, initialUrl])
 
     // Auto-navigate when URL prop changes
     useEffect(() => {
@@ -181,7 +183,14 @@ export default function BrowserPanel({ url: initialUrl }: BrowserPanelProps) {
     return (
         <div className="browser-panel" onKeyDown={handleKeyDown} tabIndex={0}>
             <div className="browser-viewport" ref={containerRef}>
-                {screenshot ? (
+                {useIframeFallback && initialUrl ? (
+                    <iframe
+                        src={initialUrl}
+                        className="browser-iframe-fallback"
+                        title="Web Page"
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    />
+                ) : screenshot ? (
                     <div className="browser-canvas">
                         <img
                             ref={imageRef}

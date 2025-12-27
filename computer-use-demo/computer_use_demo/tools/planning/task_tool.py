@@ -235,17 +235,21 @@ Returns task information or list of tasks based on operation.""",
         logger = get_logger()
 
         try:
-            # Get project path
+            # Get project path - use get_project_path which returns the planning folder
             project_manager = ProjectManager()
-            project_slug = project_manager.slugify_project_name(project_name)
-            project_path = project_manager.planning_root / project_slug
+            project_path = project_manager.get_project_path(project_name)
 
-            if not project_path.exists() and operation != "create":
-                raise ToolError(
-                    f"Project '{project_name}' not found. Create planning docs first."
-                )
+            # If project doesn't exist yet, create the planning folder path
+            if not project_path:
+                if operation != "create":
+                    raise ToolError(
+                        f"Project '{project_name}' not found. Create planning docs first."
+                    )
+                # For create operation, build the planning folder path
+                project_slug = project_manager.slugify_project_name(project_name)
+                project_path = project_manager.planning_root / project_slug / "planning"
 
-            # Initialize task manager
+            # Initialize task manager with the planning folder path
             task_manager = TaskManager(project_path)
 
             # Execute operation

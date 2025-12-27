@@ -13,6 +13,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
+import shutil
 
 
 class TaskStatus(str, Enum):
@@ -287,6 +288,32 @@ class TaskManager:
         }
         with open(self.tasks_file, "w") as f:
             json.dump(data, f, indent=2)
+
+        # Generate the task board HTML file
+        self._generate_board_html()
+
+    def _generate_board_html(self) -> None:
+        """Generate the task board HTML file with embedded task data."""
+        board_file = self.project_path / "board.html"
+        template_path = Path(__file__).parent / "task_board_template.html"
+
+        if not template_path.exists():
+            return
+
+        # Read template
+        template_content = template_path.read_text()
+
+        # Prepare task data for embedding
+        tasks_data = {
+            "tasks": {task_id: task.to_dict() for task_id, task in self.tasks.items()}
+        }
+
+        # Embed task data as a script tag before the closing </head>
+        data_script = f'<script>window.TASKS_DATA = {json.dumps(tasks_data)};</script>\n</head>'
+        html_content = template_content.replace('</head>', data_script)
+
+        # Write the board file
+        board_file.write_text(html_content)
 
     def create_task(
         self,

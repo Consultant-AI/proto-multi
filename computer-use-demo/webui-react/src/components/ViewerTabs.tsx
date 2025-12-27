@@ -400,7 +400,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
       case 'web':
         return (
           <div className="web-layout">
-            <BrowserPanel url={activeTab.resourceId} />
+            <BrowserPanel url={activeTab.resourceId} isActive={true} />
           </div>
         )
 
@@ -418,7 +418,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
       case 'computer':
         return (
           <div className="computer-layout">
-            <ComputerPanel />
+            <ComputerPanel isActive={true} />
           </div>
         )
     }

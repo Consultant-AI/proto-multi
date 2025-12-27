@@ -44,13 +44,27 @@
 
 ### 🚧 Active Tasks
 
-maybe branch off the kanban
+look at kanban and add features
+
+add skills
+
+add plugins
+
+add mcps
+
+add git
+
+improve managment
+
+connect claude code user and fallback to api key
+
+for each task plan and then after finish write a summary of the task
 
 qa + write tasks based on bugs and requirment to make it until self improve
 
 make good planning and following planning + delegation
 
-
+make it show how much money getting spent
 
 best models + use less strong when needed
 

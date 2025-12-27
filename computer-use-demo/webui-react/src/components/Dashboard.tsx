@@ -293,9 +293,9 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
             {activeComputers > 0 && <span className="badge">{activeComputers} Active</span>}
           </div>
           <div className="resource-grid">
-            {/* Live Computer Preview */}
+            {/* Computer Preview - not active, just a clickable placeholder */}
             <div className="resource-card computer-preview-card" onClick={() => onOpenResource?.('computer', 'main')}>
-              <ComputerPanel />
+              <ComputerPanel isActive={false} />
             </div>
 
             {computers.map((computer) => (

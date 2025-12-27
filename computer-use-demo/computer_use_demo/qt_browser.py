@@ -6,74 +6,107 @@ This provides a true browser experience with zero bot detection.
 import sys
 import base64
 import json
-from urllib.request import Request, urlopen
-from urllib.error import URLError
 from PyQt6.QtCore import QUrl, QTimer, pyqtSignal, QObject, QBuffer, QByteArray, QIODevice, Qt
 from PyQt6.QtWidgets import QApplication, QMainWindow
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
 from PyQt6.QtGui import QImage
+from PyQt6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from PyQt6.QtWebSockets import QWebSocket
 
 
 class BrowserCommunicator(QObject):
-    """Handles communication with FastAPI backend."""
+    """Handles communication with FastAPI backend using WebSocket (no polling)."""
 
     navigate_signal = pyqtSignal(str)
     click_signal = pyqtSignal(int, int)
     type_signal = pyqtSignal(str, bool)
+    pause_signal = pyqtSignal()
+    resume_signal = pyqtSignal()
 
     def __init__(self, backend_url="http://127.0.0.1:8000"):
         super().__init__()
         self.backend_url = backend_url
+        ws_url = backend_url.replace("http://", "ws://").replace("https://", "wss://")
+
+        # WebSocket for receiving commands (no polling!)
+        self.command_socket = QWebSocket()
+        self.command_socket.textMessageReceived.connect(self._handle_command)
+        self.command_socket.connected.connect(self._on_connected)
+        self.command_socket.disconnected.connect(self._on_disconnected)
+        self.command_socket.errorOccurred.connect(self._on_error)
+
+        # Connect to WebSocket endpoint
+        self.ws_url = f"{ws_url}/ws/qt-browser/commands"
+        self.command_socket.open(QUrl(self.ws_url))
+
+        # Non-blocking HTTP for screenshots (still needed)
+        self.screenshot_manager = QNetworkAccessManager(self)
+        self.screenshot_manager.finished.connect(self._screenshot_finished)
+
+        # Throttling flag - don't send new screenshot until previous finished
+        self._screenshot_pending = False
+
+    def _on_connected(self):
+        """WebSocket connected - no more polling needed."""
+        print("✓ Connected to backend via WebSocket (zero polling)")
+
+    def _on_disconnected(self):
+        """WebSocket disconnected - try to reconnect."""
+        print("⚠ WebSocket disconnected, reconnecting in 2s...")
+        QTimer.singleShot(2000, lambda: self.command_socket.open(QUrl(self.ws_url)))
+
+    def _on_error(self, error):
+        """WebSocket error - try to reconnect."""
+        print(f"⚠ WebSocket error: {error}, reconnecting in 2s...")
+        QTimer.singleShot(2000, lambda: self.command_socket.open(QUrl(self.ws_url)))
+
+    def _handle_command(self, message: str):
+        """Handle command received via WebSocket (instant, no polling)."""
+        try:
+            data = json.loads(message)
+            command = data.get("command")
+
+            if command == "navigate":
+                url = data.get("url")
+                if url:
+                    self.navigate_signal.emit(url)
+
+            elif command == "click":
+                x = data.get("x")
+                y = data.get("y")
+                if x is not None and y is not None:
+                    self.click_signal.emit(x, y)
+
+            elif command == "type":
+                text = data.get("text", "")
+                enter = data.get("enter", False)
+                self.type_signal.emit(text, enter)
+
+            elif command == "pause":
+                self.pause_signal.emit()
+
+            elif command == "resume":
+                self.resume_signal.emit()
+        except Exception as e:
+            print(f"Error handling command: {e}")
 
     def send_screenshot(self, screenshot_b64):
-        """Send screenshot to backend."""
-        try:
-            data = json.dumps({"screenshot": screenshot_b64}).encode('utf-8')
-            req = Request(
-                f"{self.backend_url}/api/qt-browser/screenshot",
-                data=data,
-                headers={'Content-Type': 'application/json'}
-            )
-            urlopen(req, timeout=30)
-        except URLError as e:
-            print(f"Error sending screenshot: {e}")
+        """Send screenshot to backend (non-blocking with throttling)."""
+        # Skip if previous request still pending - prevents request buildup
+        if self._screenshot_pending:
+            return
 
-    pause_signal = pyqtSignal()
-    resume_signal = pyqtSignal()
+        self._screenshot_pending = True
+        data = json.dumps({"screenshot": screenshot_b64}).encode('utf-8')
+        request = QNetworkRequest(QUrl(f"{self.backend_url}/api/qt-browser/screenshot"))
+        request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
+        self.screenshot_manager.post(request, data)
 
-    def check_commands(self):
-        """Check for commands (navigate/click/type/pause/resume) from backend."""
-        try:
-            req = Request(f"{self.backend_url}/api/qt-browser/command")
-            with urlopen(req, timeout=5) as response:
-                data = json.loads(response.read().decode('utf-8'))
-                command = data.get("command")
-
-                if command == "navigate":
-                    url = data.get("url")
-                    if url:
-                        self.navigate_signal.emit(url)
-
-                elif command == "click":
-                    x = data.get("x")
-                    y = data.get("y")
-                    if x is not None and y is not None:
-                        self.click_signal.emit(x, y)
-
-                elif command == "type":
-                    text = data.get("text", "")
-                    enter = data.get("enter", False)
-                    self.type_signal.emit(text, enter)
-
-                elif command == "pause":
-                    self.pause_signal.emit()
-
-                elif command == "resume":
-                    self.resume_signal.emit()
-
-        except URLError:
-            pass  # Silent fail if backend not ready
+    def _screenshot_finished(self, reply: QNetworkReply):
+        """Mark screenshot request as finished."""
+        self._screenshot_pending = False
+        reply.deleteLater()
 
 
 class QtBrowser(QMainWindow):
@@ -106,15 +139,13 @@ class QtBrowser(QMainWindow):
         self.communicator.pause_signal.connect(self.pause_capture)
         self.communicator.resume_signal.connect(self.resume_capture)
 
-        # Screenshot timer - capture at 30 FPS
+        # Screenshot timer - capture at 10 FPS (controlled by pause/resume)
         self.screenshot_timer = QTimer()
         self.screenshot_timer.timeout.connect(self.capture_screenshot)
 
-        # Command check timer - check for navigation commands
-        self.command_timer = QTimer()
-        self.command_timer.timeout.connect(self.communicator.check_commands)
+        # No command timer needed - WebSocket receives commands instantly
 
-        # Start paused - will be resumed when someone connects
+        # Start paused - screenshots won't capture until resumed
         self.is_paused = True
 
         # Start with blank page
@@ -178,19 +209,17 @@ class QtBrowser(QMainWindow):
             print(f"Error typing: {e}")
 
     def pause_capture(self):
-        """Pause screenshot capture and command checking."""
+        """Pause screenshot capture."""
         if not self.is_paused:
             print("Browser capture PAUSED (no viewers)")
             self.screenshot_timer.stop()
-            self.command_timer.stop()
             self.is_paused = True
 
     def resume_capture(self):
-        """Resume screenshot capture and command checking."""
+        """Resume screenshot capture."""
         if self.is_paused:
             print("Browser capture RESUMED (viewer connected)")
-            self.screenshot_timer.start(33)  # 30 FPS
-            self.command_timer.start(100)  # Check every 100ms
+            self.screenshot_timer.start(100)  # 10 FPS
             self.is_paused = False
 
     def capture_screenshot(self):
@@ -203,11 +232,11 @@ class QtBrowser(QMainWindow):
         pixmap = self.browser.grab()
         image = pixmap.toImage()
 
-        # Convert to base64 using QBuffer
+        # Convert to base64 using QBuffer - lower quality for faster streaming
         byte_array = QByteArray()
         buffer = QBuffer(byte_array)
         buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-        image.save(buffer, "JPEG", quality=80)
+        image.save(buffer, "JPEG", quality=50)  # Lower quality = smaller payload = faster
         buffer.close()
         screenshot_b64 = base64.b64encode(byte_array.data()).decode()
 

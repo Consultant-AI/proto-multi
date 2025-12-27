@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { Monitor } from 'lucide-react'
 import '../styles/ComputerPanel.css'
 
-export default function ComputerPanel() {
+interface ComputerPanelProps {
+    isActive?: boolean;  // Explicit control from parent
+}
+
+export default function ComputerPanel({ isActive = true }: ComputerPanelProps) {
     const [screenshot, setScreenshot] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
-    const [isVisible, setIsVisible] = useState(true)
     const containerRef = useRef<HTMLDivElement>(null)
 
     const fetchScreenshot = async () => {
@@ -24,38 +27,20 @@ export default function ComputerPanel() {
         }
     }
 
-    // Track visibility of the component
+    // Initial fetch when active
     useEffect(() => {
-        if (!containerRef.current) return
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsVisible(entry.isIntersecting)
-            },
-            { threshold: 0.1 }
-        )
-
-        observer.observe(containerRef.current)
-
-        return () => {
-            observer.disconnect()
-        }
-    }, [])
-
-    // Initial fetch
-    useEffect(() => {
-        if (isVisible) {
+        if (isActive) {
             fetchScreenshot()
         }
-    }, [isVisible])
+    }, [isActive])
 
-    // Polling interval - only when visible
+    // Polling interval - only when active
     useEffect(() => {
-        if (!isVisible) return
+        if (!isActive) return
 
         const interval = setInterval(fetchScreenshot, 2000) // Every 2s for live feel
         return () => clearInterval(interval)
-    }, [isVisible])
+    }, [isActive])
 
     return (
         <div className="computer-panel" ref={containerRef}>

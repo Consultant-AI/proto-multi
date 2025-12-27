@@ -136,3 +136,11 @@
         transform: rotate(360deg);
     }
 }
+
+/* Iframe fallback when Qt browser isn't available */
+.browser-iframe-fallback {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+}

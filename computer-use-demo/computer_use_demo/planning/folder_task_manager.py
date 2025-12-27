@@ -464,6 +464,44 @@ class FolderTaskManager(TaskManager):
         with open(project_json, "w") as f:
             json.dump(project_data, f, indent=2)
 
+        # Generate board.html with embedded data
+        self._generate_board_html(folder_path, project_data)
+
+    def _generate_board_html(self, folder_path: Path, project_data: dict = None) -> None:
+        """Generate the task board HTML file with embedded task data."""
+        board_file = folder_path / "board.html"
+        template_path = Path(__file__).parent / "task_board_template.html"
+
+        if not template_path.exists():
+            return
+
+        # Read template
+        template_content = template_path.read_text()
+
+        # Prepare task data for embedding
+        if project_data:
+            # Flatten tree structure for embedding
+            tasks_data = {"tasks": {}, "project_title": project_data.get("project_title", "Task Board")}
+            self._flatten_tree_for_embed(project_data.get("task_tree", {}), tasks_data["tasks"])
+        else:
+            tasks_data = {"tasks": {}}
+
+        # Embed task data as a script tag before the closing </head>
+        data_script = f'<script>window.TASKS_DATA = {json.dumps(tasks_data)};</script>\n</head>'
+        html_content = template_content.replace('</head>', data_script)
+
+        # Write the board file
+        board_file.write_text(html_content)
+
+    def _flatten_tree_for_embed(self, node: dict, tasks: dict) -> None:
+        """Flatten task tree into flat tasks dict for embedding."""
+        if not node:
+            return
+        task = {k: v for k, v in node.items() if k != 'children'}
+        tasks[task.get('id', '')] = task
+        for child in node.get('children', []):
+            self._flatten_tree_for_embed(child, tasks)
+
     def _get_all_descendants(self, task_id: str) -> list[Task]:
         """
         Get all descendant tasks recursively.

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Folder, File, FileText, PanelLeft } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Folder, File, FileText, PanelLeft, Eye, Code } from 'lucide-react'
 import { Task } from '../types'
 import TaskViewer from './TaskViewer'
 import '../styles/FileViewer.css'
@@ -16,6 +16,69 @@ interface FolderContents {
   folders: Array<{ name: string; path: string }>
 }
 
+// File types that can be rendered in browser (v2)
+const RENDERABLE_EXTENSIONS = ['.html', '.htm', '.md', '.markdown']
+
+// Check if file can be rendered
+const isRenderableFile = (path: string): boolean => {
+  const lower = path.toLowerCase()
+  return RENDERABLE_EXTENSIONS.some(ext => lower.endsWith(ext))
+}
+
+// Check if it's a markdown file
+const isMarkdownFile = (path: string): boolean => {
+  const lower = path.toLowerCase()
+  return lower.endsWith('.md') || lower.endsWith('.markdown')
+}
+
+// Simple markdown to HTML converter
+const markdownToHtml = (md: string): string => {
+  let html = md
+    // Headers
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    // Code blocks
+    .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
+    // Inline code
+    .replace(/`(.*?)`/gim, '<code>$1</code>')
+    // Links
+    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2">$1</a>')
+    // Lists
+    .replace(/^\- (.*$)/gim, '<li>$1</li>')
+    // Line breaks
+    .replace(/\n/gim, '<br>')
+
+  return `
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          padding: 20px;
+          max-width: 800px;
+          margin: 0 auto;
+          background: #0d1117;
+          color: #c9d1d9;
+          line-height: 1.6;
+        }
+        h1, h2, h3 { color: #f0f6fc; margin-top: 24px; }
+        code { background: #21262d; padding: 2px 6px; border-radius: 4px; }
+        pre { background: #21262d; padding: 16px; border-radius: 8px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        a { color: #58a6ff; }
+        li { margin: 4px 0; }
+      </style>
+    </head>
+    <body>${html}</body>
+    </html>
+  `
+}
+
 export default function FileViewer({ selectedPath, onPathChange, explorerVisible, onToggleExplorer }: FileViewerProps) {
   const [contents, setContents] = useState<FolderContents | null>(null)
   const [fileContent, setFileContent] = useState<string | null>(null)
@@ -24,11 +87,14 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
   const [currentPath, setCurrentPath] = useState<string | null>(selectedPath)
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState<string>('')
+  const [viewMode, setViewMode] = useState<'view' | 'edit'>('view')
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // Sync currentPath with selectedPath from parent
   useEffect(() => {
     setCurrentPath(selectedPath)
     setIsEditing(false) // Reset editing when path changes
+    setViewMode('view') // Reset to view mode for new files
   }, [selectedPath])
 
   useEffect(() => {
@@ -245,7 +311,28 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
           </div>
         </div>
         <div className="file-viewer-actions">
-          {!isEditing && fileContent && (
+          {/* View/Edit toggle for renderable files */}
+          {fileContent && currentPath && isRenderableFile(currentPath) && !isEditing && (
+            <div className="view-mode-toggle">
+              <button
+                className={`toggle-btn ${viewMode === 'view' ? 'active' : ''}`}
+                onClick={() => setViewMode('view')}
+                title="View rendered"
+              >
+                <Eye size={14} />
+                View
+              </button>
+              <button
+                className={`toggle-btn ${viewMode === 'edit' ? 'active' : ''}`}
+                onClick={() => setViewMode('edit')}
+                title="View source"
+              >
+                <Code size={14} />
+                Code
+              </button>
+            </div>
+          )}
+          {!isEditing && fileContent && viewMode === 'edit' && (
             <button className="edit-btn" onClick={handleEdit}>
               Edit
             </button>
@@ -279,6 +366,16 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
                     Cancel
                   </button>
                 </div>
+              </div>
+            ) : currentPath && isRenderableFile(currentPath) && viewMode === 'view' ? (
+              <div className="rendered-content">
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={isMarkdownFile(currentPath) ? markdownToHtml(fileContent) : fileContent}
+                  title="Rendered content"
+                  sandbox="allow-scripts allow-same-origin"
+                  className="content-iframe"
+                />
               </div>
             ) : (
               <pre>{fileContent}</pre>
