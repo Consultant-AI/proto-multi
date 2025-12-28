@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ViewerTabs from './components/ViewerTabs'
 import Chat from './components/Chat'
 import Resizer from './components/Resizer'
@@ -9,10 +9,28 @@ function App() {
   const [chatVisible, setChatVisible] = useState(true)
   const [viewerWidth, setViewerWidth] = useState(600)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
+  const [selectedComputer, setSelectedComputer] = useState('local')
+  const [computers, setComputers] = useState<any[]>([])
 
   const handleSelectAgent = (agentId: string, _agentName: string, _agentIcon: string) => {
     setSelectedAgentId(agentId)
   }
+
+  // Fetch computers on mount
+  useEffect(() => {
+    const fetchComputers = async () => {
+      try {
+        const response = await fetch('/api/computers')
+        if (response.ok) {
+          const data = await response.json()
+          setComputers(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch computers:', error)
+      }
+    }
+    fetchComputers()
+  }, [])
 
   const handleViewerResize = (deltaX: number) => {
     setViewerWidth(prev => {
@@ -32,6 +50,7 @@ function App() {
             onClose={chatVisible ? () => setViewerVisible(false) : undefined}
             chatVisible={chatVisible}
             onToggleChat={() => setChatVisible(!chatVisible)}
+            selectedComputer={selectedComputer}
           />
         </div>
       )}
@@ -53,6 +72,9 @@ function App() {
             onHideChat={viewerVisible ? () => setChatVisible(false) : undefined}
             selectedAgentId={selectedAgentId}
             onSelectAgent={handleSelectAgent}
+            selectedComputer={selectedComputer}
+            onSelectComputer={setSelectedComputer}
+            computers={computers}
           />
         </div>
       )}

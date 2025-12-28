@@ -11,6 +11,9 @@ interface ChatProps {
   onHideChat?: () => void
   selectedAgentId: string | null
   onSelectAgent: (agentId: string, agentName: string, agentIcon: string) => void
+  selectedComputer: string
+  onSelectComputer: (computerId: string) => void
+  computers: any[]
 }
 
 export default function Chat({
@@ -18,14 +21,16 @@ export default function Chat({
   onToggleViewer,
   onHideChat,
   selectedAgentId,
-  onSelectAgent
+  onSelectAgent,
+  selectedComputer,
+  onSelectComputer,
+  computers
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [_currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [sessionRefreshTrigger, setSessionRefreshTrigger] = useState(0)
-  const [selectedComputer, setSelectedComputer] = useState('local')
   const [selectedMode, setSelectedMode] = useState('edit-auto')
   const [selectedTools, setSelectedTools] = useState<string[]>(['files', 'bash', 'computer', 'mouse', 'keyboard'])
   const [toolsDropdownOpen, setToolsDropdownOpen] = useState(false)
@@ -250,7 +255,10 @@ export default function Chat({
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText })
+        body: JSON.stringify({
+          message: messageText,
+          computer_id: selectedComputer
+        })
       })
 
       if (!response.ok) throw new Error('Failed to send message')
@@ -460,11 +468,13 @@ export default function Chat({
               <select
                 className="input-dropdown"
                 value={selectedComputer}
-                onChange={(e) => setSelectedComputer(e.target.value)}
+                onChange={(e) => onSelectComputer(e.target.value)}
               >
-                <option value="local">Local Computer</option>
-                <option value="remote1">Remote Computer 1</option>
-                <option value="remote2">Remote Computer 2</option>
+                {computers.map(computer => (
+                  <option key={computer.id} value={computer.id}>
+                    {computer.name} {computer.status !== 'online' ? `(${computer.status})` : ''}
+                  </option>
+                ))}
               </select>
               <select
                 className="input-dropdown"

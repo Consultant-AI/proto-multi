@@ -39,6 +39,8 @@ from .tools import ToolResult, ToolVersion
 from .proto_logging import get_logger
 from .planning import ProjectManager
 from .daemon import WorkQueue
+from .remote import ComputerRegistry, SSHManager, VNCTunnel, RemoteComputerTool
+from .hetzner import HetznerManager, generate_cloud_init_script
 
 # Playwright for embedded browser
 try:
@@ -135,6 +137,12 @@ class ChatSession:
         # Session persistence
         self.created_at = datetime.now()
         self.last_active = datetime.now()
+
+        # Multi-computer control
+        self.target_computer_id = "local"
+        self.computer_registry = ComputerRegistry()
+        self.ssh_manager = SSHManager()
+        self.vnc_tunnel = VNCTunnel(self.computer_registry, self.ssh_manager)
 
         # Logging
         self.logger = get_logger()
@@ -419,6 +427,9 @@ class ChatSession:
                     stop_flag=lambda: self._stop_requested,
                     planning_progress_callback=planning_progress_callback,
                     delegation_status_callback=delegation_status_callback,
+                    target_computer_id=self.target_computer_id,
+                    computer_registry=self.computer_registry,
+                    ssh_manager=self.ssh_manager,
                 ))
 
             # Get thread pool executor from app state
@@ -449,6 +460,9 @@ class ChatSession:
                     delegation_status_callback=delegation_status_callback,
                     thinking_budget=self.thinking_budget,
                     stop_flag=lambda: self._stop_requested,
+                    target_computer_id=self.target_computer_id,
+                    computer_registry=self.computer_registry,
+                    ssh_manager=self.ssh_manager,
                 )
 
             self.messages = updated_messages
@@ -836,6 +850,15 @@ async def lifespan(app: FastAPI):
     app.state.browser_manager = BrowserManager()
     await app.state.browser_manager.start()
 
+    # Check if Hetzner Cloud integration is enabled
+    hetzner_token = os.getenv("HETZNER_API_TOKEN")
+    if hetzner_token:
+        app.state.hetzner_enabled = True
+        print("✅ Hetzner Cloud integration enabled")
+    else:
+        app.state.hetzner_enabled = False
+        print("⚠️  HETZNER_API_TOKEN not set - Hetzner Cloud features disabled")
+
     yield
 
     # Shutdown: clean up browser
@@ -860,6 +883,14 @@ app.add_middleware(
 static_path = Path(__file__).parent.parent / "static"
 if static_path.exists() and (static_path / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(static_path / "assets")), name="static_assets")
+
+# Mount noVNC static files for remote desktop viewer
+novnc_path = Path(__file__).parent.parent / "node_modules" / "novnc"
+if novnc_path.exists():
+    app.mount("/novnc", StaticFiles(directory=str(novnc_path)), name="novnc_static")
+    print("✓ noVNC static files mounted at /novnc")
+else:
+    print(f"⚠️  noVNC not found at {novnc_path}")
 
 
 # Middleware to prevent caching of static files
@@ -914,6 +945,16 @@ async def home_page():
         )
     # Fallback to old UI if React build doesn't exist
     return HTMLResponse(content=_html_shell(), status_code=200)
+
+
+@app.get("/vnc", response_class=HTMLResponse)
+@app.get("/vnc/", response_class=HTMLResponse)
+async def vnc_viewer():
+    """Serve noVNC viewer HTML for remote desktop connections."""
+    vnc_html = Path(__file__).parent.parent / "static" / "vnc.html"
+    if vnc_html.exists():
+        return HTMLResponse(content=vnc_html.read_text())
+    return HTMLResponse(content="<html><body>noVNC viewer not found</body></html>", status_code=404)
 
 
 def _get_current_session() -> ChatSession:
@@ -3746,6 +3787,504 @@ async def qt_browser_websocket(websocket: WebSocket):
         print(f"Qt browser WebSocket error: {e}")
     finally:
         await browser_manager.set_qt_websocket(None)
+
+
+# ============================================================================
+# Multi-Computer Remote Control Endpoints
+# ============================================================================
+
+
+class ComputerConfigRequest(BaseModel):
+    """Request model for adding/updating a computer."""
+
+    id: str | None = None
+    name: str
+    type: str  # 'local' or 'remote'
+    host: str | None = None
+    port: int = 22
+    username: str | None = None
+    ssh_key_path: str | None = None
+    vnc_port: int = 6080
+    api_port: int = 8000
+
+
+class RemoteExecuteRequest(BaseModel):
+    """Request model for executing a tool on a remote computer."""
+
+    action: str
+    # Additional parameters handled dynamically
+
+
+@app.get("/api/computers")
+async def list_computers():
+    """List all registered computers."""
+    try:
+        session = _get_current_session()
+        computers = session.computer_registry.list()
+        return [c.to_dict() for c in computers]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/computers")
+async def add_computer(computer: ComputerConfigRequest):
+    """Add a new computer to the registry."""
+    try:
+        session = _get_current_session()
+        from .remote.computer_registry import ComputerConfig
+
+        config = ComputerConfig(
+            id=computer.id or str(uuid.uuid4()),
+            name=computer.name,
+            type=computer.type,
+            host=computer.host,
+            port=computer.port,
+            username=computer.username,
+            ssh_key_path=computer.ssh_key_path,
+            vnc_port=computer.vnc_port,
+            api_port=computer.api_port,
+        )
+        result = session.computer_registry.add(config)
+        return result.to_dict()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/computers/{computer_id}")
+async def update_computer(computer_id: str, updates: dict):
+    """Update a computer's configuration."""
+    try:
+        session = _get_current_session()
+        computer = session.computer_registry.update(computer_id, updates)
+        if not computer:
+            raise HTTPException(status_code=404, detail="Computer not found")
+        return computer.to_dict()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/computers/{computer_id}")
+async def delete_computer(computer_id: str):
+    """Delete a computer from the registry."""
+    try:
+        session = _get_current_session()
+        if not session.computer_registry.delete(computer_id):
+            raise HTTPException(status_code=404, detail="Computer not found")
+        return {"status": "deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/computers/{computer_id}/status")
+async def get_computer_status(computer_id: str):
+    """Get the status of a computer."""
+    try:
+        session = _get_current_session()
+        computer = session.computer_registry.get(computer_id)
+        if not computer:
+            raise HTTPException(status_code=404, detail="Computer not found")
+        return {
+            "id": computer.id,
+            "name": computer.name,
+            "status": computer.status,
+            "error": computer.error_msg,
+            "last_check": computer.last_check,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/remote/execute")
+async def remote_execute_tool(request: Request):
+    """
+    Execute a tool on the local computer.
+
+    This endpoint is called by remote computers to execute tools on the local machine.
+    Remote computers POST their tool calls here via SSH tunnel.
+    """
+    try:
+        session = _get_current_session()
+        data = await request.json()
+
+        action = data.get("action")
+        if not action:
+            raise HTTPException(status_code=400, detail="Action not specified")
+
+        # Import tool here to execute locally
+        from .tools.universal_computer import UniversalComputerTool
+
+        tool = UniversalComputerTool()
+        result = await tool(**data)
+
+        # Convert ToolResult to dict for JSON response
+        return {
+            "output": result.output,
+            "error": result.error,
+            "base64_image": result.base64_image,
+            "system": result.system,
+            "display_width": getattr(tool, "display_width", 1280),
+            "display_height": getattr(tool, "display_height", 720),
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)},
+        )
+
+
+@app.post("/api/computers/{computer_id}/vnc-tunnel")
+async def create_vnc_tunnel(computer_id: str):
+    """Create SSH tunnel for noVNC access to a remote computer."""
+    try:
+        session = _get_current_session()
+        computer = session.computer_registry.get(computer_id)
+
+        # Auto-register Hetzner instances if not found
+        if not computer and computer_id.startswith("hetzner-"):
+            try:
+                instance_id = int(computer_id.replace("hetzner-", ""))
+                hetzner = HetznerManager()
+                instance = hetzner.get_instance(instance_id)
+                if instance and instance.get("public_net", {}).get("ipv4", {}).get("ip"):
+                    ip = instance["public_net"]["ipv4"]["ip"]
+                    name = instance.get("name", f"hetzner-{instance_id}")
+
+                    # Register the Hetzner instance
+                    from .remote import ComputerConfig
+                    config = ComputerConfig(
+                        id=computer_id,
+                        name=name,
+                        host=ip,
+                        username="root",
+                        ssh_key_path=os.path.expanduser("~/.ssh/id_ed25519"),
+                        vnc_port=6080,
+                        type="remote"
+                    )
+                    session.computer_registry.register(config)
+                    computer = config
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to auto-register Hetzner instance: {e}")
+
+        if not computer:
+            raise HTTPException(status_code=404, detail="Computer not found")
+
+        vnc_url = await session.vnc_tunnel.get_vnc_url(computer_id)
+        if not vnc_url:
+            raise HTTPException(status_code=500, detail="Failed to create VNC tunnel")
+
+        return {"vnc_url": vnc_url, "computer_id": computer_id, "computer_name": computer.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/computers/{computer_id}/set-target")
+async def set_target_computer(computer_id: str):
+    """Set the target computer for subsequent chat commands."""
+    try:
+        session = _get_current_session()
+        computer = session.computer_registry.get(computer_id)
+        if not computer:
+            raise HTTPException(status_code=404, detail="Computer not found")
+
+        session.target_computer_id = computer_id
+        return {"status": "ok", "target": computer_id, "computer_name": computer.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# HETZNER CLOUD ENDPOINTS
+# ============================================================================
+
+
+@app.get("/api/hetzner/instances")
+async def list_hetzner_instances():
+    """List all Hetzner Cloud instances with health checks."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            return {"error": "HETZNER_API_TOKEN not configured", "instances": []}
+
+        manager = HetznerManager(api_token=hetzner_token)
+        instances = manager.list_instances()
+
+        # Enhance with health checks and pricing
+        pricing = {
+            "cpx11": 0.0052,
+            "cpx21": 0.0095,
+            "cpx22": 0.007,
+            "cpx31": 0.0175,
+            "cpx41": 0.0345,
+            "cpx51": 0.069,
+        }
+
+        for inst in instances:
+            server_type = inst.get("server_type", {}).get("name", "cpx22")
+            inst["cost_per_hour"] = pricing.get(server_type, 0.007)
+
+        return {"instances": instances}
+    except Exception as e:
+        logger.error(f"Failed to list Hetzner instances: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hetzner/instances")
+async def create_hetzner_instance(request: Request):
+    """Create new Hetzner Cloud instance with auto-registration."""
+    try:
+        session = _get_current_session()
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        data = await request.json()
+        name = data.get("name", f"instance-{int(time.time())}")
+        server_type = data.get("server_type", "cpx22")
+        location = data.get("location", "nbg1")
+        snapshot_id = data.get("snapshot_id")
+
+        # Get SSH public key - try ed25519 first, then rsa
+        ssh_key = None
+        for key_name in ["id_ed25519.pub", "id_rsa.pub"]:
+            ssh_key_path = os.path.expanduser(f"~/.ssh/{key_name}")
+            if os.path.exists(ssh_key_path):
+                with open(ssh_key_path) as f:
+                    ssh_key = f.read().strip()
+                break
+
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+
+        # Create manager early to upload SSH key
+        manager = HetznerManager(api_token=hetzner_token)
+
+        # Upload SSH key to Hetzner and get key ID
+        ssh_key_ids = []
+        if ssh_key:
+            try:
+                key_id = manager.get_or_create_ssh_key("computer-use-demo", ssh_key)
+                ssh_key_ids = [key_id]
+            except Exception as e:
+                print(f"[Hetzner] Warning: Failed to upload SSH key: {e}")
+
+        # Generate cloud-init script
+        cloud_init = generate_cloud_init_script(
+            anthropic_api_key=anthropic_key,
+            hetzner_api_token=hetzner_token,
+            ssh_public_key=ssh_key,
+        )
+
+        # Create instance
+        if snapshot_id:
+            server = manager.clone_from_snapshot(
+                snapshot_id=int(snapshot_id),
+                name=name,
+                server_type=server_type,
+                user_data=cloud_init,
+            )
+        else:
+            server = manager.create_instance_and_register(
+                name=name,
+                server_type=server_type,
+                computer_registry=session.computer_registry,
+                location=location,
+                user_data=cloud_init,
+                labels={"created_by": "computer-use-demo"},
+                ssh_keys=ssh_key_ids,
+            )
+
+        return {
+            "success": True,
+            "instance": server,
+            "message": f"Instance {name} created and registered",
+        }
+    except Exception as e:
+        print(f"[Hetzner] Error: Failed to create instance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hetzner/instances/{instance_id}/start")
+async def start_hetzner_instance(instance_id: int):
+    """Start a stopped Hetzner instance."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        manager = HetznerManager(api_token=hetzner_token)
+        server = manager.start_instance(instance_id)
+        return {"success": True, "instance": server}
+    except Exception as e:
+        logger.error(f"Failed to start Hetzner instance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hetzner/instances/{instance_id}/stop")
+async def stop_hetzner_instance(instance_id: int):
+    """Stop a running Hetzner instance."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        manager = HetznerManager(api_token=hetzner_token)
+        manager.stop_instance(instance_id)
+        return {"success": True, "message": f"Instance {instance_id} stopped"}
+    except Exception as e:
+        logger.error(f"Failed to stop Hetzner instance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/hetzner/instances/{instance_id}")
+async def delete_hetzner_instance(instance_id: int):
+    """Delete Hetzner instance and unregister from computer registry."""
+    try:
+        session = _get_current_session()
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        # Unregister from computer registry first
+        computer_id = f"hetzner-{instance_id}"
+        session.computer_registry.delete(computer_id)
+
+        # Delete from Hetzner
+        manager = HetznerManager(api_token=hetzner_token)
+        manager.delete_instance(instance_id)
+
+        return {"success": True, "message": f"Instance {instance_id} deleted"}
+    except Exception as e:
+        logger.error(f"Failed to delete Hetzner instance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/hetzner/snapshots")
+async def list_hetzner_snapshots():
+    """List all Hetzner Cloud snapshots."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            return {"error": "HETZNER_API_TOKEN not configured", "snapshots": []}
+
+        manager = HetznerManager(api_token=hetzner_token)
+        snapshots = manager.list_snapshots(label_selector="created_by=computer-use-demo")
+
+        # Calculate costs (€0.01 per GB per month)
+        for snap in snapshots:
+            size_gb = snap.get("image_size", 0) / (1024 ** 3)  # Convert bytes to GB
+            snap["cost_per_month"] = size_gb * 0.01
+
+        return {"snapshots": snapshots}
+    except Exception as e:
+        logger.error(f"Failed to list Hetzner snapshots: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hetzner/instances/{instance_id}/snapshot")
+async def create_hetzner_snapshot(instance_id: int, request: Request):
+    """Create snapshot of Hetzner instance."""
+    try:
+        data = await request.json()
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        description = data.get("description", f"snapshot-{int(time.time())}")
+        manager = HetznerManager(api_token=hetzner_token)
+        snapshot = manager.create_snapshot(instance_id, description)
+
+        return {"success": True, "snapshot": snapshot}
+    except Exception as e:
+        logger.error(f"Failed to create Hetzner snapshot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/hetzner/snapshots/{snapshot_id}")
+async def delete_hetzner_snapshot(snapshot_id: int):
+    """Delete Hetzner snapshot."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        manager = HetznerManager(api_token=hetzner_token)
+        manager._request("DELETE", f"images/{snapshot_id}")
+
+        return {"success": True, "message": f"Snapshot {snapshot_id} deleted"}
+    except Exception as e:
+        logger.error(f"Failed to delete Hetzner snapshot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/hetzner/costs")
+async def get_hetzner_costs():
+    """Calculate current and projected Hetzner costs."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            return {
+                "hourly": 0,
+                "daily": 0,
+                "monthly": 0,
+                "running_count": 0,
+                "stopped_count": 0,
+                "snapshot_count": 0,
+                "snapshot_cost": 0,
+            }
+
+        manager = HetznerManager(api_token=hetzner_token)
+        instances = manager.list_instances()
+        snapshots = manager.list_snapshots(label_selector="created_by=computer-use-demo")
+
+        # Server pricing in EUR/hour
+        pricing = {
+            "cpx11": 0.0052,
+            "cpx21": 0.0095,
+            "cpx22": 0.007,
+            "cpx31": 0.0175,
+            "cpx41": 0.0345,
+            "cpx51": 0.069,
+        }
+
+        running = [i for i in instances if i["status"] == "running"]
+        hourly = sum(
+            pricing.get(i.get("server_type", {}).get("name", "cpx22"), 0.007)
+            for i in running
+        )
+        daily = hourly * 24
+        monthly = daily * 30
+
+        # Snapshot costs (€0.01 per GB per month)
+        snapshot_cost = sum(
+            (s.get("image_size", 0) / (1024 ** 3)) * 0.01 for s in snapshots
+        )
+        total_monthly = monthly + snapshot_cost
+
+        return {
+            "hourly": round(hourly, 4),
+            "daily": round(daily, 2),
+            "monthly": round(total_monthly, 2),
+            "running_count": len(running),
+            "stopped_count": len(instances) - len(running),
+            "snapshot_count": len(snapshots),
+            "snapshot_cost": round(snapshot_cost, 2),
+        }
+    except Exception as e:
+        logger.error(f"Failed to calculate Hetzner costs: {e}")
+        return {
+            "hourly": 0,
+            "daily": 0,
+            "monthly": 0,
+            "running_count": 0,
+            "stopped_count": 0,
+            "snapshot_count": 0,
+            "snapshot_cost": 0,
+        }
 
 
 def main():

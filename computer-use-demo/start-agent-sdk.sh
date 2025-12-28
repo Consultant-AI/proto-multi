@@ -31,7 +31,19 @@ if [ -z "$ANTHROPIC_API_KEY" ] && [ ! -f ~/.anthropic/api_key ]; then
     echo ""
 fi
 
+# Load Hetzner API token from .env file if present
+if [ -f "hetzner-deploy/.env" ]; then
+    source hetzner-deploy/.env
+    echo "✓ Loaded Hetzner API token from hetzner-deploy/.env"
+fi
+
+# Start VNC server first
+echo "Launching VNC server..."
+./start-vnc.sh &
+VNC_PID=$!
+
 # Run the webui
 cd "$(dirname "$0")"
+source .venv/bin/activate
 python3 -m computer_use_demo.webui
 

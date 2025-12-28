@@ -1,4 +1,4 @@
-export type TabType = 'newtab' | 'files' | 'web' | 'terminal' | 'computer'
+export type TabType = 'newtab' | 'files' | 'web' | 'terminal' | 'computer' | 'computers'
 
 export interface Tab {
   id: string

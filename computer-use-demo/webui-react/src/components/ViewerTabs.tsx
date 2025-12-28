@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw, Sun, Moon } from 'lucide-react'
+import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw, Sun, Moon, Layers } from 'lucide-react'
 import { Tab, TabType } from '../types/tabs'
 import Dashboard from './Dashboard'
 import FileExplorer from './FileExplorer'
 import FileViewer from './FileViewer'
 import BrowserPanel from './BrowserPanel'
 import ComputerPanel from './ComputerPanel'
+import ComputersOverview from './ComputersOverview'
 import Resizer from './Resizer'
 import '../styles/ViewerTabs.css'
 
@@ -13,6 +14,7 @@ interface ViewerTabsProps {
   onClose?: () => void
   chatVisible: boolean
   onToggleChat: () => void
+  selectedComputer?: string
 }
 
 const DEFAULT_TAB_ICONS: Record<TabType, JSX.Element> = {
@@ -20,7 +22,8 @@ const DEFAULT_TAB_ICONS: Record<TabType, JSX.Element> = {
   files: <Files size={14} />,
   web: <Globe size={14} />,
   terminal: <Terminal size={14} />,
-  computer: <Monitor size={14} />
+  computer: <Monitor size={14} />,
+  computers: <Layers size={14} />
 }
 
 const TAB_LABELS: Record<TabType, string> = {
@@ -28,7 +31,8 @@ const TAB_LABELS: Record<TabType, string> = {
   files: 'Files',
   web: 'Web',
   terminal: 'Terminal',
-  computer: 'Computer'
+  computer: 'Computer',
+  computers: 'All Computers'
 }
 
 const getFileIcon = (filename: string): JSX.Element => {
@@ -44,7 +48,7 @@ interface TabHistory {
   currentIndex: number
 }
 
-export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: ViewerTabsProps) {
+export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selectedComputer }: ViewerTabsProps) {
   const [tabs, setTabs] = useState<Tab[]>([
     { id: '1', type: 'newtab', title: 'New Tab', icon: <Plus size={14} /> }
   ])
@@ -76,7 +80,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const activeTabHistory = tabHistories.find(h => h.tabId === activeTabId)
 
-  const handleOpenResource = (type: 'files' | 'web' | 'computer' | 'terminal', id: string) => {
+  const handleOpenResource = (type: 'files' | 'web' | 'computer' | 'computers' | 'terminal', id: string) => {
     // Determine title and icon for the resource
     let title = TAB_LABELS[type]
     let icon: string | JSX.Element | undefined
@@ -100,7 +104,9 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
         icon = DEFAULT_TAB_ICONS.web
       }
     } else if (type === 'computer') {
-      title = 'Computer'
+      // For computer tabs, use the computer ID as title
+      // Convert 'hetzner-116309743' to just 'agent-sdk-demo-1' if available
+      title = id === 'main' || id === 'local' ? 'This Computer' : id
       icon = <Monitor size={14} />
     } else if (type === 'terminal') {
       title = 'Terminal'
@@ -239,8 +245,9 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
       // It's a file path
       handleOpenResource('files', input)
     } else if (input === 'computer' || input.startsWith('computer://')) {
-      // Computer view
-      handleOpenResource('computer', 'main')
+      // Computer view - extract computer ID from URL
+      const computerId = input.startsWith('computer://') ? input.substring(12) : 'local'
+      handleOpenResource('computer', computerId || 'local')
     } else if (input === 'terminal' || input.startsWith('terminal://')) {
       // Terminal
       handleOpenResource('terminal', 'main')
@@ -306,7 +313,16 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
           pathText = activeTab.resourceId || ''
           break
         case 'computer':
-          pathText = 'computer://live-view'
+          // Show computer:// URL with resourceId or localhost
+          const computerId = activeTab.resourceId
+          if (!computerId || computerId === 'main' || computerId === 'local' || computerId === '') {
+            pathText = 'computer://localhost'
+          } else if (computerId.startsWith('hetzner-')) {
+            // For Hetzner instances, try to extract IP if available in title
+            pathText = `computer://${computerId}`
+          } else {
+            pathText = `computer://${computerId}`
+          }
           break
         case 'terminal':
           pathText = `terminal://${activeTab.resourceId || 'session'}`
@@ -418,7 +434,23 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat }: Viewe
       case 'computer':
         return (
           <div className="computer-layout">
-            <ComputerPanel isActive={true} />
+            <ComputerPanel
+              key={activeTab.resourceId || 'local'}
+              isActive={true}
+              selectedComputer={selectedComputer}
+              resourceId={activeTab.resourceId}
+            />
+          </div>
+        )
+
+      case 'computers':
+        return (
+          <div className="computers-layout">
+            <ComputersOverview
+              onSelectComputer={(computerId) => {
+                handleOpenResource('computer', computerId)
+              }}
+            />
           </div>
         )
     }

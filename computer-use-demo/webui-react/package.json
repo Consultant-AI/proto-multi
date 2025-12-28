@@ -9,6 +9,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@novnc/novnc": "^1.4.0",
     "highlight.js": "^11.9.0",
     "lucide-react": "^0.561.0",
     "marked": "^11.1.1",

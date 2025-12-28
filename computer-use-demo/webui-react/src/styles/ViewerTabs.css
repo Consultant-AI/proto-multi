@@ -306,7 +306,8 @@
 .files-layout,
 .web-layout,
 .terminal-layout,
-.computer-layout {
+.computer-layout,
+.computers-layout {
   flex: 1;
   display: flex;
   overflow: hidden;
@@ -328,7 +329,8 @@
 }
 
 .web-layout,
-.computer-layout {
+.computer-layout,
+.computers-layout {
   flex-direction: column;
 }
 

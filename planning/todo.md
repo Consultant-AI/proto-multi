@@ -44,7 +44,16 @@
 
 ### 🚧 Active Tasks
 
-look at kanban and add features
+
+controlling other computer
+
+the default project folder is inside the folder of the proto and not go into the repo
+
+think of master archtecture with the concepets: specialisied agent to agents, tools and mcps, context and memory, plugins, skills and parrallel work inside computer and between computers
+
+add ultrathing
+
+add from the note
 
 add skills
 
@@ -55,6 +64,10 @@ add mcps
 add git
 
 improve managment
+
+ask user  functionallity
+
+
 
 connect claude code user and fallback to api key
 

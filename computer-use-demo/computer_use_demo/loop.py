@@ -224,6 +224,9 @@ async def sampling_loop(
     stop_flag: Callable[[], bool] | None = None,
     planning_progress_callback: Callable[[str], None] | None = None,
     delegation_status_callback: Callable[[str], None] | None = None,
+    target_computer_id: str = "local",
+    computer_registry: Any = None,
+    ssh_manager: Any = None,
 ):
     """
     Agentic sampling loop for the assistant/tool interaction of computer use.
@@ -242,6 +245,21 @@ async def sampling_loop(
             # Placeholder - we'll replace it after all tools are created
             tools.append(None)
             delegate_tool_index = i
+        elif ToolCls.__name__ == "UniversalComputerTool":
+            # Route to remote computer if target_computer_id is not 'local'
+            if target_computer_id != "local" and computer_registry and ssh_manager:
+                # Use RemoteComputerTool for remote execution
+                from .remote import RemoteComputerTool as RemoteToolImpl
+
+                computer = computer_registry.get(target_computer_id)
+                if computer:
+                    tools.append(RemoteToolImpl(target_computer_id, ssh_manager, computer))
+                else:
+                    # Fall back to local if computer not found
+                    tools.append(ToolCls())
+            else:
+                # Use local computer tool
+                tools.append(ToolCls())
         else:
             tools.append(ToolCls())
 

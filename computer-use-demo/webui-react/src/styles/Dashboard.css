@@ -73,9 +73,10 @@
 
 .dashboard-content {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
   align-items: start;
+  overflow: hidden;
 }
 
 .dashboard-section {
@@ -87,6 +88,8 @@
   background: var(--bg-panel-header);
   overflow: hidden;
   max-height: 600px;
+  min-width: 0;
+  width: 100%;
 }
 
 .dashboard-section.full-width {
@@ -490,56 +493,314 @@
   margin: 8px 12px;
 }
 
-/* Computer Preview Card in Column */
-.computer-preview-card {
-  padding: 0;
+/* ============================================ */
+/* COMPUTERS SECTION - Single Column with Cards */
+/* ============================================ */
+
+.computers-section {
+  /* Ensure strict containment */
+  min-width: 0;
   overflow: hidden;
-  min-height: 250px;
-  flex-direction: column;
-  cursor: pointer;
 }
 
-.computer-preview-card:hover {
+.computers-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Computer Card Base */
+.computer-card {
+  background: var(--bg-panel-header);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.computer-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Computer Card Header */
+.computer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.computer-card-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.computer-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.computer-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.running {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.status-badge.off {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.status-badge.starting,
+.status-badge.stopping {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+/* Menu Button and Dropdown */
+.menu-container {
+  position: relative;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.menu-btn:hover {
+  background: var(--hover);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 140px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  margin-top: 4px;
+}
+
+.dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.dropdown-menu button:hover {
+  background: var(--hover);
+}
+
+.dropdown-menu button.delete-action {
+  color: #ef4444;
+}
+
+.dropdown-menu button.delete-action:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-menu button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Computer Card Preview Area */
+.computer-card-preview {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  padding: 30px;
+  height: 100%;
+}
+
+.preview-placeholder.clickable {
+  color: var(--accent);
+}
+
+.preview-placeholder.offline {
+  opacity: 0.5;
+}
+
+/* Computer Card Footer */
+.computer-card-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.instance-ip,
+.instance-type {
+  padding: 2px 6px;
+  background: var(--bg-panel-header);
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Local Computer Card */
+.local-computer {
   border-color: var(--accent);
 }
 
-.computer-preview-card .computer-panel {
-  width: 100%;
+.local-computer .computer-card-info {
+  color: var(--accent);
+}
+
+/* Cloud Computer Card */
+.cloud-computer .computer-card-info svg {
+  color: #667eea;
+}
+
+.cloud-computer.off {
+  opacity: 0.7;
+}
+
+.cloud-computer.off:hover {
+  opacity: 1;
+}
+
+/* New Computer Card */
+.new-computer {
+  border-style: dashed;
+  border-color: var(--border);
+  min-height: 100px;
+}
+
+.new-computer:hover {
+  border-color: var(--accent);
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.new-computer.creating {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.new-computer-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
   height: 100%;
-  min-height: 250px;
+  padding: 20px;
 }
 
-.computer-preview-card .computer-panel-header {
-  padding: 6px 12px;
-  min-height: 38px;
-  height: 38px;
+.new-computer-content svg {
+  opacity: 0.6;
 }
 
-.computer-preview-card .computer-panel-title {
-  height: 26px;
+.new-computer:hover .new-computer-content {
+  color: var(--accent);
 }
 
-.computer-preview-card .computer-panel-title h2 {
-  font-size: 11px;
-  line-height: 26px;
+.new-computer:hover .new-computer-content svg {
+  opacity: 1;
 }
 
-.computer-preview-card .computer-panel-actions {
-  gap: 6px;
-  height: 26px;
+/* Spinning animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.computer-preview-card .refresh-btn {
-  padding: 2px;
-  width: 26px;
-  height: 26px;
-}
-
-.computer-preview-card .auto-refresh-toggle {
-  font-size: 10px;
-  height: 26px;
-}
-
-.computer-preview-card .auto-refresh-toggle span {
-  line-height: 26px;
+.spinning {
+  animation: spin 1s linear infinite;
 }

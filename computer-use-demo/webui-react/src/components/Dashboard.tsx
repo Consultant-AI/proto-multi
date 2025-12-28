@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
-import { Folder, FolderOpen, Globe, Monitor, Terminal, Plus, ChevronRight, ChevronDown } from 'lucide-react'
-import ComputerPanel from './ComputerPanel'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Folder, FolderOpen, Globe, Monitor, Terminal, Plus, ChevronRight, ChevronDown, MoreVertical, Pause, Power, Trash2, RefreshCw, Cloud } from 'lucide-react'
 import '../styles/Dashboard.css'
 
 interface DashboardProps {
-  onOpenResource?: (type: 'files' | 'web' | 'computer' | 'terminal', id: string) => void
+  onOpenResource?: (type: 'files' | 'web' | 'computer' | 'computers' | 'terminal', id: string) => void
 }
 
 interface FileNode {
@@ -14,13 +13,55 @@ interface FileNode {
   children?: FileNode[]
 }
 
+interface HetznerInstance {
+  id: number
+  name: string
+  status: string
+  public_net?: { ipv4?: { ip: string } }
+  server_type?: { name: string; description: string }
+  created: string
+}
+
 export default function Dashboard({ onOpenResource }: DashboardProps) {
   const [folders, setFolders] = useState<FileNode[]>([])
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [webPages, setWebPages] = useState<any[]>([])
-  const [computers, setComputers] = useState<any[]>([])
   const [terminals, setTerminals] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
+
+  // Computer states
+  const [hetznerInstances, setHetznerInstances] = useState<HetznerInstance[]>([])
+  const [localScreenshot, setLocalScreenshot] = useState<string | null>(null)
+  const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const [isCreatingInstance, setIsCreatingInstance] = useState(false)
+  const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Fetch local screenshot
+  const fetchLocalScreenshot = useCallback(async () => {
+    try {
+      const response = await fetch('/api/computer/screenshot')
+      if (response.ok) {
+        const data = await response.json()
+        setLocalScreenshot(data.image)
+      }
+    } catch (err) {
+      console.error('Failed to fetch screenshot:', err)
+    }
+  }, [])
+
+  // Fetch Hetzner instances
+  const fetchHetznerInstances = useCallback(async () => {
+    try {
+      const response = await fetch('/api/hetzner/instances')
+      if (response.ok) {
+        const data = await response.json()
+        setHetznerInstances(data.instances || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch Hetzner instances:', err)
+    }
+  }, [])
 
   // Helper to filter out paths that are already contained within another path in the list
   const filterRedundantPaths = (nodes: FileNode[]): FileNode[] => {
@@ -76,6 +117,17 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
     }
   }
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenu(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   useEffect(() => {
     // Fetch real data from backend
     const fetchData = async () => {
@@ -123,10 +175,6 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
         const webRes = await fetch('/api/web-pages')
         if (webRes.ok) setWebPages(await webRes.json())
 
-        // Fetch computers
-        const computersRes = await fetch('/api/computers')
-        if (computersRes.ok) setComputers(await computersRes.json())
-
         // Fetch terminals
         const terminalsRes = await fetch('/api/terminals')
         if (terminalsRes.ok) setTerminals(await terminalsRes.json())
@@ -140,10 +188,23 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
     }
 
     fetchData()
-  }, [])
 
-  const activeComputers = computers.filter(c => c.status === 'active').length
+    // Fetch local screenshot and start polling
+    fetchLocalScreenshot()
+    const screenshotInterval = setInterval(fetchLocalScreenshot, 2000)
+
+    // Fetch Hetzner instances
+    fetchHetznerInstances()
+    const hetznerInterval = setInterval(fetchHetznerInstances, 10000)
+
+    return () => {
+      clearInterval(screenshotInterval)
+      clearInterval(hetznerInterval)
+    }
+  }, [fetchLocalScreenshot, fetchHetznerInstances])
+
   const runningTerminals = terminals.filter(t => t.status === 'running').length
+  const runningInstances = hetznerInstances.filter(i => i.status === 'running').length
 
   const toggleFolder = async (path: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -198,6 +259,67 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
       setFolders(updateTreeNode(folders))
     } catch (error) {
       console.error('Failed to load folder contents:', error)
+    }
+  }
+
+  // Hetzner actions
+  const handleCreateInstance = async () => {
+    setIsCreatingInstance(true)
+    try {
+      const response = await fetch('/api/hetzner/instances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `agent-sdk-${Date.now()}`,
+          server_type: 'cx22',
+          from_snapshot: true
+        })
+      })
+      if (response.ok) {
+        fetchHetznerInstances()
+      } else {
+        const err = await response.json()
+        alert(err.detail || 'Failed to create instance')
+      }
+    } catch (err) {
+      console.error('Failed to create instance:', err)
+      alert('Failed to create instance')
+    } finally {
+      setIsCreatingInstance(false)
+    }
+  }
+
+  const handleStopInstance = async (id: number) => {
+    setActionLoading(id)
+    try {
+      await fetch(`/api/hetzner/instances/${id}/stop`, { method: 'POST' })
+      fetchHetznerInstances()
+    } finally {
+      setActionLoading(null)
+      setActiveMenu(null)
+    }
+  }
+
+  const handleStartInstance = async (id: number) => {
+    setActionLoading(id)
+    try {
+      await fetch(`/api/hetzner/instances/${id}/start`, { method: 'POST' })
+      fetchHetznerInstances()
+    } finally {
+      setActionLoading(null)
+      setActiveMenu(null)
+    }
+  }
+
+  const handleDeleteInstance = async (id: number, name: string) => {
+    if (!confirm(`Delete instance "${name}"? This cannot be undone.`)) return
+    setActionLoading(id)
+    try {
+      await fetch(`/api/hetzner/instances/${id}`, { method: 'DELETE' })
+      fetchHetznerInstances()
+    } finally {
+      setActionLoading(null)
+      setActiveMenu(null)
     }
   }
 
@@ -285,34 +407,137 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
           </div>
         </section>
 
-        {/* COMPUTERS Section */}
-        <section className="dashboard-section">
+        {/* COMPUTERS Section - All inline */}
+        <section className="dashboard-section computers-section">
           <div className="section-header">
             <Monitor size={16} />
             <h2>COMPUTERS</h2>
-            {activeComputers > 0 && <span className="badge">{activeComputers} Active</span>}
+            {runningInstances > 0 && <span className="badge running">{runningInstances + 1} Active</span>}
           </div>
-          <div className="resource-grid">
-            {/* Computer Preview - not active, just a clickable placeholder */}
-            <div className="resource-card computer-preview-card" onClick={() => onOpenResource?.('computer', 'main')}>
-              <ComputerPanel isActive={false} />
+
+          <div className="computers-grid">
+            {/* This Computer - with live preview */}
+            <div
+              className="computer-card local-computer"
+              onClick={() => onOpenResource?.('computer', 'local')}
+            >
+              <div className="computer-card-header">
+                <div className="computer-card-info">
+                  <Monitor size={16} />
+                  <span className="computer-card-name">This Computer</span>
+                </div>
+                <span className="status-badge running">Active</span>
+              </div>
+              <div
+                className="computer-card-preview"
+                style={localScreenshot ? {
+                  backgroundImage: `url(data:image/png;base64,${localScreenshot})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                } : undefined}
+              >
+                {!localScreenshot && (
+                  <div className="preview-placeholder">
+                    <RefreshCw size={20} className="spinning" />
+                  </div>
+                )}
+              </div>
             </div>
 
-            {computers.map((computer) => (
-              <div key={computer.id} className="resource-card" onClick={() => onOpenResource?.('computer', computer.id)}>
-                <div className="card-icon">
-                  <span>{computer.icon || '💻'}</span>
+            {/* Hetzner Cloud Instances */}
+            {hetznerInstances.map(instance => (
+              <div
+                key={instance.id}
+                className={`computer-card cloud-computer ${instance.status}`}
+                onClick={() => instance.status === 'running' && onOpenResource?.('computer', `hetzner-${instance.id}`)}
+              >
+                <div className="computer-card-header">
+                  <div className="computer-card-info">
+                    <Cloud size={16} />
+                    <span className="computer-card-name">{instance.name}</span>
+                  </div>
+                  <div className="computer-card-actions">
+                    <span className={`status-badge ${instance.status}`}>
+                      {instance.status === 'running' ? 'Running' : instance.status === 'off' ? 'Stopped' : instance.status}
+                    </span>
+                    <div className="menu-container" ref={activeMenu === `instance-${instance.id}` ? menuRef : null}>
+                      <button
+                        className="menu-btn"
+                        title="Instance actions"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)
+                        }}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {activeMenu === `instance-${instance.id}` && (
+                        <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                          {instance.status === 'running' ? (
+                            <button
+                              onClick={() => handleStopInstance(instance.id)}
+                              disabled={actionLoading === instance.id}
+                            >
+                              <Pause size={14} /> Pause
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartInstance(instance.id)}
+                              disabled={actionLoading === instance.id}
+                            >
+                              <Power size={14} /> Start
+                            </button>
+                          )}
+                          <button
+                            className="delete-action"
+                            onClick={() => handleDeleteInstance(instance.id, instance.name)}
+                            disabled={actionLoading === instance.id}
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="card-info">
-                  <div className="card-title">{computer.name}</div>
-                  <div className="card-subtitle">{computer.os} • {computer.status}</div>
+                <div className="computer-card-preview">
+                  {instance.status === 'running' ? (
+                    <div className="preview-placeholder clickable">
+                      <Monitor size={32} opacity={0.4} />
+                      <span>Click to connect</span>
+                    </div>
+                  ) : (
+                    <div className="preview-placeholder offline">
+                      <Monitor size={32} opacity={0.2} />
+                      <span>Offline</span>
+                    </div>
+                  )}
                 </div>
-                <div className={`card-indicator ${computer.status}`}></div>
+                <div className="computer-card-footer">
+                  <span className="instance-ip">{instance.public_net?.ipv4?.ip || 'No IP'}</span>
+                  <span className="instance-type">{instance.server_type?.name || 'Unknown'}</span>
+                </div>
               </div>
             ))}
-            <div className="resource-card new-resource">
-              <Plus size={20} />
-              <span>New Computer</span>
+
+            {/* New Instance Button */}
+            <div
+              className={`computer-card new-computer ${isCreatingInstance ? 'creating' : ''}`}
+              onClick={!isCreatingInstance ? handleCreateInstance : undefined}
+            >
+              <div className="new-computer-content">
+                {isCreatingInstance ? (
+                  <>
+                    <RefreshCw size={20} className="spinning" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus size={20} />
+                    <span>New Cloud Instance</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </section>

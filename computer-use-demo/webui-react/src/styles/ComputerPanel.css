@@ -163,3 +163,351 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.vnc-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vnc-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Reconnect button */
+.reconnect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--bg-sidebar, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reconnect-btn:hover:not(:disabled) {
+  background: var(--hover, #333);
+  color: var(--text-primary, #fff);
+}
+
+.reconnect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error text in loading state */
+.no-screen .error-text {
+  color: #ef4444;
+  font-size: 13px;
+  text-align: center;
+  max-width: 280px;
+}
+
+/* Spinning animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Instance status badge */
+.instance-status {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.instance-status.running {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.instance-status.stopped {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+}
+
+/* Action buttons */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--bg-sidebar, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--hover, #333);
+  color: var(--text-primary, #fff);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn.pause:hover:not(:disabled) {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
+  color: #eab308;
+}
+
+.action-btn.play:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.action-btn.snapshot:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.action-btn.delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.action-btn.reconnect:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Dialog overlay */
+.dialog-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.dialog {
+  background: var(--bg-panel, #1e1e1e);
+  border: 1px solid var(--border, #444);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.dialog h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dialog p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.dialog input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-main, #121212);
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.dialog input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.dialog-actions button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border, #444);
+  color: var(--text-secondary);
+}
+
+.cancel-btn:hover {
+  background: var(--hover, #333);
+  color: var(--text-primary);
+}
+
+.confirm-btn {
+  background: var(--accent);
+  border: none;
+  color: white;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-btn {
+  background: #ef4444;
+  border: none;
+  color: white;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-dialog h3 {
+  color: #ef4444;
+}
+
+/* Text buttons */
+.text-btn {
+  padding: 6px 12px;
+  background: var(--bg-sidebar, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.text-btn:hover:not(:disabled) {
+  background: var(--hover, #333);
+  color: var(--text-primary, #fff);
+}
+
+.text-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.text-btn.control-toggle {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.text-btn.control-toggle.active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.text-btn.pause:hover:not(:disabled) {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
+  color: #eab308;
+}
+
+.text-btn.play:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.text-btn.snapshot:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.text-btn.delete:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.text-btn.reconnect:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Control disabled overlay */
+.vnc-container.control-disabled {
+  position: relative;
+}
+
+.vnc-container.control-disabled iframe {
+  pointer-events: none;
+}
+
+.control-disabled-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 16px;
+  z-index: 10;
+  text-align: center;
+}
+
+.control-disabled-overlay span {
+  color: #eab308;
+  font-size: 12px;
+  font-weight: 500;
+}
