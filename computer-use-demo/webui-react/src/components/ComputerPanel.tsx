@@ -104,8 +104,17 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
         }
     }, [])
 
+
+    const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
     const setupRemoteVNC = useCallback(async () => {
         if (!computerId || computerId === 'local') return
+
+        // Clear any pending retry
+        if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current)
+            retryTimeoutRef.current = null
+        }
 
         setIsConnecting(true)
         setError(null)
@@ -118,18 +127,25 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
 
             if (response.ok) {
                 const data = await response.json()
-                setVncUrl(data.vnc_url)
                 if (data.computer_name) {
                     setComputerName(data.computer_name)
                 }
+                setVncUrl(data.vnc_url)
+                setIsConnecting(false)
+            } else if (response.status === 503) {
+                // Services still starting - show loading and retry
+                setError('Waiting for instance to start...')
+                retryTimeoutRef.current = setTimeout(() => {
+                    setupRemoteVNC()
+                }, 3000)
             } else {
                 const errData = await response.json().catch(() => ({}))
-                setError(errData.detail || 'Failed to connect - instance may still be initializing')
+                setError(errData.detail || 'Failed to connect')
+                setIsConnecting(false)
             }
         } catch (err) {
             console.error('VNC setup error:', err)
             setError('Could not connect to remote computer')
-        } finally {
             setIsConnecting(false)
         }
     }, [computerId])
@@ -143,6 +159,12 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
         setVncUrl(null)
         setError(null)
 
+        // Clear any pending retries
+        if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current)
+            retryTimeoutRef.current = null
+        }
+
         if (isLocalComputer) {
             // Local mode: auto-start screenshot polling
             setComputerName('This Computer')
@@ -153,6 +175,14 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
             // Remote mode: auto-setup VNC tunnel
             setComputerName(computerId)
             setupRemoteVNC()
+        }
+
+        // Cleanup on unmount
+        return () => {
+            if (retryTimeoutRef.current) {
+                clearTimeout(retryTimeoutRef.current)
+                retryTimeoutRef.current = null
+            }
         }
     }, [isActive, computerId, isLocalComputer, fetchScreenshot, setupRemoteVNC])
 
@@ -213,7 +243,7 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
                         <button
                             type="button"
                             className="text-btn reconnect"
-                            onClick={setupRemoteVNC}
+                            onClick={() => setupRemoteVNC()}
                             disabled={isConnecting}
                         >
                             {isConnecting ? <><RefreshCw size={14} className="spinning" /> Connecting...</> : <><RefreshCw size={14} /> Reconnect</>}
@@ -235,11 +265,9 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
                             src={(() => {
                                 try {
                                     const url = new URL(vncUrl);
-                                    // Load the remote noVNC interface directly (it's served on port 6080)
-                                    // The remote has its own complete noVNC at http://host:6080/vnc.html
-                                    // Add view_only parameter when control is disabled
+                                    // Connect directly to noVNC on the returned URL (host:6080)
                                     const viewOnly = !controlEnabled ? '&view_only=true' : '';
-                                    return `http://${url.hostname}:${url.port}/vnc.html?autoconnect=true&resize=scale&host=${url.hostname}&port=${url.port}${viewOnly}`;
+                                    return `${url.origin}/vnc.html?autoconnect=true&resize=scale${viewOnly}`;
                                 } catch {
                                     return `/vnc/?host=localhost&port=6080&path=websockify`;
                                 }
@@ -262,12 +290,12 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
                         {isConnecting ? (
                             <>
                                 <RefreshCw size={24} className="spinning" />
-                                <p>Connecting to {computerName}...</p>
+                                <p>{error || `Connecting to ${computerName}...`}</p>
                             </>
                         ) : error ? (
                             <>
                                 <p className="error-text">{error}</p>
-                                <button className="init-btn" onClick={isLocalComputer ? fetchScreenshot : setupRemoteVNC}>
+                                <button className="init-btn" onClick={() => isLocalComputer ? fetchScreenshot() : setupRemoteVNC()}>
                                     Retry Connection
                                 </button>
                             </>

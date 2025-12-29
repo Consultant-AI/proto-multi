@@ -445,80 +445,102 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
             </div>
 
             {/* Hetzner Cloud Instances */}
-            {hetznerInstances.map(instance => (
-              <div
-                key={instance.id}
-                className={`computer-card cloud-computer ${instance.status}`}
-                onClick={() => instance.status === 'running' && onOpenResource?.('computer', `hetzner-${instance.id}`)}
-              >
-                <div className="computer-card-header">
-                  <div className="computer-card-info">
-                    <Cloud size={16} />
-                    <span className="computer-card-name">{instance.name}</span>
-                  </div>
-                  <div className="computer-card-actions">
-                    <span className={`status-badge ${instance.status}`}>
-                      {instance.status === 'running' ? 'Running' : instance.status === 'off' ? 'Stopped' : instance.status}
-                    </span>
-                    <div className="menu-container" ref={activeMenu === `instance-${instance.id}` ? menuRef : null}>
-                      <button
-                        className="menu-btn"
-                        title="Instance actions"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)
-                        }}
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      {activeMenu === `instance-${instance.id}` && (
-                        <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                          {instance.status === 'running' ? (
-                            <button
-                              onClick={() => handleStopInstance(instance.id)}
-                              disabled={actionLoading === instance.id}
-                            >
-                              <Pause size={14} /> Pause
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleStartInstance(instance.id)}
-                              disabled={actionLoading === instance.id}
-                            >
-                              <Power size={14} /> Start
-                            </button>
-                          )}
+            {hetznerInstances.map(instance => {
+              const isRunning = instance.status === 'running'
+              const isStopped = instance.status === 'off' || instance.status === 'stopped'
+
+              return (
+                <div
+                  key={instance.id}
+                  className={`computer-card cloud-computer ${instance.status}`}
+                  onClick={() => isRunning && onOpenResource?.('computer', `hetzner-${instance.id}`)}
+                >
+                  <div className="computer-card-header">
+                    <div className="computer-card-info">
+                      <Cloud size={16} />
+                      <span className="computer-card-name">{instance.name}</span>
+                    </div>
+                    <div className="computer-card-actions">
+                      <span className={`status-badge ${instance.status}`}>
+                        {isRunning ? 'Running' : isStopped ? 'Stopped' : instance.status}
+                      </span>
+                      {isRunning && (
+                        <div className="menu-container" ref={activeMenu === `instance-${instance.id}` ? menuRef : null}>
                           <button
-                            className="delete-action"
-                            onClick={() => handleDeleteInstance(instance.id, instance.name)}
-                            disabled={actionLoading === instance.id}
+                            type="button"
+                            className="menu-btn"
+                            title="Instance actions"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)
+                            }}
                           >
-                            <Trash2 size={14} /> Delete
+                            <MoreVertical size={16} />
                           </button>
+                          {activeMenu === `instance-${instance.id}` && (
+                            <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => handleStopInstance(instance.id)}
+                                disabled={actionLoading === instance.id}
+                              >
+                                <Pause size={14} /> Pause
+                              </button>
+                              <button
+                                type="button"
+                                className="delete-action"
+                                onClick={() => handleDeleteInstance(instance.id, instance.name)}
+                                disabled={actionLoading === instance.id}
+                              >
+                                <Trash2 size={14} /> Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
-                <div className="computer-card-preview">
-                  {instance.status === 'running' ? (
-                    <div className="preview-placeholder clickable">
-                      <Monitor size={32} opacity={0.4} />
-                      <span>Click to connect</span>
-                    </div>
-                  ) : (
-                    <div className="preview-placeholder offline">
-                      <Monitor size={32} opacity={0.2} />
-                      <span>Offline</span>
+                  <div className="computer-card-preview">
+                    {isRunning ? (
+                      <div className="preview-placeholder clickable">
+                        <Monitor size={32} opacity={0.4} />
+                        <span>Click to connect</span>
+                      </div>
+                    ) : (
+                      <div className="preview-placeholder offline">
+                        <Monitor size={32} opacity={0.2} />
+                        <span>Offline</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="computer-card-footer">
+                    <span className="instance-ip">{instance.public_net?.ipv4?.ip || 'No IP'}</span>
+                    <span className="instance-type">{instance.server_type?.name || 'Unknown'}</span>
+                  </div>
+                  {/* Action buttons for stopped instances */}
+                  {isStopped && (
+                    <div className="computer-card-stopped-actions" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="action-btn resume"
+                        onClick={() => handleStartInstance(instance.id)}
+                        disabled={actionLoading === instance.id}
+                      >
+                        <Power size={14} /> {actionLoading === instance.id ? 'Starting...' : 'Resume'}
+                      </button>
+                      <button
+                        type="button"
+                        className="action-btn delete"
+                        onClick={() => handleDeleteInstance(instance.id, instance.name)}
+                        disabled={actionLoading === instance.id}
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
                     </div>
                   )}
                 </div>
-                <div className="computer-card-footer">
-                  <span className="instance-ip">{instance.public_net?.ipv4?.ip || 'No IP'}</span>
-                  <span className="instance-type">{instance.server_type?.name || 'Unknown'}</span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
 
             {/* New Instance Button */}
             <div

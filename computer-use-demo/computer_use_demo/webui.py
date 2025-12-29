@@ -3974,6 +3974,31 @@ async def create_vnc_tunnel(computer_id: str):
         if not vnc_url:
             raise HTTPException(status_code=500, detail="Failed to create VNC tunnel")
 
+        # For remote computers, verify the service is actually reachable
+        if computer.type == "remote" and computer.host:
+            import socket
+            try:
+                # Try to connect to port 6080 (noVNC) to verify services are up
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(3)
+                result = sock.connect_ex((computer.host, 6080))
+                sock.close()
+                if result != 0:
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Instance services are starting up. Please wait..."
+                    )
+            except socket.timeout:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Instance services are starting up. Please wait..."
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Instance services are starting up. Please wait..."
+                )
+
         return {"vnc_url": vnc_url, "computer_id": computer_id, "computer_name": computer.name}
     except HTTPException:
         raise

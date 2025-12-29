@@ -46,10 +46,12 @@
 
 
 controlling other computer
+full screen
+able to add resume stopped item
 
 the default project folder is inside the folder of the proto and not go into the repo
 
-think of master archtecture with the concepets: specialisied agent to agents, tools and mcps, context and memory, plugins, skills and parrallel work inside computer and between computers
+think of master archtecture with the concepets: specialisied agent to agents (subagent), tools and mcps, context and memory, plugins,lsp, skills and parrallel work inside computer and between computers
 
 add ultrathing
 

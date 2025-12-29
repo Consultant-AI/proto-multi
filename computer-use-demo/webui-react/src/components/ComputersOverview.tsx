@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Monitor, Power, Trash2, Plus, RefreshCw, Cloud, MoreVertical, Pause, Unplug } from 'lucide-react'
+import { Monitor, Power, Trash2, Plus, RefreshCw, Cloud, MoreVertical, Pause } from 'lucide-react'
 import '../styles/ComputersOverview.css'
 
 interface Computer {
@@ -239,65 +239,82 @@ export default function ComputersOverview({ onSelectComputer }: Props) {
         ))}
 
         {/* Hetzner Cloud Instances */}
-        {hetznerInstances.map(instance => (
-          <div
-            key={instance.id}
-            className={`computer-card cloud ${instance.status}`}
-            onClick={() => onSelectComputer(`hetzner-${instance.id}`)}
-          >
-            <div className="card-preview cloud-preview">
-              <Cloud size={40} />
-              <div className={`status-dot ${instance.status}`} />
-            </div>
-            <div className="card-body">
-              <h4>{instance.name}</h4>
-              <span className="card-type">
-                {instance.public_net?.ipv4?.ip || 'No IP'} • {instance.server_type?.name}
-              </span>
-              <span className={`status-badge ${instance.status}`}>
-                {instance.status.toUpperCase()}
-              </span>
-            </div>
+        {hetznerInstances.map(instance => {
+          const isRunning = instance.status === 'running'
+          const isStopped = instance.status === 'off' || instance.status === 'stopped'
 
-            {/* Action Menu Button */}
-            <button
-              className="menu-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)
-              }}
+          return (
+            <div
+              key={instance.id}
+              className={`computer-card cloud ${instance.status}`}
+              onClick={() => isRunning && onSelectComputer(`hetzner-${instance.id}`)}
             >
-              <MoreVertical size={18} />
-            </button>
-
-            {/* Dropdown Menu */}
-            {activeMenu === `instance-${instance.id}` && (
-              <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                {instance.status === 'running' && (
-                  <>
-                    <button onClick={() => handleStopInstance(instance.id)}>
-                      <Pause size={14} /> Pause
-                    </button>
-                    <button onClick={() => onSelectComputer(`hetzner-${instance.id}`)}>
-                      <Monitor size={14} /> Connect
-                    </button>
-                  </>
+              <div className="card-preview cloud-preview">
+                {isStopped ? (
+                  <div className="offline-state">Offline</div>
+                ) : (
+                  <Cloud size={40} />
                 )}
-                {instance.status === 'off' && (
-                  <button onClick={() => handleStartInstance(instance.id)}>
-                    <Power size={14} /> Start
-                  </button>
-                )}
-                <button className="disconnect-btn" onClick={() => setActiveMenu(null)}>
-                  <Unplug size={14} /> Disconnect
-                </button>
-                <button className="delete-btn" onClick={() => handleDeleteInstance(instance.id, instance.name)}>
-                  <Trash2 size={14} /> Delete
-                </button>
+                <div className={`status-dot ${instance.status}`} />
               </div>
-            )}
-          </div>
-        ))}
+              <div className="card-body">
+                <h4>{instance.name}</h4>
+                <span className="card-type">
+                  {instance.public_net?.ipv4?.ip || 'No IP'} • {instance.server_type?.name}
+                </span>
+                <span className={`status-badge ${instance.status}`}>
+                  {isStopped ? 'STOPPED' : instance.status.toUpperCase()}
+                </span>
+              </div>
+
+              {/* Quick Actions for stopped instances - visible directly on card */}
+              {isStopped && (
+                <div className="card-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="action-btn start" onClick={() => handleStartInstance(instance.id)}>
+                    <Power size={14} /> Resume
+                  </button>
+                  <button className="action-btn delete" onClick={() => handleDeleteInstance(instance.id, instance.name)}>
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
+              )}
+
+              {/* Action Menu Button - for running instances */}
+              {isRunning && (
+                <button
+                  type="button"
+                  className="menu-btn"
+                  title="More actions"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)
+                  }}
+                >
+                  <MoreVertical size={18} />
+                </button>
+              )}
+
+              {/* Dropdown Menu */}
+              {activeMenu === `instance-${instance.id}` && (
+                <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                  {isRunning && (
+                    <>
+                      <button type="button" onClick={() => handleStopInstance(instance.id)}>
+                        <Pause size={14} /> Pause
+                      </button>
+                      <button type="button" onClick={() => onSelectComputer(`hetzner-${instance.id}`)}>
+                        <Monitor size={14} /> Connect
+                      </button>
+                    </>
+                  )}
+                  <button type="button" className="delete-btn" onClick={() => handleDeleteInstance(instance.id, instance.name)}>
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         {/* Empty state */}
         {computers.length === 0 && hetznerInstances.length === 0 && (

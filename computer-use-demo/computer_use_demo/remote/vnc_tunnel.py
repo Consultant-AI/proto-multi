@@ -212,9 +212,11 @@ class VNCTunnel:
             return f"ws://localhost:{computer.vnc_port}/websockify"
 
         # For remote computers with direct mode (public ports), connect directly
+        # Hetzner instances use nginx proxy on port 80 - VNC port 6080 is localhost only
         if direct and computer.host:
-            logger.info(f"Using direct VNC connection to {computer.host}:{computer.vnc_port}")
-            return f"ws://{computer.host}:{computer.vnc_port}/websockify"
+            # Connect directly to noVNC on port 6080
+            logger.info(f"Using direct VNC connection to {computer.host}:6080")
+            return f"http://{computer.host}:6080"
 
         # Fallback: create SSH tunnel
         local_port = await self.create_tunnel(computer_id)
