@@ -154,6 +154,54 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
             }
           }
 
+          // If no custom paths, try to add the default Proto path
+          if (customPaths.length === 0) {
+            try {
+              const configRes = await fetch('/api/dashboard/config')
+              if (configRes.ok) {
+                const config = await configRes.json()
+                const defaultPath = config.defaultProjectPath
+                if (defaultPath) {
+                  // Pre-load folder contents
+                  let children: FileNode[] = []
+                  try {
+                    const folderRes = await fetch(`/api/browse/folder?path=${encodeURIComponent(defaultPath)}`)
+                    if (folderRes.ok) {
+                      const folderData = await folderRes.json()
+                      children = [
+                        ...folderData.folders.map((folder: { name: string; path: string }) => ({
+                          name: folder.name,
+                          path: folder.path,
+                          type: 'folder' as const,
+                          children: []
+                        })),
+                        ...folderData.files.map((file: { name: string }) => ({
+                          name: file.name,
+                          path: `${defaultPath}/${file.name}`,
+                          type: 'file' as const
+                        }))
+                      ]
+                    }
+                  } catch {
+                    // Ignore folder content load failure
+                  }
+
+                  const defaultNode: FileNode = {
+                    name: 'Proto Projects',
+                    path: defaultPath,
+                    type: 'folder',
+                    children
+                  }
+                  customPaths = [defaultNode]
+                  // Save to localStorage so FileExplorer also sees it
+                  localStorage.setItem('explorer_custom_paths', JSON.stringify(customPaths))
+                }
+              }
+            } catch {
+              // Ignore config fetch failure
+            }
+          }
+
           // Combine and filter redundant paths
           const combined = [...customPaths, ...projectFolders]
           const filtered = filterRedundantPaths(combined)
@@ -165,7 +213,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
 
           // Load contents for all first-level folders
           for (const folder of filtered) {
-            if (folder.type === 'folder') {
+            if (folder.type === 'folder' && (!folder.children || folder.children.length === 0)) {
               loadFolderContentsInitial(folder.path, filtered)
             }
           }
