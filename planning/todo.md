@@ -45,6 +45,10 @@
 ### 🚧 Active Tasks
 
 
+add to archtecture to build more determistic playbooks / code scripts to be more reliable
+
+use the not wrong system
+
 controlling other computer
 full screen
 able to add resume stopped item
@@ -52,7 +56,7 @@ able to add resume stopped item
 the default project folder is inside the folder of the proto and not go into the repo
 
 think of master archtecture with the concepets: specialisied agent to agents (subagent), tools and mcps, context and memory, plugins,lsp, skills and parrallel work inside computer and between computers
-
+feature of ask to clearify maaybe in a mode in the chat like planning add mode ask to clearify
 add ultrathing
 
 add from the note

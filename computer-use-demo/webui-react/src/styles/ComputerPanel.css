@@ -245,6 +245,18 @@
   color: #eab308;
 }
 
+.instance-status.stopping,
+.instance-status.starting {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Action buttons */
 .action-btn {
   display: flex;

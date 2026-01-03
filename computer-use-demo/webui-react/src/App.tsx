@@ -7,7 +7,10 @@ import './styles/App.css'
 function App() {
   const [viewerVisible, setViewerVisible] = useState(true)
   const [chatVisible, setChatVisible] = useState(true)
-  const [viewerWidth, setViewerWidth] = useState(600)
+  const [viewerWidth, setViewerWidth] = useState(() => {
+    const saved = localStorage.getItem('viewerWidth')
+    return saved ? parseInt(saved, 10) : window.innerWidth - 420
+  })
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
   const [selectedComputer, setSelectedComputer] = useState('local')
   const [computers, setComputers] = useState<any[]>([])
@@ -15,6 +18,11 @@ function App() {
   const handleSelectAgent = (agentId: string, _agentName: string, _agentIcon: string) => {
     setSelectedAgentId(agentId)
   }
+
+  // Save viewer width to localStorage
+  useEffect(() => {
+    localStorage.setItem('viewerWidth', viewerWidth.toString())
+  }, [viewerWidth])
 
   // Fetch computers on mount
   useEffect(() => {

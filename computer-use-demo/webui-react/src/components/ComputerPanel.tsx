@@ -34,21 +34,45 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
     const handlePauseResume = async () => {
         if (!hetznerInstanceId) return
         setIsActionPending(true)
+
+        const isRunning = instanceStatus === 'running'
+        const action = isRunning ? 'stop' : 'start'
+
+        // Set intermediate status
+        setInstanceStatus(isRunning ? 'stopping' : 'starting')
+        if (isRunning) {
+            setVncUrl(null) // Clear VNC immediately when stopping
+            setError('Stopping instance...')
+        } else {
+            setError('Starting instance and services...')
+            setIsConnecting(true)
+        }
+
         try {
-            const action = instanceStatus === 'running' ? 'stop' : 'start'
             const response = await fetch(`/api/hetzner/instances/${hetznerInstanceId}/${action}`, {
                 method: 'POST'
             })
             if (response.ok) {
                 setInstanceStatus(action === 'stop' ? 'stopped' : 'running')
-                if (action === 'stop') {
-                    setVncUrl(null) // Clear VNC when stopped
+                setError(null)
+                if (action === 'start') {
+                    // After start completes, setup VNC
+                    setupRemoteVNC()
                 }
+            } else {
+                // Revert status on error
+                setInstanceStatus(isRunning ? 'running' : 'stopped')
+                setError(`Failed to ${action} instance`)
             }
         } catch (err) {
             console.error('Failed to pause/resume instance:', err)
+            setInstanceStatus(isRunning ? 'running' : 'stopped')
+            setError(`Error: ${err}`)
         } finally {
             setIsActionPending(false)
+            if (action === 'start') {
+                setIsConnecting(false)
+            }
         }
     }
 
@@ -198,7 +222,10 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
                     {/* Instance status badge */}
                     {isHetznerInstance && (
                         <span className={`instance-status ${instanceStatus}`}>
-                            {instanceStatus}
+                            {instanceStatus === 'stopping' ? '⏳ Stopping...' :
+                             instanceStatus === 'starting' ? '⏳ Starting...' :
+                             instanceStatus === 'running' ? '● Running' :
+                             instanceStatus === 'stopped' ? '○ Stopped' : instanceStatus}
                         </span>
                     )}
                     {/* Control toggle */}
@@ -217,9 +244,12 @@ export default function ComputerPanel({ isActive = true, selectedComputer = 'loc
                                 type="button"
                                 className={`text-btn ${instanceStatus === 'running' ? 'pause' : 'play'}`}
                                 onClick={handlePauseResume}
-                                disabled={isActionPending}
+                                disabled={isActionPending || instanceStatus === 'stopping' || instanceStatus === 'starting'}
                             >
-                                {instanceStatus === 'running' ? <><Pause size={14} /> Pause</> : <><Play size={14} /> Resume</>}
+                                {instanceStatus === 'stopping' ? <><RefreshCw size={14} className="spinning" /> Stopping...</> :
+                                 instanceStatus === 'starting' ? <><RefreshCw size={14} className="spinning" /> Starting...</> :
+                                 instanceStatus === 'running' ? <><Pause size={14} /> Pause</> :
+                                 <><Play size={14} /> Resume</>}
                             </button>
                             <button
                                 type="button"

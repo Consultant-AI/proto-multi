@@ -51,11 +51,28 @@ class TaskComplexityAnalyzer:
         "implement",
         "build",
         "create",
+        "make",
         "design system",
         "architecture",
         "integrate",
         "refactor",
         "migrate",
+        # Project-type nouns that always need planning
+        "game",
+        "app",
+        "application",
+        "website",
+        "webapp",
+        "web app",
+        "tool",
+        "system",
+        "platform",
+        "clone",
+        "dashboard",
+        "portal",
+        "service",
+        "api",
+        "bot",
     ]
 
     MEDIUM_KEYWORDS = [
@@ -95,8 +112,8 @@ class TaskComplexityAnalyzer:
         # Determine complexity level
         complexity = self._determine_complexity(task_lower, context)
 
-        # Determine if planning is required
-        planning_required = complexity in ["complex", "project"]
+        # Determine if planning is required (any non-simple task needs planning)
+        planning_required = complexity in ["medium", "complex", "project"]
 
         # Estimate number of steps
         estimated_steps = self._estimate_steps(complexity, task_lower)

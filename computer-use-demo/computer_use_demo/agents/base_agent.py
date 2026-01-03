@@ -14,6 +14,55 @@ from anthropic.types import Message, TextBlock
 from ..proto_logging import get_logger
 from ..tools.collection import ToolCollection
 
+# Import thinking module for auto-detection
+try:
+    from ..thinking import auto_detect_budget, get_api_thinking_config
+    THINKING_AVAILABLE = True
+except ImportError:
+    THINKING_AVAILABLE = False
+    auto_detect_budget = None
+    get_api_thinking_config = None
+
+# Import reliability module for circuit breaker and retry
+try:
+    from ..reliability import (
+        get_circuit_breaker,
+        CircuitOpenError,
+        RETRY_API_CONFIG,
+        retry_sync,
+    )
+    RELIABILITY_AVAILABLE = True
+except ImportError:
+    RELIABILITY_AVAILABLE = False
+    get_circuit_breaker = None
+    CircuitOpenError = Exception
+    RETRY_API_CONFIG = None
+    retry_sync = None
+
+# Import memory module for CLAUDE.md injection
+try:
+    from ..memory import get_memory_injection
+    MEMORY_AVAILABLE = True
+except ImportError:
+    MEMORY_AVAILABLE = False
+    get_memory_injection = None
+
+# Import skills module for auto-activated expertise
+try:
+    from ..skills import get_skill_injection
+    SKILLS_AVAILABLE = True
+except ImportError:
+    SKILLS_AVAILABLE = False
+    get_skill_injection = None
+
+# Import smart selector module for intelligent model + thinking selection
+try:
+    from ..smart_selector import SmartSelector
+    SMART_SELECTOR_AVAILABLE = True
+except ImportError:
+    SMART_SELECTOR_AVAILABLE = False
+    SmartSelector = None
+
 AgentRole = Literal["ceo", "marketing", "development", "design", "analytics", "content", "research"]
 
 
@@ -30,6 +79,7 @@ class AgentConfig:
     temperature: float = 1.0
     max_self_correction_attempts: int = 3  # Max retry attempts with self-correction
     beta_flag: str | None = None  # Anthropic API beta flag (e.g. "computer-use-2025-01-24")
+    smart_selection: bool = True  # Enable smart model + thinking selection
 
 
 @dataclass
@@ -428,11 +478,97 @@ class BaseAgent(ABC):
         """
         system_prompt = self.get_system_prompt()
 
+        # Inject memory from CLAUDE.md hierarchy
+        if MEMORY_AVAILABLE:
+            memory_content = get_memory_injection()
+            if memory_content:
+                system_prompt = f"{system_prompt}\n\n{memory_content}"
+
+        # Inject skills based on task context
+        if SKILLS_AVAILABLE and self.messages:
+            # Get the first user message to detect skills
+            first_user_msg = None
+            for msg in self.messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", "")
+                    if isinstance(content, str):
+                        first_user_msg = content
+                    break
+
+            if first_user_msg:
+                skills_content = get_skill_injection(message=first_user_msg)
+                if skills_content:
+                    system_prompt = f"{system_prompt}\n\n{skills_content}"
+
         # Prepare tools if any
         tools = [tool.to_params() for tool in self.config.tools] if self.config.tools else []
 
         # Validate and clean messages before sending to API
         cleaned_messages = self._validate_and_clean_messages()
+
+        # Smart model and thinking selection
+        effective_model = self.config.model
+        thinking_budget = None
+        thinking_reason = None
+
+        # Get first user message for smart selection
+        first_user_msg = None
+        for msg in cleaned_messages:
+            if msg.get("role") == "user":
+                content = msg.get("content", "")
+                if isinstance(content, str):
+                    first_user_msg = content
+                elif isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            first_user_msg = block.get("text", "")
+                            break
+                break
+
+        if self.config.smart_selection and SMART_SELECTOR_AVAILABLE and SmartSelector and first_user_msg:
+            try:
+                # Use SmartSelector for intelligent model + thinking selection
+                # Selection is purely content-based - analyzes actual task text
+                selector = SmartSelector()
+                selection = selector.select_sync(
+                    task=first_user_msg,
+                    context={"agent_role": self.config.role},
+                )
+
+                effective_model = selection.model_id
+                thinking_budget = selection.thinking_budget
+                thinking_reason = selection.reasoning
+
+                self.logger.log_event(
+                    event_type="smart_selection",
+                    session_id=self.session_id,
+                    data={
+                        "agent_role": self.config.role,
+                        "selected_model": selection.model,
+                        "thinking_budget": thinking_budget,
+                        "task_type": selection.task_type.value,
+                        "is_mechanical": selection.is_mechanical,
+                    },
+                )
+
+            except Exception as e:
+                # Fallback to old thinking auto-detection
+                self.logger.log_event(
+                    event_type="smart_selection_failed",
+                    level="WARNING",
+                    session_id=self.session_id,
+                    data={"error": str(e)},
+                )
+                if THINKING_AVAILABLE and first_user_msg:
+                    detection_result = auto_detect_budget(first_user_msg)
+                    thinking_budget = detection_result.budget
+                    thinking_reason = detection_result.reason
+
+        elif THINKING_AVAILABLE and first_user_msg:
+            # Fallback: use old auto-detect if SmartSelector not available
+            detection_result = auto_detect_budget(first_user_msg)
+            thinking_budget = detection_result.budget
+            thinking_reason = detection_result.reason
 
         # Log API request
         self.logger.log_event(
@@ -445,13 +581,23 @@ class BaseAgent(ABC):
                 "original_message_count": len(self.messages),
                 "has_tools": len(tools) > 0,
                 "messages_cleaned": len(cleaned_messages) != len(self.messages),
+                "thinking_budget": thinking_budget,
+                "thinking_reason": thinking_reason,
             },
         )
 
         # Call API - only include tools if non-empty
+        # Use effective_model from SmartSelector or fallback to config.model
+        max_tokens = 4096
+        # Adjust max_tokens if thinking budget requires it
+        if thinking_budget and thinking_budget > 0:
+            min_required = thinking_budget + 1000
+            if max_tokens < min_required:
+                max_tokens = min_required
+
         api_params = {
-            "model": self.config.model,
-            "max_tokens": 4096,
+            "model": effective_model,  # Use SmartSelector's model choice
+            "max_tokens": max_tokens,
             "temperature": self.config.temperature,
             "system": system_prompt,
             "messages": cleaned_messages,  # Use cleaned messages
@@ -460,7 +606,71 @@ class BaseAgent(ABC):
         if tools:  # Only add tools parameter if there are actual tools
             api_params["tools"] = tools
 
-        response = self.client.messages.create(**api_params)
+        # Add thinking budget if auto-detected
+        if thinking_budget and thinking_budget > 0:
+            thinking_config = get_api_thinking_config(thinking_budget)
+            if thinking_config:
+                api_params["extra_body"] = thinking_config
+
+        # Execute API call with reliability patterns (circuit breaker + retry)
+        if RELIABILITY_AVAILABLE:
+            # Get circuit breaker for this agent's API calls
+            circuit_breaker = get_circuit_breaker(f"anthropic_api_{self.config.role}")
+
+            # Check if circuit is available
+            if not circuit_breaker.is_available():
+                circuit_breaker.record_rejection()
+                raise CircuitOpenError(
+                    f"Circuit breaker for {self.config.role} is open - API calls temporarily blocked"
+                )
+
+            try:
+                # Define the API call as a function for retry
+                def make_api_call():
+                    return self.client.messages.create(**api_params)
+
+                # Define retry callback for logging
+                def on_retry(attempt: int, error: Exception, delay: float):
+                    self.logger.log_event(
+                        event_type="api_retry",
+                        session_id=self.session_id,
+                        data={
+                            "agent_role": self.config.role,
+                            "attempt": attempt,
+                            "delay": delay,
+                            "error": str(error)[:200],
+                        },
+                    )
+
+                # Execute with retry
+                response, retry_stats = retry_sync(
+                    make_api_call,
+                    config=RETRY_API_CONFIG,
+                    on_retry=on_retry,
+                )
+
+                # Log retry stats if retries occurred
+                if retry_stats.attempts > 1:
+                    self.logger.log_event(
+                        event_type="api_call_retried",
+                        session_id=self.session_id,
+                        data={
+                            "agent_role": self.config.role,
+                            "total_attempts": retry_stats.attempts,
+                            "total_delay": retry_stats.total_delay,
+                        },
+                    )
+
+                # Record success with circuit breaker
+                circuit_breaker.record_success()
+
+            except Exception as e:
+                # Record failure with circuit breaker
+                circuit_breaker.record_failure(e)
+                raise
+        else:
+            # Fallback: direct API call without reliability patterns
+            response = self.client.messages.create(**api_params)
 
         # Log API response
         self.logger.log_event(

@@ -16,6 +16,22 @@
   flex: 0 0 auto;
 }
 
+.viewer-panel .dashboard {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.viewer-panel .dashboard-content {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.viewer-panel .dashboard-section {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .viewer-panel.viewer-expanded {
   flex: 1;
   width: auto !important;

@@ -2,8 +2,12 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   background: var(--bg-main);
   border-right: 1px solid var(--border);
+  overflow: hidden;
 }
 
 .viewer-tabs-header {
@@ -13,18 +17,19 @@
   padding: 0;
   background: var(--bg-panel-header);
   border-bottom: 1px solid var(--border);
-  height: 60px;
+  height: 44px;
   gap: 8px;
 }
 
 .viewer-tabs-list {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 2px;
   flex: 1;
-  padding: 4px 4px 0 4px;
+  padding: 0 4px;
   overflow-x: auto;
   overflow-y: hidden;
+  height: 100%;
 }
 
 .viewer-tabs-list::-webkit-scrollbar {
@@ -192,6 +197,9 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .tab-path-bar {

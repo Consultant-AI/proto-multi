@@ -336,6 +336,7 @@ Returns paths to created planning documents.""",
                 output_lines.append(f"  ✓ {doc['type']}")
 
             # Add NEXT STEPS guidance
+            tasks_json_path_str = str(tasks_json_path) if tasks_json_path.exists() else f"{project_path}/tasks.json"
             output_lines.extend([
                 "",
                 "=" * 60,
@@ -344,7 +345,7 @@ Returns paths to created planning documents.""",
                 "",
                 "Planning is complete. Now you MUST delegate to the appropriate specialist:",
                 "",
-                f"1. Review TASKS.md at: {tasks_md_path}",
+                f"1. Review tasks at: {tasks_json_path_str}",
                 f"2. Delegate to specialist: {recommended_specialist}",
                 "",
                 "Example delegation command:",

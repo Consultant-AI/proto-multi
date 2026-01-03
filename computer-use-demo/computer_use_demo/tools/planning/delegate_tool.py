@@ -36,7 +36,7 @@ class DelegateTaskTool(BaseAnthropicTool):
         delegation_depth: int = 0,
         stop_flag: Any = None,
         progress_callback: Any = None,
-        delegation_status_callback: Any = None
+        delegation_status_callback: Any = None,
     ):
         """
         Initialize delegation tool.
@@ -376,7 +376,8 @@ Returns the specialist's output and execution details.""",
         for tool in self.available_tools:
             if hasattr(tool, 'name') and tool.name == 'delegate_task':
                 # Create new DelegateTaskTool with incremented depth (for tracking only)
-                # Pass stop_flag, progress_callback, and delegation_status_callback so they propagate through the delegation chain
+                # Pass stop_flag, progress_callback, delegation_status_callback
+                # so they propagate through the delegation chain
                 specialist_tools.append(
                     DelegateTaskTool(
                         available_tools=self.available_tools,

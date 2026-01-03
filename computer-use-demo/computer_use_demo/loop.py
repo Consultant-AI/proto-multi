@@ -36,6 +36,54 @@ from .tools import (
     ToolVersion,
 )
 
+# Import reliability module
+try:
+    from .reliability import (
+        get_circuit_breaker,
+        CircuitOpenError,
+        RETRY_API_CONFIG,
+        retry_sync,
+    )
+    RELIABILITY_AVAILABLE = True
+except ImportError:
+    RELIABILITY_AVAILABLE = False
+    get_circuit_breaker = None
+    CircuitOpenError = Exception
+    RETRY_API_CONFIG = None
+    retry_sync = None
+
+# Import memory module (CLAUDE.md hierarchy)
+try:
+    from .memory import get_memory_injection
+    MEMORY_AVAILABLE = True
+except ImportError:
+    MEMORY_AVAILABLE = False
+    get_memory_injection = None
+
+# Import skills module (auto-activated knowledge)
+try:
+    from .skills import get_skill_injection
+    SKILLS_AVAILABLE = True
+except ImportError:
+    SKILLS_AVAILABLE = False
+    get_skill_injection = None
+
+# Import thinking module (auto-detect thinking budget)
+try:
+    from .thinking import auto_detect_budget
+    THINKING_AVAILABLE = True
+except ImportError:
+    THINKING_AVAILABLE = False
+    auto_detect_budget = None
+
+# Import smart selector module (intelligent model + thinking selection)
+try:
+    from .smart_selector import SmartSelector
+    SMART_SELECTOR_AVAILABLE = True
+except ImportError:
+    SMART_SELECTOR_AVAILABLE = False
+    SmartSelector = None
+
 PROMPT_CACHING_BETA_FLAG = "prompt-caching-2024-07-31"
 
 
@@ -227,6 +275,7 @@ async def sampling_loop(
     target_computer_id: str = "local",
     computer_registry: Any = None,
     ssh_manager: Any = None,
+    smart_selection: bool = True,  # Enable smart model + thinking selection
 ):
     """
     Agentic sampling loop for the assistant/tool interaction of computer use.
@@ -461,9 +510,98 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
 </CEO_AGENT_ROLE>
 """
 
+    # === NEW ARCHITECTURE INTEGRATION ===
+
+    # Extract user's latest message for context-aware injections
+    user_message_text = ""
+    for msg in reversed(messages):
+        if msg.get("role") == "user":
+            content = msg.get("content", [])
+            if isinstance(content, str):
+                user_message_text = content
+            elif isinstance(content, list):
+                for item in content:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        user_message_text = item.get("text", "")
+                        break
+            break
+
+    # Inject memory (CLAUDE.md hierarchy)
+    memory_injection = ""
+    if MEMORY_AVAILABLE and get_memory_injection:
+        try:
+            memory_injection = get_memory_injection()
+            if memory_injection:
+                print(f"[Memory] Injected CLAUDE.md content ({len(memory_injection)} chars)")
+        except Exception as e:
+            print(f"[Memory] Failed to load: {e}")
+
+    # Inject skills based on context
+    skills_injection = ""
+    if SKILLS_AVAILABLE and get_skill_injection and user_message_text:
+        try:
+            skills_injection = get_skill_injection(message=user_message_text)
+            if skills_injection:
+                print(f"[Skills] Injected matching skills ({len(skills_injection)} chars)")
+        except Exception as e:
+            print(f"[Skills] Failed to load: {e}")
+
+    # Smart model and thinking selection
+    effective_thinking_budget = thinking_budget
+    effective_model = model  # Default to passed model
+
+    if smart_selection and SMART_SELECTOR_AVAILABLE and SmartSelector and user_message_text:
+        try:
+            # Use SmartSelector for intelligent model + thinking selection
+            selector = SmartSelector(api_key=api_key)
+            selection = selector.select_sync(
+                task=user_message_text,
+                context={"tool_version": tool_version},
+            )
+
+            # Use selected model (unless explicit model was requested)
+            if not thinking_budget:  # Only override if not explicitly set
+                effective_model = selection.model_id
+                effective_thinking_budget = selection.thinking_budget
+
+            print(f"[SmartSelector] Model: {selection.model} | Thinking: {selection.thinking_budget}")
+            print(f"[SmartSelector] Reason: {selection.reasoning}")
+            print(f"[SmartSelector] Task type: {selection.task_type.value} | Mechanical: {selection.is_mechanical}")
+
+        except Exception as e:
+            print(f"[SmartSelector] Failed: {e}, falling back to auto-detect")
+            # Fallback to old thinking auto-detection
+            if THINKING_AVAILABLE and auto_detect_budget and not thinking_budget:
+                try:
+                    detection_result = auto_detect_budget(user_message_text)
+                    if detection_result.budget > 0:
+                        effective_thinking_budget = detection_result.budget
+                        print(f"[Thinking] Auto-detected budget: {detection_result.budget} ({detection_result.reason})")
+                except Exception as e2:
+                    print(f"[Thinking] Auto-detection also failed: {e2}")
+
+    elif THINKING_AVAILABLE and auto_detect_budget and user_message_text and not thinking_budget:
+        # Fallback: use old auto-detect if SmartSelector not available
+        try:
+            detection_result = auto_detect_budget(user_message_text)
+            if detection_result.budget > 0:
+                effective_thinking_budget = detection_result.budget
+                print(f"[Thinking] Auto-detected budget: {detection_result.budget} ({detection_result.reason})")
+        except Exception as e:
+            print(f"[Thinking] Auto-detection failed: {e}")
+
+    # Build the complete system prompt with injections
+    prompt_parts = [SYSTEM_PROMPT, ceo_agent_prompt]
+    if memory_injection:
+        prompt_parts.append(f"\n\n<MEMORY_CONTEXT>\n{memory_injection}\n</MEMORY_CONTEXT>")
+    if skills_injection:
+        prompt_parts.append(f"\n\n<ACTIVE_SKILLS>\n{skills_injection}\n</ACTIVE_SKILLS>")
+    if system_prompt_suffix:
+        prompt_parts.append(f" {system_prompt_suffix}")
+
     system = BetaTextBlockParam(
         type="text",
-        text=f"{SYSTEM_PROMPT}{ceo_agent_prompt}{' ' + system_prompt_suffix if system_prompt_suffix else ''}",
+        text="".join(prompt_parts),
     )
 
     while True:
@@ -501,26 +639,73 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
                 min_removal_threshold=image_truncation_threshold,
             )
         extra_body = {}
-        if thinking_budget:
-            # Ensure we only send the required fields for thinking
+        # Dynamically adjust max_tokens for thinking
+        effective_max_tokens = max_tokens
+        if effective_thinking_budget:
+            # max_tokens MUST be greater than thinking.budget_tokens
+            # Add a buffer for the actual response (at least 1000 tokens for response)
+            min_required_max_tokens = effective_thinking_budget + 1000
+            if effective_max_tokens < min_required_max_tokens:
+                effective_max_tokens = min_required_max_tokens
+                print(f"[Thinking] Adjusted max_tokens to {effective_max_tokens} (thinking budget: {effective_thinking_budget})")
             extra_body = {
-                "thinking": {"type": "enabled", "budget_tokens": thinking_budget}
+                "thinking": {"type": "enabled", "budget_tokens": effective_thinking_budget}
             }
 
-        # Call the API
+        # Call the API with reliability patterns (circuit breaker + retry)
         # we use raw_response to provide debug information to streamlit. Your
         # implementation may be able call the SDK directly with:
         # `response = client.messages.create(...)` instead.
         try:
-            raw_response = client.beta.messages.with_raw_response.create(
-                max_tokens=max_tokens,
-                messages=messages,
-                model=model,
-                system=[system],
-                tools=tool_collection.to_params(),
-                betas=betas,
-                extra_body=extra_body,
-            )
+            if RELIABILITY_AVAILABLE:
+                # Get circuit breaker for main sampling loop
+                circuit_breaker = get_circuit_breaker("anthropic_api_sampling_loop")
+
+                # Check if circuit is available
+                if not circuit_breaker.is_available():
+                    circuit_breaker.record_rejection()
+                    raise CircuitOpenError("Sampling loop circuit breaker is open")
+
+                try:
+                    # Define the API call function for retry
+                    def make_api_call():
+                        return client.beta.messages.with_raw_response.create(
+                            max_tokens=effective_max_tokens,
+                            messages=messages,
+                            model=effective_model,  # Use SmartSelector's model choice
+                            system=[system],
+                            tools=tool_collection.to_params(),
+                            betas=betas,
+                            extra_body=extra_body,
+                        )
+
+                    # Execute with retry
+                    raw_response, retry_stats = retry_sync(
+                        make_api_call,
+                        config=RETRY_API_CONFIG,
+                    )
+
+                    # Record success
+                    circuit_breaker.record_success()
+
+                except Exception as e:
+                    circuit_breaker.record_failure(e)
+                    raise
+            else:
+                # Fallback: direct API call without reliability
+                raw_response = client.beta.messages.with_raw_response.create(
+                    max_tokens=effective_max_tokens,
+                    messages=messages,
+                    model=effective_model,  # Use SmartSelector's model choice
+                    system=[system],
+                    tools=tool_collection.to_params(),
+                    betas=betas,
+                    extra_body=extra_body,
+                )
+        except CircuitOpenError as e:
+            # Circuit breaker is open - return error but don't retry
+            api_response_callback(None, None, e)
+            return messages
         except (APIStatusError, APIResponseValidationError) as e:
             api_response_callback(e.request, e.response, e)
             return messages

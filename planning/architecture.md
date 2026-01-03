@@ -1,842 +1,960 @@
-# Proto Multi-Agent System - Product Requirements Document
+# Proto Multi-Agent System - Architecture Document
 
-## Goal
-Make it run a business while it improves itself in the process
+## Vision
 
+**Goal**: Build an autonomous multi-agent system that can run a complete software business while continuously improving itself.
 
 ---
 
-# Complete System Architecture
-
-## 6-Layer Enterprise Architecture
+## System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    PROTO MULTI-AGENT SYSTEM                          │
-│              Enterprise-Grade Autonomous Business Platform            │
-└──────────────────────────────────────────────────────────────────────┘
+                    ┌─────────────────────────────────────────────────────────────────────────────────┐
+                    │                        PROTO MULTI-AGENT SYSTEM                                  │
+                    │              Enterprise-Grade Autonomous Business Platform                        │
+                    │                                                                                   │
+                    │   "Multiple computers, multiple agents, one unified business brain"              │
+                    └─────────────────────────────────────────────────────────────────────────────────┘
 
-1. PRESENTATION LAYER
-   ├── Web UI (FastAPI) - http://localhost:8000
-   │   ├── Dark-themed interface
-   │   ├── Real-time message streaming
-   │   ├── File uploads & management
-   │   └── Session persistence
-   ├── CLI Interface
-   └── REST API Endpoints
-
-2. ORCHESTRATION LAYER
-   ├── CEO Agent - Main orchestrator & delegation
-   ├── Company Orchestrator - Continuous operation daemon
-   │   ├── Event loop for autonomous business
-   │   ├── Health monitoring
-   │   └── Graceful shutdown handling
-   └── Work Queue System
-       ├── Priority-based (LOW/MEDIUM/HIGH/CRITICAL)
-       ├── Retry mechanism (configurable max retries)
-       └── State persistence for recovery
-
-3. AGENT LAYER (20+ Specialist Agents)
-   ├── Engineering (Dev, DevOps, QA, Security)
-   ├── Product (PM, UX, Strategy)
-   ├── Business (Marketing, Sales, CS, Finance, Legal)
-   └── Operations (HR, BizOps, Admin, Data, Content)
-
-4. PLANNING & STATE MANAGEMENT
-   ├── Project Manager
-   │   ├── Folder structure management
-   │   ├── Document generation (overview, requirements, specs, roadmap)
-   │   └── Integration with TaskManager & KnowledgeStore
-   ├── Task Manager
-   │   ├── Hierarchical tasks with dependencies
-   │   ├── Status tracking (PENDING/IN_PROGRESS/COMPLETED/BLOCKED/CANCELLED)
-   │   ├── Priority levels (LOW/MEDIUM/HIGH/CRITICAL)
-   │   └── Parent-child relationships
-   ├── Knowledge Store
-   │   ├── Persistent learning across sessions
-   │   ├── Types: technical_decision, learning, pattern, reference, context, best_practice, lesson_learned
-   │   ├── Search & relevance scoring
-   │   └── Task/entry linking
-   └── Complexity Analyzer
-       ├── Determines if planning docs needed
-       └── Complexity levels: simple/medium/complex/very_complex
-
-5. TOOL LAYER (16 Tools)
-   ├── Core: Computer, LocalComputer, Bash, Edit
-   ├── Coding: Glob, Grep, Git, Todo, PythonExec
-   └── Planning: Planning, ReadPlanning, Delegate, Task, Knowledge, Project, WorkQueue
-
-6. INFRASTRUCTURE
-   ├── Logging System
-   │   ├── 4 separate streams (sessions, errors, tools, system)
-   │   ├── JSONL format for machine readability
-   │   └── Unified log viewer for chronological debugging
-   ├── Training System
-   │   ├── Test suites for agent validation
-   │   └── Training data storage
-   ├── Verification System
-   │   ├── Screenshot analysis
-   │   └── Feedback loops for iterative improvement
-   └── Persistence
-       └── .proto/ folder structure for all state
+                                                      │
+                                                      ▼
+    ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+    │                                    GLOBAL CEO ORCHESTRATOR                                        │
+    │                                      (Opus 4.5 + UltraThink)                                      │
+    │                                                                                                   │
+    │    • Sees ALL computers and ALL products                                                         │
+    │    • Makes company-wide strategic decisions                                                      │
+    │    • Coordinates work across distributed computers                                               │
+    │    • Manages product portfolio and resource allocation                                           │
+    └─────────────────────────────────────────────────┬────────────────────────────────────────────────┘
+                                                      │
+              ┌───────────────────────────────────────┼───────────────────────────────────────┐
+              │                                       │                                       │
+              ▼                                       ▼                                       ▼
+    ┌──────────────────────┐              ┌──────────────────────┐              ┌──────────────────────┐
+    │     COMPUTER 1       │              │     COMPUTER 2       │              │     COMPUTER N       │
+    │     (Local Mac)      │              │   (Hetzner VM 1)     │              │      (Cloud)         │
+    │                      │              │                      │              │                      │
+    │  ┌────────────────┐  │              │  ┌────────────────┐  │              │  ┌────────────────┐  │
+    │  │   LOCAL CEO    │  │              │  │   LOCAL CEO    │  │              │  │   LOCAL CEO    │  │
+    │  │   (Sonnet)     │  │              │  │   (Sonnet)     │  │              │  │   (Sonnet)     │  │
+    │  └───────┬────────┘  │              │  └───────┬────────┘  │              │  └───────┬────────┘  │
+    │          │           │              │          │           │              │          │           │
+    │  ┌───────┴────────┐  │              │  ┌───────┴────────┐  │              │  ┌───────┴────────┐  │
+    │  │   20+ AGENTS   │  │              │  │   20+ AGENTS   │  │              │  │   20+ AGENTS   │  │
+    │  │  Dev, QA, PM   │  │              │  │  Dev, QA, PM   │  │              │  │  DevOps, SRE   │  │
+    │  │  Sales, Mktg   │  │              │  │  Sales, Mktg   │  │              │  │  Data, Admin   │  │
+    │  └────────────────┘  │              │  └────────────────┘  │              │  └────────────────┘  │
+    │                      │              │                      │              │                      │
+    │  Assigned: Product A │              │  Assigned: Product B │              │  Assigned: Shared    │
+    └──────────┬───────────┘              └──────────┬───────────┘              └──────────┬───────────┘
+               │                                     │                                     │
+               └─────────────────────────────────────┼─────────────────────────────────────┘
+                                                     │
+                                                     ▼
+                              ┌─────────────────────────────────────────────────┐
+                              │              SHARED INFRASTRUCTURE               │
+                              │                                                  │
+                              │   Message Bus │ Knowledge Hub │ Business Ops    │
+                              │     (Redis)   │  (PostgreSQL) │   (Metrics)     │
+                              └─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Agent Hierarchy
+## Core Concept Roles
 
-```
-User Input
-    ↓
-CEO Agent (Entry Point)
-    ↓
-├── Analyzes request complexity
-├── Plans execution strategy
-└── Delegates to specialist agents
-    ↓
-    ├─→ Engineering Manager
-    │   ├─→ Senior Developer
-    │   │   ├─→ Code Reviewer
-    │   │   ├─→ Refactoring Specialist
-    │   │   ├─→ Test Writer
-    │   │   └─→ Utility Tools
-    │   │       ├─→ Calculator
-    │   │       ├─→ Text Processor
-    │   │       ├─→ Date/Time Helper
-    │   │       ├─→ Regex Builder
-    │   │       ├─→ Hash Generator
-    │   │       └─→ URL Parser
-    │   ├─→ Frontend Developer
-    │   │   ├─→ Component Generator
-    │   │   ├─→ CSS Optimizer
-    │   │   └─→ Media Processor
-    │   │       ├─→ Image Optimizer
-    │   │       ├─→ SVG Generator
-    │   │       ├─→ Color Palette
-    │   │       └─→ QR Code Generator
-    │   ├─→ Backend Developer
-    │   │   ├─→ API Generator
-    │   │   ├─→ Database Optimizer
-    │   │   ├─→ Migration Writer
-    │   │   └─→ Data Processor
-    │   │       ├─→ JSON Parser
-    │   │       ├─→ CSV Processor
-    │   │       ├─→ XML Handler
-    │   │       └─→ File Converter
-    │   ├─→ Mobile Developer
-    │   ├─→ DevOps Engineer
-    │   │   ├─→ Dockerfile Generator
-    │   │   ├─→ CI Pipeline Builder
-    │   │   └─→ Terraform Writer
-    │   ├─→ QA Engineer
-    │   │   ├─→ E2E Test Writer
-    │   │   └─→ Bug Analyzer
-    │   └─→ Security Engineer
-    │       ├─→ Vulnerability Scanner
-    │       └─→ Encryption Helper
-    │
-    ├─→ Product Manager
-    │   ├─→ Product Strategist
-    │   ├─→ UX Designer
-    │   └─→ User Researcher
-    │
-    ├─→ Marketing Director
-    │   ├─→ Content Marketer
-    │   ├─→ Social Media Manager
-    │   ├─→ Email Marketing Specialist
-    │   └─→ SEO Specialist
-    │
-    ├─→ Sales Director
-    │   ├─→ Account Executive
-    │   └─→ Sales Development Rep
-    │
-    ├─→ Customer Success Manager
-    │   ├─→ Customer Success Specialist
-    │   └─→ Customer Support Agent
-    │
-    ├─→ Data & Analytics Manager
-    │   ├─→ Data Analyst
-    │   │   ├─→ Chart Generator
-    │   │   ├─→ Graph Maker
-    │   │   ├─→ Statistics Calculator
-    │   │   └─→ Data Visualizer
-    │   └─→ Growth Analyst
-    │
-    ├─→ Technical Writer
-    │   ├─→ Documentation Generator
-    │   ├─→ Markdown Formatter
-    │   └─→ Diagram Generator
-    │       ├─→ Flowchart Maker
-    │       ├─→ Sequence Diagram
-    │       └─→ ER Diagram
-    │
-    └─→ COO
-        ├─→ Finance Manager
-        ├─→ Legal & Compliance
-        ├─→ HR Manager
-        └─→ Business Operations
+Each concept has a distinct role. Understanding these is key to using the system effectively:
 
-Each agent has access to:
-    ├─→ All 16 Tools (See complete list below)
-    ├─→ Knowledge Store (Project context, persistent learnings)
-    ├─→ Task Management (Planning, tracking, dependencies)
-    ├─→ Project Management (Structure, documents, metadata)
-    └─→ Ability to call ANY other agent (not limited by hierarchy)
-```
+| Concept | Role | Responsibility | Analogy |
+|---------|------|----------------|---------|
+| **Subagents** | Workers | Execute specialized tasks delegated by lead agent | Employees on a team |
+| **Tools** | Hands | Perform atomic actions (read file, run command, edit) | Hammers, screwdrivers |
+| **MCP** | Universal Adapter | Connect to ANY external system (DB, browser, API) | USB ports |
+| **Context** | Short-term Memory | Current conversation, what agent is working on NOW | Working memory |
+| **Memory (CLAUDE.md)** | Long-term Memory | Persistent rules, conventions, patterns across sessions | Institutional knowledge |
+| **Skills** | Expertise | Auto-activated specialized knowledge for specific tasks | Training/certifications |
+| **Rules** | Guardrails | Enforce constraints and policies that ALL agents must follow | Safety protocols |
+| **Hooks** | Automation Triggers | Execute shell commands on events (pre/post tool calls) | Circuit breakers |
+| **Plugins** | Extensions | Packaged bundles of skills+tools+hooks for distribution | App store packages |
+| **Thinking** | Deep Reasoning | Extended thinking for complex decisions (auto-detected) | "Sleep on it" |
 
 ---
 
 ## Agent Delegation Model
 
-### Why Delegation to Specialists is Critical
+### Peer-to-Peer Collaborative Network
 
-**CEO Agent Role:**
-- Orchestrates work, analyzes complexity, creates planning
-- **Should NOT do specialized work directly**
-- **Should ALWAYS delegate to specialists** for execution
+**This is NOT a hierarchical system where only CEO delegates.**
 
-**Specialist Sub-Agent Excellence:**
-Each specialist is highly optimized for their domain:
+This is a **PEER-TO-PEER COLLABORATIVE NETWORK** where:
+- ✅ **Any agent can delegate to any other specialist**
+- ✅ Delegation chains can be unlimited depth (specialist → specialist → specialist...)
+- ✅ No restrictions on who calls whom
 
-**Engineering Specialists:**
-- **Senior Developer**: Expert at complex implementation, architecture decisions
-- **Frontend Developer**: Masters React, TypeScript, UI/UX implementation
-- **Backend Developer**: Database design, APIs, authentication, scalability
-- **DevOps Engineer**: Docker, CI/CD, deployment, infrastructure
-- **QA Engineer**: Testing strategies, E2E tests, bug analysis
-- **Security Engineer**: Vulnerability assessment, encryption, security audits
-
-**Product & Design Specialists:**
-- **Product Manager**: Requirements, roadmaps, feature prioritization
-- **UX Designer**: User experience, interface design, usability
-- **User Researcher**: User needs analysis, testing, feedback
-
-**Business Specialists:**
-- **Marketing Director**: Strategy, campaigns, content planning
-- **Sales Director**: Pipeline management, outreach, conversions
-- **Customer Success Manager**: Support, retention, satisfaction
-
-### Delegation Best Practices
+### When ANY Agent Should Delegate
 
 **✅ ALWAYS Delegate When:**
-1. Task requires specialized domain knowledge
-2. Implementation involves specific technologies
-3. Quality depends on expert judgment
-4. Specialist has dedicated tools/workflows
+1. Task requires expertise outside your domain
+2. Another specialist would do it better/faster
+3. You're stuck or hitting errors repeatedly
+4. Task spans multiple domains - delegate each part
 
-**❌ NEVER Skip Delegation:**
-- CEO writing frontend code directly ❌
-- CEO designing database schemas ❌
-- CEO implementing security features ❌
-- Any agent doing work outside their expertise ❌
-
-### Delegation Flow
-
+**Example Peer Delegation Chains:**
 ```
-User: "Build a web app with authentication"
-    ↓
-CEO Agent:
-  1. Analyzes: "Complex project requiring planning"
-  2. Creates planning docs in .proto/planning/
-  3. Breaks down into specialist tasks:
-     ├─ "Design authentication system" → Backend Developer
-     ├─ "Create login UI" → Frontend Developer
-     ├─ "Set up deployment" → DevOps Engineer
-     └─ "Write security tests" → QA Engineer
-    ↓
-Backend Developer (Specialist):
-  ✅ Reads project context from .proto/planning/
-  ✅ Understands requirements, technical spec
-  ✅ Implements authentication (JWT, sessions, etc.)
-  ✅ Uses tools: Edit, Bash, PythonExec, Git
-  ✅ Updates knowledge base with decisions
-  ✅ Returns result to CEO
-    ↓
-Frontend Developer (Specialist):
-  ✅ Reads Backend Developer's work
-  ✅ Implements login forms, state management
-  ✅ Integrates with backend API
-  ✅ Returns result to CEO
-    ↓
-CEO Agent:
-  ✅ Coordinates handoffs between specialists
-  ✅ Ensures consistency across work
-  ✅ Updates project status
-  ✅ Reports completion to user
+Backend Dev → "Need secure auth" → Security Engineer
+Frontend Dev → "Need deployment" → DevOps Engineer
+QA Engineer → "Found arch issue" → Senior Developer
+Product Manager → "Need user research" → UX Designer
 ```
 
 ### Sub-Agent Specialization Advantages
 
-**1. Deep Domain Expertise**
-- Specialists have domain-specific prompts and context
-- Know best practices for their field
-- Make better technical decisions
-
-**2. Better Tool Usage**
-- Each specialist knows optimal tool combinations
-- Senior Developer: GlobTool → GrepTool → EditTool → GitTool
-- DevOps Engineer: BashTool → Docker commands → Git commits
-- Frontend Developer: EditTool → PythonExec (npm) → Browser testing
-
-**3. Quality & Efficiency**
-- Specialists work faster in their domain
-- Fewer iterations needed
-- Higher quality output
-
-**4. Knowledge Accumulation**
-- Each specialist builds domain-specific knowledge
-- Patterns recognized and reused
-- Continuous improvement in specialty
-
-**5. Parallel Execution**
-- Multiple specialists can work simultaneously
-- Frontend + Backend + DevOps in parallel
-- Reduces total project time
-
-### When Any Agent Can Delegate
-
-**Not Just CEO:**
-Any agent can delegate when they need specialist help:
-
-```
-Senior Developer working on API:
-  "I need a database schema designed"
-  → Delegates to Backend Developer (database specialist)
-
-Frontend Developer needs deployment:
-  "This needs to be deployed to production"
-  → Delegates to DevOps Engineer
-
-Product Manager needs market research:
-  "What do users think about this feature?"
-  → Delegates to User Researcher
-```
-
-**Key Principle:**
-**If work requires specialized knowledge, ALWAYS delegate to the specialist.**
+1. **Deep Domain Expertise** - Specialists have domain-specific prompts and context
+2. **Better Tool Usage** - Each knows optimal tool combinations for their domain
+3. **Quality & Efficiency** - Work faster in their domain, fewer iterations needed
+4. **Knowledge Accumulation** - Build domain-specific patterns over time
+5. **Parallel Execution** - Multiple specialists can work simultaneously
 
 ---
 
-## Complete Tool Catalog (16 Tools)
-
-### Core Computer Tools (4 tools)
-
-**1. ComputerTool** (VNC/Docker-based GUI automation)
-   - Purpose: Original Anthropic computer use tool for containerized environments
-   - Versions: ComputerTool20241022, ComputerTool20250124
-   - Use when: Running in Docker/VNC environment
-
-**2. LocalComputerTool** (Direct local computer control)
-   - Purpose: Full computer control via pyautogui (no Docker/VNC needed)
-   - **Screenshot**: Capture screen state with automatic scaling
-   - **Mouse Control**:
-     - mouse_move: Move cursor to coordinates
-     - left_click, right_click, middle_click
-     - double_click, triple_click
-     - left_click_drag: Drag from current to target position
-     - left_mouse_down, left_mouse_up: Low-level mouse control
-     - cursor_position: Get current cursor coordinates
-   - **Keyboard Control**:
-     - type: Type text with realistic interval
-     - key: Press key combinations (e.g., "cmd+c", "ctrl+v")
-     - hold_key: Hold keys for specified duration
-   - **Scrolling**:
-     - scroll: Scroll in any direction (up/down/left/right) with amount
-     - Support for modifier keys during scroll
-   - **Timing**:
-     - wait: Pause execution for specified duration
-
-**3. BashTool**
-   - Purpose: Execute bash commands in persistent shell
-   - Features: Command execution, output capture, session management
-   - Safety: 2-minute timeout default, configurable up to 10 minutes
-
-**4. EditTool**
-   - Purpose: File editing with find/replace operations
-   - Operations: view, create, str_replace, insert, undo
-   - Versions: 20241022, 20250429, 20250728
-   - Safety: Must read file before editing
-
-### Coding & Development Tools (5 tools)
-
-**5. GlobTool**
-   - Purpose: Fast file pattern matching
-   - Supports: `**/*.py`, `src/**/*.tsx`, complex glob patterns
-   - Output: Sorted by modification time
-   - Use when: Finding files by name/pattern
-
-**6. GrepTool**
-   - Purpose: Content search with full regex support
-   - Features: Context lines (-A/-B/-C), case-insensitive, multiline mode
-   - Output modes: content, files_with_matches, count
-   - Filtering: By glob pattern or file type
-   - Use when: Searching code content
-
-**7. GitTool**
-   - Purpose: Git version control operations
-   - Operations: status, diff, log, add, commit, push, branch, checkout, merge
-   - Safety: Read-only emphasis, warnings for destructive ops
-   - Integration: Auto-commits planning changes
-
-**8. PythonExecutionTool**
-   - Purpose: Execute Python code in persistent environment
-   - Pre-loaded: pandas, numpy, matplotlib, seaborn, plotly
-   - Features: Variables persist across executions
-   - Use cases: Data analysis, calculations, graph generation
-
-**9. TodoWriteTool**
-   - Purpose: Task tracking for complex multi-step workflows
-   - Status: pending, in_progress, completed
-   - Features: Two-form descriptions (imperative & active)
-   - Integration: Auto-syncs with ProjectManager dashboard
-   - Use when: Breaking down complex tasks into trackable steps
-
-### Planning & Collaboration Tools (4 tools)
-
-**10. PlanningTool**
-   - Purpose: Generate comprehensive planning documents via LLM
-   - Creates: project_overview, requirements, technical_spec, roadmap, knowledge_base, decisions, specialist_plans
-   - Output: Structured markdown documents in .proto/planning/{project}/
-   - Use when: Starting complex projects requiring detailed planning
-
-**11. ReadPlanningTool**
-   - Purpose: Read planning documents and project context
-   - Operations: list_projects, read_document, get_project_context, check_exists
-   - Use when: Continuing existing projects, understanding project state
-
-**12. DelegateTaskTool**
-   - Purpose: Delegate tasks to specialist agents
-   - Available specialists: marketing-strategy, senior-developer, ux-designer, product-manager (expandable)
-   - Features: Passes planning context automatically
-   - Use when: CEO needs expert execution from specialists
-
-**13. WorkQueueTool**
-   - Purpose: Manage work queue for continuous autonomous operation
-   - Operations: add, status, list_pending
-   - Priority: LOW, MEDIUM, HIGH, CRITICAL
-   - Features: Persistent queue, retry mechanism
-   - Use when: Scheduling work for daemon/continuous mode
-
-### Knowledge & Project Management Tools (3 tools)
-
-**14. TaskTool**
-   - Purpose: Comprehensive project task management
-   - Operations: create, update, complete, block, start, list, get, summary, add_note, add_dependency
-   - Features:
-     - Status: PENDING, IN_PROGRESS, COMPLETED, BLOCKED, CANCELLED
-     - Priority: LOW, MEDIUM, HIGH, CRITICAL
-     - Dependencies: Parent-child relationships
-     - Metadata: Agent assignment, tags, notes
-   - Storage: .proto/planning/{project}/tasks.json
-   - Use when: Managing project execution, tracking progress
-
-**15. KnowledgeTool**
-   - Purpose: Persistent knowledge base for learning and context
-   - Types: technical_decision, learning, pattern, reference, context, best_practice, lesson_learned
-   - Operations: add, search, get, update, list, summary, link_to_task
-   - Features: Search, tagging, relevance scoring, task linking
-   - Storage: .proto/planning/{project}/knowledge/
-   - Use when: Storing decisions, patterns, learnings for future reference
-
-**16. ProjectTool**
-   - Purpose: Manage and discover projects
-   - Operations: list, get, exists, context
-   - Features: Helps decide to continue existing or create new project
-   - Storage: .proto/planning/ (scans for project directories)
-   - Use when: Starting work, checking project existence
-
-### Tool Usage Patterns
-
-- **File Search**: GlobTool (by name) → GrepTool (by content)
-- **Code Changes**: GlobTool (find files) → EditTool (make changes) → GitTool (commit)
-- **Project Start**: ProjectTool (check exists) → PlanningTool (create docs) → TaskTool (create tasks)
-- **Knowledge Capture**: KnowledgeTool (store learning) → link to TaskTool (connect to work)
-- **Complex Task**: TodoWriteTool (track progress) → TaskTool (persist in project)
-- **Data Analysis**: PythonExecutionTool (calculations) → Chart Generator agent (visualizations)
-- **GUI Automation**: LocalComputerTool (screenshot → analyze → click/type)
-
----
-
-## Data Flow Architecture
+## When to Use What: Decision Guide
 
 ```
-1. User Request
-      ↓
-2. Web UI / CLI / API
-      ↓
-3. CEO Agent
-   ├── ComplexityAnalyzer determines: simple/medium/complex/very_complex
-   └── If complex → PlanningTool generates docs
-      ↓
-4. Planning Phase (for complex tasks)
-   ├── ProjectTool: Check if project exists
-   ├── PlanningTool: Create project_overview, requirements, technical_spec, roadmap
-   ├── TaskTool: Break down into tasks with dependencies
-   └── KnowledgeTool: Store context & decisions
-      ↓
-5. Execution Phase
-   ├── DelegateTaskTool → Specialist Agents
-   ├── Specialists use tools:
-   │   ├── Coding tools (Glob, Grep, Git, PythonExec)
-   │   ├── Computer tools (LocalComputer for GUI)
-   │   ├── Planning tools (Task, Knowledge)
-   │   └── Other specialist agents as needed
-   └── TodoWriteTool tracks progress
-      ↓
-6. Results Collection
-   ├── Task updates (TaskTool)
-   ├── Knowledge capture (KnowledgeTool)
-   └── Git commits (GitTool)
-      ↓
-7. Learning & Persistence
-   ├── Knowledge stored in .proto/planning/{project}/knowledge/
-   ├── Tasks persisted in .proto/planning/{project}/tasks.json
-   └── Logs written to logs/ directory
-      ↓
-8. Response to User
-   └── Web UI / CLI / API
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CONCEPT SELECTION FLOWCHART                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+"I need to do X"
+       │
+       ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Is it a simple   │───────────►│   TOOL                                                       │
+│ built-in action? │            │   Read, Write, Edit, Bash, Glob, Grep, Computer             │
+└────────┬─────────┘            │   Use for: File operations, commands, GUI automation        │
+         │ NO                   └─────────────────────────────────────────────────────────────┘
+         ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Need external    │───────────►│   MCP (Model Context Protocol)                               │
+│ system/process?  │            │   Database, Browser, GitHub, Email, APIs                    │
+└────────┬─────────┘            │   Use for: Connecting to external services                  │
+         │ NO                   └─────────────────────────────────────────────────────────────┘
+         ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Need specialized │───────────►│   SUBAGENT                                                   │
+│ expert (human)?  │            │   Security Engineer, QA, DevOps, UX Designer                │
+└────────┬─────────┘            │   Use for: Domain expertise, different perspective          │
+         │ NO                   └─────────────────────────────────────────────────────────────┘
+         ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Need knowledge   │───────────►│   SKILL                                                      │
+│ auto-activated?  │            │   Code-review, Security-patterns, Test-writing              │
+└────────┬─────────┘            │   Use for: HOW to think, not WHAT to do                     │
+         │ NO                   └─────────────────────────────────────────────────────────────┘
+         ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Enforce a        │───────────►│   RULE                                                       │
+│ constraint?      │            │   "Never commit secrets", "Always run tests"                │
+└────────┬─────────┘            │   Use for: Policies ALL agents must follow                  │
+         │ NO                   └─────────────────────────────────────────────────────────────┘
+         ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Auto-run on      │───────────►│   HOOK                                                       │
+│ event/trigger?   │            │   Pre-edit lint, Post-commit tests, On-error notify         │
+└────────┬─────────┘            │   Use for: Deterministic automation (WILL happen)           │
+         │ NO                   └─────────────────────────────────────────────────────────────┘
+         ▼
+┌──────────────────┐     YES    ┌─────────────────────────────────────────────────────────────┐
+│ Bundle for       │───────────►│   PLUGIN                                                     │
+│ distribution?    │            │   Package of skills + MCPs + hooks + commands               │
+└──────────────────┘            │   Use for: Sharing capabilities across projects/teams       │
+                                └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Operational Modes
+## 7-Layer Architecture
 
-### 1. Interactive Mode (Web UI)
-- **Access**: http://localhost:8000
-- **Features**:
-  - Real-time chat interface
-  - Agent selection tree (20+ specialists)
-  - File explorer & viewer
-  - Message streaming
-  - Session persistence
-- **Use when**: Active user interaction, development, testing
-
-### 2. Continuous Mode (Company Orchestrator)
-- **Process**: Daemon runs in background
-- **Features**:
-  - Monitors WorkQueue for pending items
-  - Assigns work by priority (CRITICAL → HIGH → MEDIUM → LOW)
-  - Health checks every loop iteration
-  - Graceful shutdown on SIGTERM/SIGINT
-  - State persistence for recovery
-- **Storage**: ~/.proto/daemon/
-- **Use when**: Autonomous business operation, scheduled tasks
-
-### 3. CLI/API Mode
-- **Features**:
-  - Direct agent invocation
-  - REST API endpoints
-  - Scriptable interactions
-- **Use when**: Automation, integration with other systems
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1: PRESENTATION                                                                       │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  │ Web UI (FastAPI)     │ CLI Interface      │ REST API Endpoints                           │
+│  │ http://localhost:8000│ Terminal commands  │ Programmatic access                          │
+│  │ • Dark theme         │ • Direct agent     │ • JSON responses                             │
+│  │ • Real-time stream   │   invocation       │ • Webhook support                            │
+│  │ • File management    │ • Script-friendly  │ • Status endpoints                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 2: ORCHESTRATION                                                                      │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                              │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────────────────────┐ │
+│  │    GLOBAL CEO       │  │  COMPUTER POOL      │  │     WORK QUEUE SYSTEM               │ │
+│  │    (Opus 4.5)       │  │  ORCHESTRATOR       │  │                                     │ │
+│  │  + UltraThink       │  │                     │  │  Priority: CRITICAL > HIGH >        │ │
+│  │                     │  │  • Task routing     │  │            MEDIUM > LOW             │ │
+│  │  • Company-wide     │  │  • Load balancing   │  │  • Retry mechanism                  │ │
+│  │    decisions        │  │  • Health checks    │  │  • State persistence                │ │
+│  │  • Product          │  │  • Failover         │  │  • Scheduled execution              │ │
+│  │    portfolio        │  │                     │  │                                     │ │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────────────────────────────┘ │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 3: AGENT LAYER (20+ Specialist Agents)                                                │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                           PEER-TO-PEER MIXTURE OF EXPERTS                             │  │
+│  │                                                                                       │  │
+│  │       ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐               │  │
+│  │       │ Backend  │◄───►│ Frontend │◄───►│   QA     │◄───►│ Security │               │  │
+│  │       │   Dev    │     │   Dev    │     │ Engineer │     │ Engineer │               │  │
+│  │       └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘               │  │
+│  │            │                │                │                │                      │  │
+│  │       ┌────┼────────────────┼────────────────┼────────────────┼────┐                │  │
+│  │       │    │                │                │                │    │                │  │
+│  │       ▼    ▼                ▼                ▼                ▼    ▼                │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │  │
+│  │  │  DevOps  │  │    UX    │  │    PM    │  │   Data   │  │Marketing │             │  │
+│  │  │ Engineer │  │ Designer │  │          │  │ Analyst  │  │ Director │             │  │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │  │
+│  │                                                                                       │  │
+│  │  KEY: Any agent can call ANY other agent! Not limited by hierarchy.                  │  │
+│  └──────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                              │
+│  ENGINEERING          PRODUCT           BUSINESS            OPERATIONS                      │
+│  ────────────         ───────           ────────            ──────────                      │
+│  • Sr Developer       • Product Mgr     • Marketing Dir     • HR Manager                    │
+│  • Frontend Dev       • UX Designer     • Sales Director    • Finance Mgr                   │
+│  • Backend Dev        • Strategist      • CS Manager        • Legal/Compliance              │
+│  • Mobile Dev         • User Research   • Account Exec      • Biz Ops                       │
+│  • DevOps Engineer                      • Sales Rep         • Admin                         │
+│  • QA Engineer                          • Support Agent     • Data Analyst                  │
+│  • Security Engineer                                        • Tech Writer                   │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 4: CONTEXT & MEMORY                                                                   │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                          HYBRID CONTEXT ARCHITECTURE                                 │   │
+│  │                                                                                      │   │
+│  │  ┌──────────────────────────────────────────────────────────────────────────────┐  │   │
+│  │  │                     SHARED KNOWLEDGE LAYER                                    │  │   │
+│  │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐             │  │   │
+│  │  │  │ CLAUDE.md  │  │ Knowledge  │  │  TASKS.md  │  │   RULES    │             │  │   │
+│  │  │  │(conventions│  │   Store    │  │(work queue)│  │ (policies) │             │  │   │
+│  │  │  └────────────┘  └────────────┘  └────────────┘  └────────────┘             │  │   │
+│  │  └──────────────────────────────────────────────────────────────────────────────┘  │   │
+│  │         ▲  All agents read this persistent layer                                   │   │
+│  │         │                                                                          │   │
+│  │  ┌──────┴──────────────────────────────────────────────────────────────────────┐  │   │
+│  │  │                 LEAD AGENT (Coordinator - sees all summaries)                │  │   │
+│  │  └──────┬──────────────────────────────────────────────────────────────────────┘  │   │
+│  │         │ delegates with: objective + context snippet                             │   │
+│  │         ▼                                                                          │   │
+│  │  ┌────────────┐   ┌────────────┐   ┌────────────┐                                │   │
+│  │  │ Dev Agent  │   │ QA Agent   │   │DevOps Agent│  ISOLATED (full token budget)  │   │
+│  │  │ (context)  │   │ (context)  │   │ (context)  │                                │   │
+│  │  └────────────┘   └────────────┘   └────────────┘                                │   │
+│  │         │              │              │                                           │   │
+│  │         └──────────────┴──────────────┘  returns SUMMARY (not full context)      │   │
+│  │                        ▼                                                          │   │
+│  │               Lead Agent Synthesizes                                              │   │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                              │
+│  MEMORY HIERARCHY:                                                                          │
+│  1. Enterprise: ~/.claude/CLAUDE.md          (Global conventions, team standards)          │
+│  2. Project: .claude/CLAUDE.md               (Project-specific patterns, tech stack)       │
+│  3. Directory: subdirs/.claude/CLAUDE.md     (Module-specific context)                     │
+│  4. Session: in-memory + transcript.jsonl    (Current conversation)                        │
+│  5. Knowledge Store: .proto/planning/        (Persistent learnings, patterns)              │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 5: SKILLS, RULES & HOOKS                                                              │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                              │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────────────┐ │
+│  │   SKILLS (Expertise) │  │   RULES (Guardrails) │  │      HOOKS (Automation)          │ │
+│  │                      │  │                      │  │                                  │ │
+│  │  Auto-activated      │  │  Enforced policies   │  │  Deterministic triggers          │ │
+│  │  specialized         │  │  ALL agents follow   │  │  that WILL execute               │ │
+│  │  knowledge           │  │                      │  │                                  │ │
+│  │                      │  │  • No secrets        │  │  • PreToolCall: validate/block   │ │
+│  │  • code-review       │  │  • Always test       │  │  • PostToolCall: verify/notify   │ │
+│  │  • security-audit    │  │  • OWASP compliance  │  │  • OnError: recover/alert        │ │
+│  │  • test-writing      │  │  • Code standards    │  │  • OnSessionStart/End            │ │
+│  │  • deployment        │  │                      │  │                                  │ │
+│  │                      │  │  Rule vs Memory:     │  │  Hook vs Rule:                   │ │
+│  │  Skill = HOW to      │  │  CLAUDE.md = prefs   │  │  Rule = "Please do X"           │ │
+│  │  think better        │  │  Rule = constraints  │  │  Hook = "X WILL happen"         │ │
+│  └──────────────────────┘  └──────────────────────┘  └──────────────────────────────────┘ │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 6: TOOLS & MCP                                                                        │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              BUILT-IN TOOLS (16+)                                    │   │
+│  │                                                                                      │   │
+│  │  CORE                  CODING              PLANNING           COMPUTER              │   │
+│  │  ────                  ──────              ────────           ────────              │   │
+│  │  • Bash                • Glob              • Planning         • Computer            │   │
+│  │  • Edit                • Grep              • ReadPlanning     • LocalComputer       │   │
+│  │  • Read                • Git               • Delegate         • Screenshot          │   │
+│  │  • Write               • PythonExec        • Task                                   │   │
+│  │                        • Todo              • Knowledge                              │   │
+│  │                                            • Project                                │   │
+│  │                                            • WorkQueue                              │   │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │  LocalComputerTool Actions (GUI Automation):                                         │   │
+│  │  • Mouse: mouse_move, left/right/middle_click, double/triple_click, drag            │   │
+│  │  • Keyboard: type (text), key (combos like "cmd+c"), hold_key                       │   │
+│  │  • Scroll: scroll (up/down/left/right with amount)                                  │   │
+│  │  • Screenshot: Capture screen state with automatic scaling                          │   │
+│  │  • Wait: Pause execution for timing                                                 │   │
+│  │                                                                                      │   │
+│  │  Tool Usage Patterns:                                                               │   │
+│  │  • File Search: Glob → Grep                                                         │   │
+│  │  • Code Changes: Glob → Edit → Git                                                  │   │
+│  │  • Project Start: Project → Planning → Task                                         │   │
+│  │  • GUI Automation: LocalComputer (screenshot → analyze → click/type)                │   │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                         MCP SERVER REGISTRY (External Systems)                       │   │
+│  │                                                                                      │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │   │
+│  │  │ Database │  │ Browser  │  │ Git/VCS  │  │  Email   │  │  Custom  │             │   │
+│  │  │ (sqlite) │  │(playwrt) │  │ (github) │  │(sendgrid)│  │   ...    │             │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │   │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              LSP INTEGRATION (Code Intelligence)                     │   │
+│  │                                                                                      │   │
+│  │  Go-to-definition │ Find references │ Hover docs │ Real-time type errors           │   │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 7: INFRASTRUCTURE                                                                     │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│                                                                                              │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
+│  │   RELIABILITY     │  │    LOGGING       │  │   PERSISTENCE    │  │    MESSAGE BUS   │   │
+│  │                   │  │                  │  │                  │  │                  │   │
+│  │  • Circuit        │  │  4 Streams:      │  │  • .proto/       │  │  • Redis Pub/Sub │   │
+│  │    breakers       │  │  - sessions      │  │    planning/     │  │  • Task assign   │   │
+│  │  • Retry w/       │  │  - errors        │  │  • Knowledge     │  │  • Heartbeat     │   │
+│  │    backoff        │  │  - tools         │  │    Store         │  │  • Knowledge     │   │
+│  │  • Checkpoints    │  │  - system        │  │  • Git commits   │  │    sync          │   │
+│  │  • Health         │  │                  │  │                  │  │                  │   │
+│  │    monitoring     │  │  JSONL format    │  │  Full recovery   │  │  Inter-computer  │   │
+│  │                   │  │  Machine-readable│  │  capability      │  │  communication   │   │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Project Management System
+## Smart Model & Thinking Selection System
 
-### Dual-Structure Architecture
+The system uses an intelligent **SmartSelector** that routes tasks to the optimal model with appropriate thinking budget. This replaces keyword-based detection with an LLM classifier.
 
-Each project maintains **two separate folders** for clean organization:
-
-**1. Planning & Meta (~/Proto/{project}/.proto/)**
-- Planning documents, decisions, knowledge
-- Never mixed with actual code
-
-**2. Actual Project Files (~/Proto/{project}/)**
-- Source code, documentation, assets
-- Standard project structure
-
-### Complete Directory Structure
+### Philosophy: "Act Like Opus Is Always On"
 
 ```
-~/Proto/
-└── {project-name}/                # Example: "saas-company"
-    │
-    ├── .proto/                    # Planning & Meta (System Management)
-    │   └── planning/
-    │       ├── .project_metadata.json  # Project info (name, description, tags, status)
-    │       ├── tasks.json              # TaskManager state & dependencies
-    │       │
-    │       ├── project_overview.md     # High-level project description
-    │       ├── requirements.md         # Detailed requirements
-    │       ├── technical_spec.md       # Technical specifications
-    │       ├── roadmap.md              # Project roadmap & milestones
-    │       ├── knowledge_base.md       # Aggregated knowledge
-    │       ├── decisions.md            # Technical decisions log
-    │       │
-    │       ├── agents/                 # Specialist-specific plans
-    │       │   ├── senior-developer_plan.md
-    │       │   ├── frontend-developer_plan.md
-    │       │   ├── devops-engineer_plan.md
-    │       │   ├── product-manager_plan.md
-    │       │   ├── ux-designer_plan.md
-    │       │   └── marketing-strategy_plan.md
-    │       │
-    │       └── knowledge/              # KnowledgeStore
-    │           ├── index.json          # Knowledge index
-    │           ├── technical_decision/
-    │           ├── learning/
-    │           ├── pattern/
-    │           ├── reference/
-    │           ├── context/
-    │           ├── best_practice/
-    │           └── lesson_learned/
-    │
-    └── [Actual Project Files]     # Standard project structure
-        ├── src/                   # Source code
-        ├── docs/                  # User documentation
-        ├── tests/                 # Test files
-        ├── public/                # Public assets
-        ├── package.json           # Dependencies
-        ├── README.md              # Project readme
-        └── ...                    # Other project files
-
-~/.proto/daemon/                   # Global system state
-├── work_queue.json                # Pending/active work items
-└── orchestrator_state.json        # Runtime state for recovery
-
-logs/                              # System logging
-├── proto_sessions.jsonl           # Session events
-├── proto_errors.jsonl             # Error tracking
-├── proto_tools.jsonl              # Tool invocations
-└── proto_system.jsonl             # System events
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  CAPABILITY-FIRST SELECTION                                                                  │
+│                                                                                              │
+│  The system BEHAVES like the smartest model is always running.                              │
+│  Only use weaker models when the RESULT WOULD BE IDENTICAL.                                 │
+│                                                                                              │
+│  NOT: "Use cheap model, hope it works"                                                      │
+│  BUT: "Use strongest model needed for THIS specific task"                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Why This Structure Works
+### Company Hierarchy Model
 
-**Clean Separation:**
-- ✅ Planning docs never clutter actual codebase
-- ✅ Easy to version control (`.proto/` can be in .gitignore or separate repo)
-- ✅ Clear distinction between "what we're doing" vs "what we've built"
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              MODEL SELECTION HIERARCHY                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│  OPUS 4.5 = CEO (20-30% of calls)                                                           │
+│  ├── Makes all strategic decisions                                                          │
+│  ├── Handles ambiguity and judgment calls                                                   │
+│  ├── Reviews important work                                                                 │
+│  └── Planning, architecture, strategy phases                                                │
+│                                                                                              │
+│  SONNET 4.5 = Senior Engineers (50-60% of calls)                                            │
+│  ├── Implements complex features                                                            │
+│  ├── Debugs difficult issues                                                                │
+│  ├── Makes technical decisions within scope                                                 │
+│  └── Quality-critical code, security considerations                                         │
+│                                                                                              │
+│  HAIKU 4.5 = Junior Staff / Automation (20-30% of calls)                                    │
+│  ├── ONLY for truly mechanical tasks                                                        │
+│  ├── File operations, searches, formatting                                                  │
+│  ├── Never makes decisions                                                                  │
+│  └── Result would be IDENTICAL to stronger models                                           │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
-**Persistent Context:**
-- ✅ All meta information survives across sessions
-- ✅ Any agent can read planning context to understand project
-- ✅ Knowledge accumulates and informs future decisions
+### SmartSelector Architecture
 
-**Scalable:**
-- ✅ Each project self-contained
-- ✅ Easy to archive, clone, or share
-- ✅ Specialist plans kept organized by agent type
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SMART SELECTOR FLOW                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
 
-### Recovery Mechanisms
+  User Request
+       │
+       ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                   SMART SELECTOR (Haiku 4.5)                     │
+  │                        Cost: ~$0.001                             │
+  ├─────────────────────────────────────────────────────────────────┤
+  │  Input: Actual task content (purely content-based)               │
+  │  Output: {model, thinking_budget, task_type, reasoning}         │
+  │                                                                  │
+  │  Classifier asks: "Would Opus produce a DIFFERENT result?"       │
+  │  - If task is MECHANICAL → Haiku (result identical)             │
+  │  - If task needs JUDGMENT → Sonnet or Opus                       │
+  └─────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                    EXECUTION ENGINE                              │
+  │  Routes to selected model with optimal thinking budget           │
+  └─────────────────────────────────────────────────────────────────┘
+```
 
-**1. Session Recovery**
-- All sessions logged to `logs/proto_sessions.jsonl`
-- Can replay conversations from logs
-- Chat state persists in memory during runtime
+### Content-Based Selection (No Hardcoded Rules)
 
-**2. Work Queue Recovery**
-- WorkQueue persisted to `~/.proto/daemon/work_queue.json`
-- On crash/restart: daemon loads queue, retries pending items
-- Retry mechanism with configurable max attempts
+**IMPORTANT**: Selection is purely based on analyzing the actual task content. There are NO
+hardcoded rules based on phase labels, agent types, or other metadata. The Haiku classifier
+dynamically determines complexity by reading what the task actually asks for.
 
-**3. Project State Recovery**
-- All project data in `.proto/planning/{project}/`
-- Can reconstruct project state from:
-  - tasks.json (TaskManager state)
-  - knowledge/index.json (KnowledgeStore state)
-  - Planning documents (context)
+```
+  ┌────────────────────────────────────────────────────────────────────────────────────────┐
+  │  Task Content Analysis                                                                  │
+  ├────────────────────────────────────────────────────────────────────────────────────────┤
+  │                                                                                         │
+  │  MECHANICAL TASKS (Haiku) - Result would be IDENTICAL:                                 │
+  │  • "Read file X and return contents"                                                   │
+  │  • "List all .py files in directory"                                                   │
+  │  • "Format this JSON"                                                                  │
+  │  • "Run command: npm install"                                                          │
+  │                                                                                         │
+  │  JUDGMENT TASKS (Sonnet/Opus) - Result WOULD differ:                                   │
+  │  • "Design a system architecture for..."                                               │
+  │  • "Debug this complex race condition"                                                 │
+  │  • "Plan how to implement this feature"                                                │
+  │  • "Review this code for security issues"                                              │
+  │                                                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────┘
 
-**4. Git-based Recovery**
-- Planning changes auto-committed via GitTool
-- Can rollback to previous planning states
-- Full audit trail of project evolution
+  The classifier reads the ACTUAL WORDS in the task to make decisions.
+  A "specialist" doing strategic work gets Opus. A "CEO" doing file reads gets Haiku.
+```
+
+### Model Pricing (Dec 2024)
+
+```
+  ┌────────────────────────────────────────────────────────────────────────────────────────┐
+  │  Model          │  Model ID                    │  Input    │  Output  │  Thinking     │
+  ├────────────────────────────────────────────────────────────────────────────────────────┤
+  │  Haiku 4.5      │  claude-haiku-4-5-20251001   │  $1/MTok  │  $5/MTok │  Yes          │
+  │  Sonnet 4.5     │  claude-sonnet-4-5-20250929  │  $3/MTok  │  $15/MTok│  Yes          │
+  │  Opus 4.5       │  claude-opus-4-5-20251101    │  $5/MTok  │  $25/MTok│  Yes          │
+  └────────────────────────────────────────────────────────────────────────────────────────┘
+
+  Key insight: Haiku 4.5 now supports extended thinking!
+```
+
+### Adaptive Escalation
+
+Start with recommended model, escalate only when needed:
+
+```
+  Initial Selection → Execute Task
+       │
+       ├── Success? → Done ✓
+       │
+       └── Low confidence or needs more reasoning?
+            │
+            ▼
+       Escalate: Haiku → Sonnet → Opus
+                 Thinking: 0 → 4K → 10K → 31,999
+            │
+            ▼
+       Retry with stronger model
+```
+
+### Cost Comparison
+
+```
+  OLD (keyword-based with Sonnet for everything):
+  ─────────────────────────────────────────────────
+  "Build a chess game" → ULTRATHINK (31,999) on Sonnet
+  CEO call: ~$0.55 (31K thinking tokens)
+  Specialist call: ~$0.55 (also gets ULTRATHINK)
+  Total per project: $2-5+
+
+  NEW (SmartSelector with content-based selection):
+  ─────────────────────────────────────────────────
+  "Build a chess game"
+    → Haiku classifier: ~$0.005
+    → CEO planning: Opus + 10K thinking (~$0.25)
+    → Specialist execution: Sonnet + 4K thinking (~$0.08)
+    → Total: ~$0.35 per project
+
+  SAVINGS: 70-90% while maintaining quality
+```
 
 ---
 
-## Logging & Monitoring
+## Module Reference
 
-### 4-Stream Logging Architecture
+### Hooks System (`computer_use_demo/hooks/`)
 
-**1. Sessions Log** (`logs/proto_sessions.jsonl`)
-- Events: session_start, session_end, user_message, agent_response
-- Contains: timestamps, session_id, agent_id, message content
-- Use for: Session replay, conversation analysis
+Deterministic automation that executes shell commands on events:
 
-**2. Errors Log** (`logs/proto_errors.jsonl`)
-- Events: tool_error, agent_error, system_error
-- Contains: stack traces, context, recovery actions
-- Use for: Debugging, error pattern analysis
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              HOOKS SYSTEM                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Hook Types:                                                                │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  PreToolCall     │  Run BEFORE tool executes │ Can block/modify args       │
+│  PostToolCall    │  Run AFTER tool completes │ Validate, notify            │
+│  OnError         │  Run when tool fails      │ Recovery, alert             │
+│  OnSessionStart  │  Run when session begins  │ Load context                │
+│  OnSessionEnd    │  Run when session ends    │ Persist learnings           │
+│                                                                              │
+│  Configuration (.claude/hooks.json):                                        │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  {                                                                          │
+│    "hooks": [                                                               │
+│      {                                                                      │
+│        "event": "post_edit",                                               │
+│        "command": "npm run lint -- {{file_path}}",                         │
+│        "blocking": true                                                     │
+│      }                                                                      │
+│    ]                                                                        │
+│  }                                                                          │
+│                                                                              │
+│  Template Variables:                                                        │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  {{file_path}}   - File being operated on                                  │
+│  {{tool_name}}   - Name of tool being called                               │
+│  {{tool_args}}   - JSON of tool arguments                                  │
+│  {{result}}      - Tool result (PostToolCall only)                         │
+│  {{error}}       - Error message (OnError only)                            │
+│                                                                              │
+│  Files:                                                                     │
+│  ├── types.py      - HookConfig, HookContext, HookResult, HookEvent        │
+│  ├── registry.py   - HookRegistry for managing hooks                       │
+│  ├── executor.py   - HookExecutor for running hooks                        │
+│  └── template.py   - Variable substitution                                 │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-**3. Tools Log** (`logs/proto_tools.jsonl`)
-- Events: tool_call, tool_result
-- Contains: tool name, parameters, results, duration
-- Use for: Tool usage patterns, performance analysis
+### Reliability Module (`computer_use_demo/reliability/`)
 
-**4. System Log** (`logs/proto_system.jsonl`)
-- Events: daemon_start, daemon_stop, health_check, state_persist
-- Contains: system state, metrics, lifecycle events
-- Use for: System monitoring, health tracking
+Production-grade reliability patterns:
 
-### Unified Log Viewer
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           RELIABILITY PATTERNS                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Circuit Breaker (circuit_breaker.py):                                      │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│                                                                              │
+│       CLOSED ──────────► OPEN ──────────► HALF_OPEN                         │
+│         │                  │                  │                              │
+│    (normal)          (blocking)        (testing)                            │
+│         │                  │                  │                              │
+│    5 failures         60s wait          1 success                           │
+│    in 1 min          cooldown         → CLOSED                              │
+│                                                                              │
+│  Retry with Backoff (retry.py):                                             │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  Attempt 1 → Fail → Wait 1s                                                 │
+│  Attempt 2 → Fail → Wait 2s                                                 │
+│  Attempt 3 → Fail → Wait 4s (+ jitter)                                      │
+│  Attempt 4 → Success!                                                       │
+│                                                                              │
+│  Other Features:                                                            │
+│  • Checkpointing (checkpoint.py) - State recovery                          │
+│  • Health monitoring (health.py) - Service status                          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-**Command**: `python -m computer_use_demo.logging.unified`
-- Merges all 4 streams chronologically
-- Color-coded by event type
-- AI-friendly timeline format
-- Filters by session, agent, time range
+### Memory Module (`computer_use_demo/memory/`)
+
+CLAUDE.md hierarchy for persistent conventions:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MEMORY HIERARCHY                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Level 1: Enterprise   ~/.claude/CLAUDE.md                                  │
+│           └── Global conventions, API keys, team standards                  │
+│                         │                                                   │
+│                         ▼ (merged)                                          │
+│  Level 2: Project      .claude/CLAUDE.md                                    │
+│           └── Project-specific patterns, tech stack                         │
+│                         │                                                   │
+│                         ▼ (merged)                                          │
+│  Level 3: Directory    subdirs/.claude/CLAUDE.md                            │
+│           └── Module-specific context                                       │
+│                         │                                                   │
+│                         ▼ (merged)                                          │
+│  Final: Injected into agent system prompt                                   │
+│                                                                              │
+│  Files:                                                                     │
+│  ├── claude_md.py   - CLAUDE.md parser                                     │
+│  ├── hierarchy.py   - Enterprise → Project → Directory merge               │
+│  ├── loader.py      - Auto-load on session start                           │
+│  └── types.py       - MemoryFile, MemorySection, MergedMemory              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Skills Module (`computer_use_demo/skills/`)
+
+Auto-activated specialized knowledge:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          SKILLS SYSTEM                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Skill Structure (.claude/skills/):                                         │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  .claude/skills/                                                            │
+│  ├── code-review/                                                           │
+│  │   ├── SKILL.md          # Frontmatter + prompt                          │
+│  │   ├── scripts/          # Automation scripts                            │
+│  │   └── references/       # Checklists, patterns                          │
+│  ├── security-audit/                                                        │
+│  │   └── SKILL.md                                                          │
+│  └── test-writing/                                                          │
+│      └── SKILL.md                                                          │
+│                                                                              │
+│  SKILL.md Frontmatter:                                                      │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  ---                                                                        │
+│  name: code-review                                                          │
+│  description: Expert code reviewer for security & quality                   │
+│  triggers:                                                                  │
+│    keywords: [review, audit, check]                                        │
+│    file_patterns: ["*.py", "*.ts"]                                         │
+│  allowed-tools: Read, Grep, Glob                                           │
+│  model: claude-sonnet-4                                                    │
+│  ---                                                                        │
+│                                                                              │
+│  Files:                                                                     │
+│  ├── types.py     - Skill, SkillContext, SkillTrigger                      │
+│  ├── loader.py    - Discover and load skills                               │
+│  ├── matcher.py   - Match user message to relevant skills                  │
+│  └── executor.py  - Format and inject skills                               │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Rules Module (`computer_use_demo/rules/`)
+
+Enforced guardrails for all agents:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           RULES SYSTEM                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Rule Structure (.claude/rules/):                                           │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  .claude/rules/                                                             │
+│  ├── security.md         # "Never commit secrets"                          │
+│  └── quality.md          # "Always run tests before deploy"                │
+│                                                                              │
+│  Rule Example:                                                              │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  # Security Rules                                                           │
+│                                                                              │
+│  ## Config                                                                  │
+│  - severity: error                                                          │
+│  - scope: file                                                              │
+│  - patterns: *.env, secrets.json                                           │
+│                                                                              │
+│  ## Conditions                                                              │
+│  - Block commits of .env files                                             │
+│  - Block files containing API keys                                         │
+│                                                                              │
+│  Files:                                                                     │
+│  ├── types.py     - Rule, RuleCheckResult, RuleSeverity                    │
+│  ├── loader.py    - Load rules from .claude/rules/                         │
+│  └── enforcer.py  - Check actions against rules                            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### MCP Module (`computer_use_demo/mcp/`)
+
+Model Context Protocol for external systems:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        MCP INTEGRATION                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Supported MCP Servers:                                                     │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  • @modelcontextprotocol/server-filesystem  - Sandboxed file access        │
+│  • @modelcontextprotocol/server-github      - GitHub API                   │
+│  • playwright                               - Browser automation           │
+│  • sqlite                                   - Database queries             │
+│                                                                              │
+│  Configuration (.claude/settings.json):                                     │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  {                                                                          │
+│    "mcpServers": {                                                          │
+│      "playwright": {"command": "npx", "args": [...]},                      │
+│      "database": {"command": "python", "args": [...]}                      │
+│    }                                                                        │
+│  }                                                                          │
+│                                                                              │
+│  Files:                                                                     │
+│  ├── client.py          - MCP client implementation                        │
+│  ├── server_registry.py - Manage MCP server processes                      │
+│  ├── tool_wrapper.py    - Wrap MCP tools as native tools                   │
+│  └── config.py          - Configuration loader                             │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Smart Selector Module (`computer_use_demo/smart_selector/`)
+
+Intelligent model and thinking budget selection:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SMART SELECTOR MODULE                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Files:                                                                     │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  models.py           │  Data structures: SelectionResult, ModelConfig,     │
+│                      │  TaskType, Phase, model configurations              │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  classifier_prompt.py│  Capability-first prompts for Haiku classifier      │
+│                      │  "Would Opus produce a DIFFERENT result?"           │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  selector.py         │  SmartSelector class - main entry point             │
+│                      │  select_sync() and select() methods                 │
+│                      │  PURELY CONTENT-BASED (no phase shortcuts)          │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  escalation.py       │  AdaptiveExecutor for retry with escalation         │
+│                      │  Escalation: Haiku → Sonnet → Opus                  │
+│                      │  Thinking: 0 → 4K → 10K → 31,999                    │
+│                                                                              │
+│  Integration Points:                                                        │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  • loop.py           │  SmartSelector called before API calls              │
+│  • base_agent.py     │  Agents use SmartSelector (content-based)           │
+│                                                                              │
+│  Task Types (determined by analyzing task content):                         │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  MECHANICAL (Haiku)  │  file_read, file_search, list_files, format_code   │
+│  IMPLEMENTATION      │  simple_code, feature_impl, bug_fix, refactor      │
+│  STRATEGIC (Opus)    │  planning, architecture, design, strategy, review  │
+│                                                                              │
+│  Selection Logic:                                                           │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│  Haiku classifier reads actual task text and asks:                          │
+│  "Would Opus produce a DIFFERENT result?"                                   │
+│  If task is mechanical → Haiku (identical result)                           │
+│  If task needs judgment → Sonnet/Opus (result would differ)                 │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Additional Modules
+
+| Module | Location | Purpose |
+|--------|----------|---------|
+| **Smart Selector** | `smart_selector/` | Intelligent model + thinking selection (Haiku classifier) |
+| **Thinking** | `thinking/` | ThinkingBudget enum, complexity detection (fallback) |
+| **LSP** | `lsp/` | Language Server Protocol for code intelligence |
+| **Messaging** | `messaging/` | Inter-computer communication (Redis Pub/Sub) |
+| **Registry** | `registry/` | Computer registration and discovery |
+| **Orchestrator** | `orchestrator/` | Global CEO, task scheduling |
+| **Knowledge** | `knowledge/` | Distributed knowledge synchronization |
+| **Plugins** | `plugins/` | Distributable capability bundles |
+| **Marketplace** | `marketplace/` | 3rd party component discovery |
+| **Business** | `business/` | Revenue, CRM, compliance engines |
+| **Self-Improve** | `self_improve/` | Safe self-modification with rollback |
+| **Human Pool** | `human_pool/` | Last-resort human escalation |
 
 ---
 
-## Knowledge Accumulation & Self-Improvement
-
-### How the System Learns
-
-The system implements **active, automatic learning** through three mechanisms:
-
-#### 1. Automatic Knowledge Capture (During Work)
-
-**Location**: [agents/base_agent.py](computer-use-demo/computer_use_demo/agents/base_agent.py#L417-L581)
-
-Every agent automatically captures knowledge after task execution:
-
-```python
-# ✅ IMPLEMENTED - Auto-capture on task completion
-async def _auto_capture_knowledge(task, result, context, start_time):
-    """Runs after EVERY task (success or failure)"""
-
-    if result.success:
-        # Capture successful patterns
-        knowledge_store.add_entry(
-            title=f"Successful approach: {task_summary}",
-            type=KnowledgeType.PATTERN,
-            content=f"""
-                Tools used: {tools_used}
-                Duration: {duration}s
-                Iterations: {result.iterations}
-                Outcome: {result.output}
-            """,
-            tags=[agent_role, "success", "auto-captured"]
-        )
-
-        # Capture complex task learnings
-        if result.iterations >= 10:
-            knowledge_store.add_entry(
-                title=f"Complex task solved: {task}",
-                type=KnowledgeType.LEARNING,
-                content="Tasks of this nature benefit from breaking into smaller steps"
-            )
-
-    else:
-        # Capture lessons from failures
-        knowledge_store.add_entry(
-            title=f"Lesson learned: {task}",
-            type=KnowledgeType.LESSON_LEARNED,
-            content=f"Error: {error_msg}\nRecommendation: Review task complexity...",
-            tags=[agent_role, "failure", "needs-review"]
-        )
-```
-
-**What Gets Auto-Captured:**
-- ✅ Successful tool usage patterns
-- ✅ Complex task completion strategies
-- ✅ Failure lessons with error context
-- ✅ Task duration and iteration metrics
-- ✅ Agent-specific approaches
-
-#### 2. Smart Knowledge Retrieval (Before Work)
-
-**Location**: [agents/ceo_agent.py](computer-use-demo/computer_use_demo/agents/ceo_agent.py#L398-L532)
-
-CEO agent searches ALL past projects for relevant knowledge before planning:
-
-```python
-# ✅ IMPLEMENTED - Cross-project knowledge search
-async def _retrieve_relevant_knowledge(task):
-    """Searches across all projects for similar past work"""
-
-    # Extract keywords from current task
-    keywords = extract_keywords(task)  # ["authentication", "api", "jwt"]
-
-    # Search across 10 most recent projects
-    for project in all_projects[:10]:
-        knowledge_store = get_knowledge_store(project)
-
-        # Search for each keyword
-        for keyword in keywords[:5]:
-            entries = knowledge_store.search_entries(keyword)
-
-            # Return top 10 relevant entries
-            relevant_knowledge.append({
-                "title": entry.title,
-                "content": entry.content[:300],
-                "source_project": project.name,
-                "type": entry.type
-            })
-
-    return relevant_knowledge  # Used in planning context
-```
-
-**Benefits:**
-- ✅ Avoids repeating past mistakes
-- ✅ Applies proven patterns from previous projects
-- ✅ Learns from failures across all projects
-- ✅ Suggests technical decisions that worked before
-
-#### 3. Background Self-Improvement (Outside Work)
-
-**Location**: [daemon/orchestrator.py](computer-use-demo/computer_use_demo/daemon/orchestrator.py#L477-L695)
-
-Company Orchestrator daemon runs continuous improvement every ~100 seconds:
-
-```python
-# ✅ IMPLEMENTED - Background learning loop
-async def _background_self_improvement():
-    """Runs every 10 event loops (~100 seconds)"""
-
-    # Task 1: Mine knowledge from session logs
-    await _mine_knowledge_from_logs()
-    # - Analyzes last 100 session events
-    # - Detects tool sequences used 3+ times
-    # - Recommends creating compound tools
-    # - Example: "GlobTool → GrepTool → EditTool" appears 5x
-    #   → Suggests "FindAndReplaceTool"
-
-    # Task 2: Analyze error patterns
-    await _analyze_error_patterns()
-    # - Scans last 50 errors from error log
-    # - Identifies top 5 recurring errors
-    # - Logs recommendations for fixes
-    # - Example: "ToolNotFound" error 12x
-    #   → Suggests validating tool availability
-
-    # Task 3: Queue optimization tasks (when idle)
-    if idle and completed_tasks >= 10:
-        work_queue.add_work(
-            "Review knowledge base and consolidate duplicate patterns",
-            priority=LOW,
-            agent="data-analyst"
-        )
-
-        work_queue.add_work(
-            "Analyze tool usage logs and identify inefficiencies",
-            priority=LOW,
-            agent="senior-developer"
-        )
-```
-
-**Improvement Actions:**
-- ✅ Pattern discovery from tool sequences
-- ✅ Error trend analysis
-- ✅ Knowledge consolidation tasks
-- ✅ Tool optimization recommendations
-- ✅ Automatic queueing of improvement work
-
-### Self-Improvement Mechanism (Complete Loop)
+## Complete Request Flow
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                   DURING WORK (Real-time)                     │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                     HOW A REQUEST FLOWS THROUGH THE SYSTEM                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+USER REQUEST: "Build authentication system with tests"
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 1. SMART SELECTION (Haiku classifier ~$0.001)                                                │
+│    SmartSelector analyzes task content: "Build auth system" → Strategic task                │
+│    → Model: Opus 4.5 (needs strategic thinking)                                             │
+│    → Thinking: 10,000 tokens (complex multi-step task)                                      │
+│    → Reason: "Architecture + planning requires deep reasoning"                              │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 2. CONTEXT (Load shared memory)                                                              │
+│    ├── CLAUDE.md → "We use FastAPI + React + pytest"                                        │
+│    ├── Knowledge Store → "JWT worked well in last project"                                  │
+│    └── TASKS.md → Current work queue                                                        │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 3. SKILLS (Auto-activate relevant expertise)                                                 │
+│    "authentication" detected → loads auth-patterns SKILL.md                                 │
+│    "tests" detected → loads test-generation SKILL.md                                        │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 4. RULES (Check constraints before execution)                                                │
+│    ✓ "no-secrets" rule loaded                                                               │
+│    ✓ "always-test" rule loaded                                                              │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 5. SUBAGENTS (Delegate to specialists - peer-to-peer)                                        │
+│                                                                                              │
+│    Each specialist's task analyzed by SmartSelector (content-based)                         │
+│                                                                                              │
+│       Backend Dev ──────────────► Security Engineer                                         │
+│       "Implement JWT"             "Validate token logic"                                    │
+│       (Sonnet, 4K thinking)       (Sonnet, 4K thinking)                                    │
+│            │                           │                                                    │
+│            └───────────┬───────────────┘                                                    │
+│                        │                                                                     │
+│                        ▼                                                                     │
+│       Frontend Dev ◄───┼───► QA Engineer                                                    │
+│       "Create login UI"│    "Write E2E tests"                                               │
+│       (Sonnet, 4K)     │    (Sonnet, 4K)                                                    │
+│                        ▼                                                                     │
+│                   DevOps Engineer                                                           │
+│                   "Set up deployment" (Sonnet, 4K)                                          │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 6. TOOLS (Execute with hooks)                                                                │
+│                                                                                              │
+│    ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐                  │
+│    │ PRE-HOOK    │ → │   TOOL      │ → │ POST-HOOK   │ → │   LSP       │                  │
+│    │ (lint check)│   │   (Edit)    │   │ (typecheck) │   │ (errors?)   │                  │
+│    └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘                  │
+│                                                               │                            │
+│                                                 ┌─────────────┴─────────────┐              │
+│                                                 │ Fix errors immediately     │              │
+│                                                 └────────────────────────────┘              │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 7. MCP (Connect to external systems as needed)                                               │
+│    • playwright MCP → Browser testing                                                       │
+│    • github MCP → Create PR                                                                 │
+│    • sqlite MCP → Database setup                                                            │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 8. KNOWLEDGE CAPTURE (Auto-capture learnings)                                                │
+│    • Success patterns stored                                                                │
+│    • Technical decisions recorded                                                           │
+│    • Failure lessons captured                                                               │
+└──────────────────────────────────────────────────────────────────────────────────────┬──────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 9. RESULT                                                                                    │
+│    ✅ Authentication system built                                                           │
+│    ✅ Tests passing                                                                         │
+│    ✅ Knowledge captured for next time                                                      │
+│    ✅ All agents saw what happened (shared context)                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Self-Improvement Loop
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SELF-IMPROVEMENT MECHANISM                                      │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                   DURING WORK (Real-time)                             │
+└──────────────────────────────────────────────────────────────────────┘
+
 User Task → CEO Agent
-    ↓
+    │
+    ▼
 [SMART RETRIEVAL] Search all projects for relevant knowledge
-    ↓
+    │
+    ▼
 Planning with Past Learnings Applied
-    ↓
+    │
+    ▼
 Task Execution by Specialist
-    ↓
-[SELF-HEALING RETRY LOOP] 🔥 NEW!
+    │
+    ▼
+[SELF-HEALING RETRY LOOP]
     ├─ Task succeeds? → Continue ✓
     ├─ Task fails? → Analyze failure
     │   ├─ Search knowledge base for similar past failures
@@ -844,502 +962,362 @@ Task Execution by Specialist
     │   ├─ Retry with improved approach (max 3 attempts)
     │   ├─ Success after retry? → Capture recovery pattern as best practice
     │   └─ Still failing? → Queue as "hard failure" for later (HIGH priority)
-    ↓
+    │
+    ▼
 [AUTO-CAPTURE] Extract patterns, tools used, duration, outcome
-    ↓
+    │
+    ▼
 Knowledge Stored in .proto/planning/{project}/knowledge/
-    ↓
-[AUTO-IMPROVEMENT TASK GENERATION] ⭐
+    │
+    ▼
+[AUTO-IMPROVEMENT TASK GENERATION]
     ├─ Task failed? → Queue "Debug and fix" task (MEDIUM priority)
     ├─ Task took 10+ iterations? → Queue "Optimize process" task (MEDIUM priority)
     └─ Error seen 3+ times? → Queue "Systematic fix" task (HIGH priority)
-    ↓
-Improvement Tasks Added to Work Queue
-    ↓
-System Executes Improvement Tasks → Gets Better at Running the Business
-    ↓
-Indexed & Searchable for Future Tasks
+    │
+    ▼
+System Executes Improvement Tasks → Gets Better Over Time
 
-┌──────────────────────────────────────────────────────────────┐
-│              OUTSIDE WORK (Background/Idle Time)              │
-└──────────────────────────────────────────────────────────────┘
-CompanyOrchestrator Event Loop (every ~100 seconds)
-    ↓
+
+┌──────────────────────────────────────────────────────────────────────┐
+│              BACKGROUND (Idle Time - every ~100 seconds)              │
+└──────────────────────────────────────────────────────────────────────┘
+
+CompanyOrchestrator Event Loop
+    │
+    ▼
 [LOG MINING] Analyze session logs for tool patterns
-    ↓
+    │
+    ▼
 [ERROR ANALYSIS] Identify recurring failures
-    ↓
-[KNOWLEDGE-BASED OPTIMIZATION] ⭐ ENHANCED!
+    │
+    ▼
+[KNOWLEDGE-BASED OPTIMIZATION]
     ├─ Analyze each project's knowledge store
     ├─ 5+ failures? → Queue root cause analysis (MEDIUM priority)
     ├─ 5+ patterns? → Queue component creation (LOW priority)
     └─ Multiple projects? → Queue cross-project consolidation (LOW priority)
-    ↓
-Project-Aware Improvement Tasks Queued
-    ↓
-Self-Optimization Tasks Execute → System Improves
-    ↓
-LOOP (continuous autonomous improvement)
+    │
+    ▼
+Project-Aware Improvement Tasks Queued → System Improves
+    │
+    └──────────────────────────► LOOP (continuous)
 ```
 
-### What Makes This Different
+**Implementation Locations:**
+- Auto-capture: [agents/base_agent.py:417-581](computer-use-demo/computer_use_demo/agents/base_agent.py#L417-L581)
+- Knowledge retrieval: [agents/ceo_agent.py:398-532](computer-use-demo/computer_use_demo/agents/ceo_agent.py#L398-L532)
+- Background improvement: [daemon/orchestrator.py:477-695](computer-use-demo/computer_use_demo/daemon/orchestrator.py#L477-L695)
 
-**Before (Manual):**
-- ❌ Agents had to explicitly call `manage_knowledge`
-- ❌ Knowledge retrieval required manual search
-- ❌ No background learning
-- ❌ Each task started "cold"
-- ❌ Learnings just stored, never acted upon
+---
 
-**Now (Automatic):**
-- ✅ **Auto-capture** after every task (success or failure)
-- ✅ **Auto-retrieval** before planning (searches all projects)
-- ✅ **Auto-mining** from logs every ~100 seconds
-- ✅ **Auto-optimization** tasks queue during idle time
-- ✅ **Auto-improvement task generation** (⭐) - turns learnings into actionable work
-- ✅ **Project-aware optimization** (⭐) - analyzes knowledge stores to queue improvements
-- ✅ **Self-healing retry loop** (🔥 NEW!) - immediate retry with learnings until success or max attempts
-- ✅ **Recovery pattern capture** (🔥 NEW!) - successful retries become best practices
-- ✅ System learns continuously AND actively improves itself while working
+## Multi-Computer Architecture
 
-### Metrics & Observability
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                       MULTI-COMPUTER SOFTWARE COMPANY                                        │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
 
-All self-improvement activities are logged:
-
-```jsonl
-// Session log - knowledge auto-captured
-{"event_type": "knowledge_auto_captured", "agent_role": "ceo", "task_success": true, "project_name": "saas-app", "duration_seconds": 45.2}
-
-// Session log - knowledge retrieved
-{"event_type": "knowledge_retrieved", "keywords": ["authentication", "api"], "num_results": 7, "projects_searched": 10}
-
-// 🔥 NEW - Session log - self-healing retry attempt
-{"event_type": "self_correction_attempt", "task": "Deploy backend API", "attempt": 1, "error": "ConnectionError: Connection refused"}
-{"event_type": "failure_analysis_completed", "error_category": "ConnectionError", "similar_failures": 3, "helpful_patterns": 2}
-
-// 🔥 NEW - Session log - recovery pattern captured
-{"event_type": "recovery_pattern_captured", "task": "Deploy backend API", "retry_attempt": 2, "project_name": "saas-app"}
-
-// 🔥 NEW - Session log - self-correction exhausted (too hard for now)
-{"event_type": "self_correction_exhausted", "task": "Deploy backend API", "total_attempts": 3, "final_error": "Persistent connection failure"}
-
-// ⭐ Session log - improvement task automatically queued
-{"event_type": "improvement_task_queued", "reason": "task_failure", "project_name": "saas-app", "original_task": "Deploy backend API"}
-{"event_type": "improvement_task_queued", "reason": "inefficient_execution", "iterations": 15, "project_name": "saas-app"}
-{"event_type": "improvement_task_queued", "reason": "recurring_error", "error_category": "TimeoutError", "occurrence_count": 4}
-{"event_type": "improvement_task_queued", "reason": "self_correction_exhausted", "retry_attempts": 3, "original_task": "Deploy backend API"}
-
-// System log - pattern discovered
-{"event_type": "pattern_discovered", "tool_sequence": ["glob", "grep", "edit"], "occurrence_count": 5, "recommendation": "Consider compound tool"}
-
-// ⭐ System log - project-aware optimization tasks queued
-{"event_type": "optimization_tasks_queued", "tasks_added": 3, "reason": "knowledge_based_optimization", "projects_analyzed": 3}
+                              ┌──────────────────┐
+                              │   GLOBAL CEO     │ ◄─── Opus 4.5 + UltraThink
+                              │   (Coordinator)  │      Sees ALL products
+                              └────────┬─────────┘      Makes company-wide decisions
+                                       │
+     ┌─────────────────────────────────┼─────────────────────────────────┐
+     ▼                                 ▼                                 ▼
+ ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+ │ PRODUCT  │   │ COMPUTER │   │ BUSINESS │   │  SELF-   │   │  HUMAN   │
+ │ PORTFOLIO│   │   POOL   │   │   OPS    │   │ IMPROVE  │   │   POOL   │
+ │ MANAGER  │   │ORCHESTR. │   │ MANAGER  │   │  ENGINE  │   │ MANAGER  │
+ └──────────┘   └────┬─────┘   └──────────┘   └──────────┘   └──────────┘
+                     │
+      ┌──────────────┼──────────────┬──────────────┐
+      ▼              ▼              ▼              ▼
+ ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
+ │COMPUTER │   │COMPUTER │   │COMPUTER │   │COMPUTER │
+ │   1     │   │   2     │   │   3     │   │   N     │
+ │ (Mac)   │   │(Hetzner)│   │(Hetzner)│   │ (Cloud) │
+ │         │   │         │   │         │   │         │
+ │Product A│   │Product B│   │Product C│   │ Shared  │
+ │  Team   │   │  Team   │   │  Team   │   │ Infra   │
+ └────┬────┘   └────┬────┘   └────┬────┘   └────┬────┘
+      │             │             │             │
+      └─────────────┴─────────────┴─────────────┘
+                          │
+                          ▼
+            ┌────────────────────┐
+            │   MESSAGE BUS      │
+            │   (Redis/NATS)     │
+            │                    │
+            │ • task_assign      │
+            │ • task_complete    │
+            │ • knowledge_sync   │
+            │ • heartbeat        │
+            └─────────┬──────────┘
+                      │
+       ┌──────────────┴──────────────┐
+       ▼                             ▼
+┌─────────────┐            ┌─────────────┐
+│  SHARED     │            │  REVENUE    │
+│  KNOWLEDGE  │            │  ENGINE     │
+│  HUB        │            │             │
+│             │            │  - Stripe   │
+│ - Patterns  │            │  - Invoices │
+│ - Rules     │            │  - Metrics  │
+│ - Skills    │            │             │
+└─────────────┘            └─────────────┘
 ```
 
 ---
 
-## Training & Verification Systems
+## Human-in-the-Loop Escalation
 
-### Training System
+Humans are called ONLY when legally, physically, or regulatorily impossible for AI:
 
-**Location**: `computer_use_demo/training/`
-
-**Test Suites**:
-- QA Testing
-- DevOps
-- Senior Developer
-- Sales
-- Customer Success
-- Technical Writer
-- Data Analyst
-
-**Features**:
-- Test case definitions
-- Validation harness
-- Training data storage: `.proto/training/`
-- Agent performance evaluation
-
-### Verification System
-
-**Location**: `computer_use_demo/verification/`
-
-**Components**:
-1. **ScreenshotAnalyzer**: Analyze GUI state from screenshots
-2. **StructuralChecker**: Verify code structure & correctness
-3. **FeedbackLoop**: Iterative improvement cycles
-
-**Usage**:
-- Verify task completion
-- Validate generated code
-- Ensure GUI automation succeeded
-- Provide feedback for refinement
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                         HUMAN POOL - LAST RESORT ONLY                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│  ✅ WHEN TO CALL HUMAN (Exhaustive list - ONLY these cases):                                │
+│  ──────────────────────────────────────────────────────────────────────────────────────────│
+│                                                                                              │
+│  LEGAL/REGULATORY (Cannot be done by AI)                                                    │
+│  ├── Sign legal contracts (requires human legal signature)                                  │
+│  ├── Company formation documents (LLC, Corp filings)                                        │
+│  ├── Tax filings requiring human attestation                                                │
+│  └── Patent/trademark applications (human inventor required)                                │
+│                                                                                              │
+│  FINANCIAL (Bank/regulatory requirements)                                                   │
+│  ├── Open business bank accounts (KYC requires human)                                       │
+│  ├── Sign loan documents                                                                    │
+│  ├── Authorize large wire transfers (>$10K, bank policy)                                    │
+│  └── Investor agreements (securities law)                                                   │
+│                                                                                              │
+│  PHYSICAL WORLD (Cannot be done remotely)                                                   │
+│  ├── Mail physical documents (notarized, certified mail)                                    │
+│  ├── Hardware purchases requiring physical presence                                         │
+│  └── In-person meetings mandated by contract                                                │
+│                                                                                              │
+│  ❌ NEVER CALL HUMAN FOR:                                                                   │
+│  ├── Writing code (system does this)                                                        │
+│  ├── Debugging (system does this)                                                           │
+│  ├── Customer support chat/email (system does this)                                         │
+│  ├── Marketing content (system does this)                                                   │
+│  ├── Sales outreach (system does this)                                                      │
+│  └── ANY computer-based task (system MUST do this)                                          │
+│                                                                                              │
+│  Escalation Tool: HumanEscalationTool                                                       │
+│  ──────────────────────────────────────────────────────────────────────────────────────────│
+│  human_tool.request_human_action(                                                           │
+│      task="Sign LLC formation documents for Proto AI Inc",                                  │
+│      reason="LEGAL: Company formation requires human signature",                            │
+│      deadline="2024-01-15",                                                                 │
+│      priority="HIGH",                                                                       │
+│      assigned_to="founder-1"                                                                │
+│  )                                                                                          │
+│                                                                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Key Principles
+## Directory Structure
 
-### 1. Intelligent Delegation (Most Important)
-**Core Philosophy: Right Agent for Right Task**
-- ✅ CEO orchestrates, specialists execute
-- ✅ Any agent can delegate to any specialist when needed
-- ✅ Not constrained by organizational hierarchy
-- ✅ Specialists are domain experts - always prefer them
-- ❌ Never do specialized work outside your expertise
-- ❌ Never skip delegation when specialist exists
+```
+~/Proto/
+└── {project-name}/                    # Example: "saas-company"
+    │
+    ├── .proto/                        # Planning & Meta (System Management)
+    │   └── planning/
+    │       ├── .project_metadata.json # Project info (name, description, tags)
+    │       ├── tasks.json             # TaskManager state & dependencies
+    │       │
+    │       ├── project_overview.md    # High-level project description
+    │       ├── requirements.md        # Detailed requirements
+    │       ├── technical_spec.md      # Technical specifications
+    │       ├── roadmap.md             # Project roadmap & milestones
+    │       ├── knowledge_base.md      # Aggregated knowledge
+    │       ├── decisions.md           # Technical decisions log
+    │       │
+    │       ├── agents/                # Specialist-specific plans
+    │       │   ├── senior-developer_plan.md
+    │       │   ├── frontend-developer_plan.md
+    │       │   └── ...
+    │       │
+    │       └── knowledge/             # KnowledgeStore
+    │           ├── index.json
+    │           ├── technical_decision/
+    │           ├── learning/
+    │           ├── pattern/
+    │           └── best_practice/
+    │
+    └── [Actual Project Files]         # Standard project structure
+        ├── src/
+        ├── docs/
+        ├── tests/
+        └── ...
 
-**Why This Matters:**
-- Better quality (specialists know best practices)
-- Faster execution (specialists work in their domain)
-- Scalable (multiple specialists work in parallel)
-- Continuous improvement (specialists accumulate domain knowledge)
+~/.proto/                              # Global system state
+├── daemon/
+│   ├── work_queue.json               # Pending/active work items
+│   └── orchestrator_state.json       # Runtime state
+├── company/
+│   ├── portfolio.json                # Products and assignments
+│   ├── humans/                       # Human pool configuration
+│   └── business/                     # Financial, CRM data
+└── computers/
+    ├── registry.json                 # Known computers
+    └── health/                       # Health status per computer
 
-### 2. Dual-Structure Project Organization
-**Planning Separate from Code**
-- ✅ Planning/meta in `{project}/.proto/planning/`
-- ✅ Actual code in `{project}/` (src/, docs/, tests/)
-- ✅ Clear separation: "what we're doing" vs "what we've built"
-- ✅ Planning survives code changes, provides persistent context
+.claude/                              # Project configuration
+├── CLAUDE.md                         # Project conventions (memory)
+├── hooks.json                        # Automation hooks
+├── settings.json                     # MCP, LSP configuration
+├── rules/                            # Policy guardrails
+│   ├── security.md
+│   └── quality.md
+├── skills/                           # Auto-activated expertise
+│   ├── code-review/
+│   └── security-audit/
+└── plugins/                          # Installed plugins
 
-**Benefits:**
-- Never clutter codebase with planning docs
-- Easy to version control separately
-- Context available to all agents across sessions
-- Specialist plans organized by agent type
+logs/                                 # System logging
+├── proto_sessions.jsonl              # Session events
+├── proto_errors.jsonl                # Error tracking
+├── proto_tools.jsonl                 # Tool invocations
+└── proto_system.jsonl                # System events
+```
 
-### 3. Enterprise-Grade Architecture
-- Multi-tier design (Presentation → Orchestration → Agents → Planning → Tools → Infrastructure)
-- Production-ready components (logging, monitoring, recovery)
-- Scalable and maintainable
+---
 
-### 4. Continuous Operation
-- Can run autonomously via CompanyOrchestrator daemon
-- WorkQueue system for scheduled/ongoing work
-- Health monitoring and graceful degradation
+## Business Operations
 
-### 5. Persistent Learning & Self-Improvement
-- Knowledge accumulates across sessions
-- Decisions, patterns, learnings stored permanently
-- Each project makes future projects better
-- System learns from both successes and failures
-- Auto-queues optimization tasks during idle time
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           COMPLETE AUTONOMOUS BUSINESS LOOP                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
 
-### 6. Universal Tool Access
-- All 16 tools available to all agents
-- Tools can be chained for complex operations
-- Smart tool selection based on task requirements
-- Specialists know optimal tool combinations for their domain
+  1. PRODUCT DEVELOPMENT
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Global CEO → Assigns product to Computer → Local CEO builds with Agents
+     → Code pushed to GitHub → Deployed via Vercel/AWS
 
-### 7. Flat Peer-to-Peer Execution
-- Tree structure for user navigation/discovery
-- Actual execution is flexible peer-to-peer
-- Best agent/tool selected regardless of hierarchy
-- Any agent can call any other agent when needed
+  2. CUSTOMER ACQUISITION
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Marketing Agent → Creates content → Posts via Social MCPs
+     → SEO Agent optimizes → Leads captured in HubSpot
 
-### 8. State Persistence & Recovery
-- All project state in `.proto/planning/{project}/`
-- Recovery from crashes/restarts
-- Full audit trail via Git commits
-- Work queue persists for daemon recovery
+  3. SALES
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Sales Agent → Sends outreach via SendGrid → Follows up
+     → Demo scheduled → Contract sent → Human signs if needed
+
+  4. REVENUE
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Customer signs up → Stripe processes payment → Invoice generated
+     → Revenue tracked → Metrics updated
+
+  5. SUPPORT
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Customer issue → Support Agent via Intercom → Resolves or escalates
+     → Knowledge captured for future
+
+  6. SELF-IMPROVEMENT
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Metrics analyzed → Inefficiencies detected → Code modified
+     → Tests pass → Deployed → Performance improves
+
+  7. HUMAN ESCALATION (RARE)
+     ─────────────────────────────────────────────────────────────────────────────────────────
+     Legal/regulatory block → Human notified → Human acts
+     → System continues autonomously
+```
 
 ---
 
 ## Project Lifecycle Example
 
-### Complete Example: Building a SaaS Application
+**Building a SaaS App (Condensed Flow):**
 
-**1. User Request**
-```
-"Build a SaaS application for project management with authentication,
-team collaboration, and real-time updates"
-```
+1. **User Request** → "Build SaaS with auth and real-time updates"
+2. **CEO Analysis** → Complexity: very_complex → Creates planning docs
+3. **CEO Delegates**:
+   - Product Manager → Define requirements
+   - Backend Developer → Implement JWT auth
+   - Frontend Developer → Create React UI
+   - DevOps Engineer → Set up deployment
+4. **Specialists Execute** → Each reads planning context, uses appropriate tools
+5. **Knowledge Captured** → Decisions stored in `.proto/planning/knowledge/`
+6. **Result** → Working app + knowledge for future projects
 
-**2. CEO Agent Analysis & Planning**
-```python
-# Step 1: Analyze complexity
-complexity = analyzer.analyze_task(user_request)
-# Result: "very_complex" → Triggers comprehensive planning
-
-# Step 2: Create project structure
-project_manager.create_project("saas-project-mgmt")
-# Creates:
-# ~/Proto/saas-project-mgmt/
-# ~/Proto/saas-project-mgmt/.proto/planning/
-
-# Step 3: Generate planning documents
-planning_tool.create(
-    project_name="saas-project-mgmt",
-    documents=[
-        "project_overview",     # High-level vision
-        "requirements",         # Detailed requirements
-        "technical_spec",       # Architecture & tech stack
-        "roadmap"              # Implementation phases
-    ]
-)
-# All saved in ~/Proto/saas-project-mgmt/.proto/planning/
-
-# Step 4: Break down into specialist tasks
-tasks = [
-    ("Product Manager", "Define features & prioritize roadmap"),
-    ("UX Designer", "Design user interface & workflows"),
-    ("Backend Developer", "Build API & authentication"),
-    ("Frontend Developer", "Create React UI"),
-    ("DevOps Engineer", "Set up deployment pipeline"),
-]
-```
-
-**3. CEO Delegates to Product Manager**
-```python
-delegate_tool.delegate(
-    specialist="product-manager",
-    task="Define product requirements and feature prioritization",
-    context=read_planning_tool.get_project_context("saas-project-mgmt")
-)
-```
-
-**4. Product Manager Creates Detailed Requirements**
-```python
-# Product Manager reads planning context from .proto/planning/
-# Writes detailed requirements
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/.proto/planning/requirements.md",
-    content="""
-    ## Core Features
-    1. User Authentication (Google, GitHub SSO)
-    2. Team Workspace Management
-    3. Real-time Task Board
-    4. Comments & Notifications
-    ...
-    """
-)
-
-# Updates knowledge base
-knowledge_tool.add(
-    title="Feature Priority: Real-time collaboration critical",
-    type="technical_decision",
-    content="Users expect instant updates - WebSocket required"
-)
-```
-
-**5. CEO Delegates to UX Designer**
-```python
-delegate_tool.delegate(
-    specialist="ux-designer",
-    task="Design user interface for task management and collaboration"
-)
-```
-
-**6. UX Designer Creates Mockups**
-```python
-# UX Designer creates designs in actual project folder
-# Note: .proto/ is for planning, actual files go in project root
-bash_tool.run("cd ~/Proto/saas-project-mgmt && mkdir -p designs/")
-# Creates Figma files, wireframes, etc. in ~/Proto/saas-project-mgmt/designs/
-
-# Documents decisions in planning
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/.proto/planning/agents/ux-designer_plan.md",
-    content="UI approach: Kanban-style board with drag-drop..."
-)
-```
-
-**7. CEO Delegates to Backend Developer**
-```python
-delegate_tool.delegate(
-    specialist="backend-developer",
-    task="Implement authentication API and database schema",
-    context=read_planning_tool.get_project_context("saas-project-mgmt")
-)
-```
-
-**8. Backend Developer Implements API**
-```python
-# Backend Dev reads all planning context
-planning_context = read_planning_tool.get_project_context("saas-project-mgmt")
-
-# Creates actual code in project folder (NOT in .proto/)
-bash_tool.run("cd ~/Proto/saas-project-mgmt && mkdir -p src/api")
-
-# Implements authentication
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/src/api/auth.py",
-    content="""
-    from fastapi import FastAPI, Depends
-    from sqlalchemy.orm import Session
-    # ... implementation
-    """
-)
-
-# Runs tests
-python_exec.run("cd ~/Proto/saas-project-mgmt && pytest tests/")
-
-# Commits code
-git_tool.commit("Add authentication API with JWT tokens")
-
-# Documents decision in planning/knowledge
-knowledge_tool.add(
-    project="saas-project-mgmt",
-    title="Auth Stack: FastAPI + JWT + SQLAlchemy",
-    type="best_practice",
-    content="FastAPI provides excellent async support for real-time features",
-    tags=["backend", "authentication", "fastapi"]
-)
-```
-
-**9. CEO Delegates to Frontend Developer**
-```python
-delegate_tool.delegate(
-    specialist="frontend-developer",
-    task="Build React UI connecting to backend API",
-    context=read_planning_tool.get_project_context("saas-project-mgmt")
-)
-```
-
-**10. Frontend Developer Builds UI**
-```python
-# Frontend Dev creates React app in actual project folder
-bash_tool.run("cd ~/Proto/saas-project-mgmt && npx create-react-app frontend")
-
-# Implements components
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/frontend/src/components/TaskBoard.tsx",
-    content="// Task board implementation with drag-drop..."
-)
-
-# Integrates with backend
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/frontend/src/api/client.ts",
-    content="// API client connecting to FastAPI backend..."
-)
-
-# Updates planning with frontend decisions
-knowledge_tool.add(
-    project="saas-project-mgmt",
-    title="Frontend Stack: React + TypeScript + TailwindCSS",
-    type="technical_decision",
-    tags=["frontend", "react", "typescript"]
-)
-```
-
-**11. CEO Delegates to DevOps Engineer**
-```python
-delegate_tool.delegate(
-    specialist="devops-engineer",
-    task="Set up deployment pipeline and hosting"
-)
-```
-
-**12. DevOps Sets Up Deployment**
-```python
-# DevOps creates deployment configs in project folder
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/Dockerfile",
-    content="FROM python:3.11..."
-)
-
-edit_tool.create(
-    file="~/Proto/saas-project-mgmt/docker-compose.yml",
-    content="services:\n  backend:\n    ..."
-)
-
-# Documents deployment strategy
-knowledge_tool.add(
-    project="saas-project-mgmt",
-    title="Deployment: Docker + Railway",
-    type="technical_decision",
-    content="Railway provides easy deployment with auto-scaling"
-)
-```
-
-**13. Final Project Structure**
-```
-~/Proto/saas-project-mgmt/
-├── .proto/                          # Planning & Meta
-│   └── planning/
-│       ├── project_overview.md      # CEO created
-│       ├── requirements.md          # Product Manager updated
-│       ├── technical_spec.md        # Backend Dev contributed
-│       ├── roadmap.md
-│       ├── knowledge/               # All specialists contributed
-│       │   └── technical_decision/
-│       │       ├── auth-stack.json
-│       │       ├── frontend-stack.json
-│       │       └── deployment.json
-│       └── agents/                  # Specialist plans
-│           ├── product-manager_plan.md
-│           ├── ux-designer_plan.md
-│           ├── backend-developer_plan.md
-│           ├── frontend-developer_plan.md
-│           └── devops-engineer_plan.md
-│
-└── [Actual Project Files]           # All specialists built this
-    ├── src/                         # Backend code
-    │   ├── api/
-    │   ├── models/
-    │   └── services/
-    ├── frontend/                    # Frontend code
-    │   ├── src/
-    │   ├── public/
-    │   └── package.json
-    ├── designs/                     # UX designs
-    ├── tests/                       # QA tests
-    ├── Dockerfile                   # DevOps config
-    ├── docker-compose.yml
-    └── README.md
-```
-
-**14. Continuous Improvement**
-```python
-# All knowledge captured during execution
-# Future "build SaaS" projects will:
-# - Retrieve this knowledge automatically
-# - Apply proven patterns
-# - Avoid same mistakes
-# - Start from accumulated wisdom
-```
-
-### Key Takeaways from Example
-
-✅ **CEO orchestrated, never coded directly**
-✅ **Each specialist worked in their domain**
-✅ **Planning (.proto/) separate from code**
-✅ **All decisions documented in knowledge base**
-✅ **Specialists collaborated through CEO coordination**
-✅ **Project structure clean and organized**
-✅ **Knowledge persists for future projects**
+**Key Takeaways:**
+- ✅ CEO orchestrated, never coded directly
+- ✅ Each specialist worked in their domain
+- ✅ Planning (.proto/) separate from code
+- ✅ All decisions documented in knowledge base
 
 ---
 
-## Extension Points
+## Training & Verification Systems
 
-### Adding New Tools
+**Training System** (`computer_use_demo/training/`):
+- Test suites for agent validation (QA, DevOps, Senior Dev, Sales, etc.)
+- Training data storage in `.proto/training/`
+- Agent performance evaluation
 
-1. Create tool class inheriting from `BaseAnthropicTool`
-2. Implement `__call__` method
-3. Register in `tools/groups.py`
-4. Add to appropriate TOOL_GROUPS
-
-### Adding New Specialist Agents
-
-1. Create agent definition in `.claude/agents/specialists/{name}.md`
-2. Add to `agent_org_structure.py`
-3. Optional: Create test suite in `training/`
-4. Optional: Add specialized sub-agents
-
-### Customizing Planning Templates
-
-1. Edit templates in `planning/documents.py`
-2. Modify `PlanningDocuments.templates` dict
-3. Adjust prompts for LLM generation
-4. Test with `PlanningTool`
+**Verification System** (`computer_use_demo/verification/`):
+- ScreenshotAnalyzer: Analyze GUI state from screenshots
+- StructuralChecker: Verify code structure & correctness
+- FeedbackLoop: Iterative improvement cycles
 
 ---
 
+## Key Design Principles
+
+1. **Intelligent Delegation**
+   - CEO orchestrates, specialists execute
+   - Any agent can call any specialist when needed
+   - Not constrained by organizational hierarchy
+   - Always delegate to the domain expert
+
+2. **Dual-Structure Organization**
+   - Planning/meta in `.proto/planning/`
+   - Actual code in project root
+   - Clear separation of concerns
+
+3. **Hybrid Context Model**
+   - Shared knowledge layer (CLAUDE.md, Knowledge Store, Rules)
+   - Isolated execution contexts for subagents
+   - Lead agent synthesizes summaries
+
+4. **Deterministic + Intelligent**
+   - Hooks for guaranteed automation
+   - Skills for intelligent adaptation
+   - Rules for policy enforcement
+
+5. **Self-Improvement**
+   - Automatic knowledge capture
+   - Background pattern mining
+   - Improvement task generation
+
+6. **Fault Tolerance**
+   - Circuit breakers on API calls
+   - Retry with exponential backoff
+   - Checkpointing for recovery
+   - Multi-computer redundancy
+
+7. **Human as Last Resort**
+   - System does everything it can autonomously
+   - Humans only for legal/physical/regulatory blocks
+   - Clear escalation protocols
 
 ---
 
-## Hetzner Cloud Deployment
+## Deployment
 
-### Quick Setup
+### Hetzner Cloud (Remote Computers)
+
 ```bash
 export HETZNER_API_TOKEN=your-token
 export ANTHROPIC_API_KEY=your-key
@@ -1348,35 +1326,18 @@ pip3 install -r requirements.txt
 ./deploy.sh
 ```
 
-### Deployment Options
-- **Server**: Hetzner CX22 (2 vCPU, 4GB RAM)
-- **Cost**: €0.007/hr (~€5/month if 24/7)
-- **Build Time**: 10-15 min (fresh) or 1-2 min (from snapshot)
-- **Location**: Ashburn, VA (USA) or Nuremberg, Germany (nbg1)
-
-### Features
-- Auto-start on boot
-- Pause/resume (€0/hr when paused)
-- Snapshots for quick cloning
-- HTTP Basic Auth (admin/anthropic2024)
+**Specifications**:
+- Server: Hetzner CX22 (2 vCPU, 4GB RAM)
+- Cost: ~€5/month if 24/7, €0/hr when paused
+- Snapshot-based cloning for fast deployment
 
 ### Control Dashboard
+
 ```bash
 python3 control_panel.py
 # Access: http://localhost:5500
 ```
 
-**Dashboard Actions:**
-- Create/delete instances
-- Pause/resume for cost savings
-- Create snapshots (~€0.20/month storage)
-- Clone from snapshots (1-2 min deploy)
-
-### Cost Savings
-- Running 24/7: ~€7/month
-- Snapshot + Delete: ~€0.20/month
-- **Savings: ~€6.80/month (97%)**
-
 ---
 
-*Last updated: 2025-12-19*
+*Last updated: 2025-12-31 - Added Smart Model & Thinking Selection System*

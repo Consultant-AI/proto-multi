@@ -3977,26 +3977,70 @@ async def create_vnc_tunnel(computer_id: str):
         # For remote computers, verify the service is actually reachable
         if computer.type == "remote" and computer.host:
             import socket
+            error_detail = None
+
             try:
-                # Try to connect to port 6080 (noVNC) to verify services are up
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(3)
-                result = sock.connect_ex((computer.host, 6080))
-                sock.close()
-                if result != 0:
-                    raise HTTPException(
-                        status_code=503,
-                        detail="Instance services are starting up. Please wait..."
-                    )
+                # For Hetzner instances: try port 80 (nginx) first, then fall back to 6080 (legacy/direct)
+                # Non-Hetzner remotes: check port 6080 directly
+                if computer_id.startswith("hetzner-"):
+                    # Try port 80 (nginx) first
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(3)
+                    nginx_available = sock.connect_ex((computer.host, 80)) == 0
+                    sock.close()
+
+                    if nginx_available:
+                        # nginx is running - verify it's serving
+                        check_port = 80
+                        try:
+                            async with httpx.AsyncClient(timeout=5.0) as client:
+                                resp = await client.get(f"http://{computer.host}/PORT6080/")
+                                if resp.status_code not in (200, 401, 301, 302):
+                                    error_detail = f"nginx returned {resp.status_code}, VNC proxy not ready"
+                                    print(f"[VNC] {error_detail}")
+                                    raise HTTPException(status_code=503, detail=f"Waiting for instance services... ({error_detail})")
+                        except httpx.TimeoutException:
+                            raise HTTPException(status_code=503, detail="Waiting for instance services... (nginx timeout)")
+                        except httpx.ConnectError:
+                            raise HTTPException(status_code=503, detail="Waiting for instance services... (nginx not responding)")
+                    else:
+                        # No nginx - try direct port 6080 (legacy instance)
+                        check_port = 6080
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(5)
+                        result = sock.connect_ex((computer.host, check_port))
+                        sock.close()
+                        if result != 0:
+                            error_detail = f"Port {check_port} not reachable on {computer.host}"
+                            print(f"[VNC] {error_detail}")
+                            raise HTTPException(status_code=503, detail=f"Waiting for instance services... ({error_detail})")
+                        print(f"[VNC] Legacy instance detected - using direct port 6080")
+                else:
+                    # Non-Hetzner remote - check port 6080 directly
+                    check_port = 6080
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(5)
+                    result = sock.connect_ex((computer.host, check_port))
+                    sock.close()
+                    if result != 0:
+                        error_detail = f"Port {check_port} not reachable on {computer.host}"
+                        print(f"[VNC] {error_detail}")
+                        raise HTTPException(status_code=503, detail=f"Waiting for instance services... ({error_detail})")
             except socket.timeout:
+                error_detail = f"Socket timeout connecting to port {check_port}"
+                print(f"[VNC] {error_detail}")
                 raise HTTPException(
                     status_code=503,
-                    detail="Instance services are starting up. Please wait..."
+                    detail=f"Waiting for instance services... ({error_detail})"
                 )
+            except HTTPException:
+                raise
             except Exception as e:
+                error_detail = str(e)
+                print(f"[VNC] Connection check failed: {error_detail}")
                 raise HTTPException(
                     status_code=503,
-                    detail="Instance services are starting up. Please wait..."
+                    detail=f"Waiting for instance services... (connection error)"
                 )
 
         return {"vnc_url": vnc_url, "computer_id": computer_id, "computer_name": computer.name}
@@ -4028,6 +4072,83 @@ async def set_target_computer(computer_id: str):
 # ============================================================================
 
 
+async def _ensure_hetzner_services_running(ip: str, max_retries: int = 10, retry_delay: int = 5) -> dict:
+    """
+    SSH into Hetzner instance and ensure Docker/nginx services are running.
+    Returns status dict with success/failure info.
+    """
+    import asyncio
+    import subprocess
+
+    # Find SSH key
+    ssh_key_path = None
+    for key_name in ["id_ed25519", "id_rsa"]:
+        path = os.path.expanduser(f"~/.ssh/{key_name}")
+        if os.path.exists(path):
+            ssh_key_path = path
+            break
+
+    if not ssh_key_path:
+        return {"success": False, "error": "No SSH key found"}
+
+    # Commands to check and start services
+    # Full restart: after VM resume, containers can be in bad state
+    # Do docker compose down/up for clean restart
+    check_and_start_cmd = """
+        echo "=== Starting services ===" &&
+        systemctl is-active docker || systemctl start docker &&
+        sleep 2 &&
+        cd /opt/proto-multi/computer-use-demo &&
+        echo "Restarting containers (clean state)..." &&
+        docker compose down 2>/dev/null || true &&
+        docker compose up -d &&
+        sleep 8 &&
+        echo "=== Service Status ===" &&
+        docker ps --format 'table {{.Names}}\t{{.Status}}' &&
+        nc -z localhost 6080 && echo "=== Services OK ===" || echo "Port 6080 not ready yet"
+    """
+
+    for attempt in range(max_retries):
+        try:
+            print(f"[Hetzner] Ensuring services on {ip} (attempt {attempt + 1}/{max_retries})")
+
+            result = subprocess.run(
+                [
+                    "ssh",
+                    "-o", "StrictHostKeyChecking=no",
+                    "-o", "UserKnownHostsFile=/dev/null",
+                    "-o", "ConnectTimeout=10",
+                    "-o", "BatchMode=yes",
+                    "-i", ssh_key_path,
+                    f"root@{ip}",
+                    check_and_start_cmd
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+
+            if result.returncode == 0 and "Services OK" in result.stdout:
+                print(f"[Hetzner] Services started successfully on {ip}")
+                return {
+                    "success": True,
+                    "output": result.stdout,
+                    "attempt": attempt + 1
+                }
+
+            print(f"[Hetzner] Services not ready yet: {result.stderr or result.stdout}")
+
+        except subprocess.TimeoutExpired:
+            print(f"[Hetzner] SSH timeout on attempt {attempt + 1}")
+        except Exception as e:
+            print(f"[Hetzner] SSH error on attempt {attempt + 1}: {e}")
+
+        if attempt < max_retries - 1:
+            await asyncio.sleep(retry_delay)
+
+    return {"success": False, "error": f"Failed to start services after {max_retries} attempts"}
+
+
 @app.get("/api/hetzner/instances")
 async def list_hetzner_instances():
     """List all Hetzner Cloud instances with health checks."""
@@ -4055,7 +4176,7 @@ async def list_hetzner_instances():
 
         return {"instances": instances}
     except Exception as e:
-        logger.error(f"Failed to list Hetzner instances: {e}")
+        print(f"Failed to list Hetzner instances: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4135,7 +4256,7 @@ async def create_hetzner_instance(request: Request):
 
 @app.post("/api/hetzner/instances/{instance_id}/start")
 async def start_hetzner_instance(instance_id: int):
-    """Start a stopped Hetzner instance."""
+    """Start a stopped Hetzner instance and ensure services are running."""
     try:
         hetzner_token = os.getenv("HETZNER_API_TOKEN")
         if not hetzner_token:
@@ -4143,9 +4264,27 @@ async def start_hetzner_instance(instance_id: int):
 
         manager = HetznerManager(api_token=hetzner_token)
         server = manager.start_instance(instance_id)
-        return {"success": True, "instance": server}
+
+        # Get instance IP
+        ip = server.get("public_net", {}).get("ipv4", {}).get("ip")
+        if not ip:
+            return {"success": True, "instance": server, "services": {"status": "unknown", "error": "No IP found"}}
+
+        # Wait a bit for SSH to become available after VM boot
+        import asyncio
+        print(f"[Hetzner] VM started, waiting for SSH to become available...")
+        await asyncio.sleep(10)
+
+        # Ensure services are running via SSH
+        services_result = await _ensure_hetzner_services_running(ip, max_retries=6, retry_delay=5)
+
+        return {
+            "success": True,
+            "instance": server,
+            "services": services_result
+        }
     except Exception as e:
-        logger.error(f"Failed to start Hetzner instance: {e}")
+        print(f"Failed to start Hetzner instance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4161,7 +4300,34 @@ async def stop_hetzner_instance(instance_id: int):
         manager.stop_instance(instance_id)
         return {"success": True, "message": f"Instance {instance_id} stopped"}
     except Exception as e:
-        logger.error(f"Failed to stop Hetzner instance: {e}")
+        print(f"Failed to stop Hetzner instance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hetzner/instances/{instance_id}/ensure-services")
+async def ensure_hetzner_services(instance_id: int):
+    """Manually ensure services are running on a Hetzner instance via SSH."""
+    try:
+        hetzner_token = os.getenv("HETZNER_API_TOKEN")
+        if not hetzner_token:
+            raise HTTPException(status_code=400, detail="HETZNER_API_TOKEN not configured")
+
+        manager = HetznerManager(api_token=hetzner_token)
+        instance = manager.get_instance(instance_id)
+
+        ip = instance.get("public_net", {}).get("ipv4", {}).get("ip")
+        if not ip:
+            raise HTTPException(status_code=400, detail="Instance has no IP address")
+
+        if instance.get("status") != "running":
+            raise HTTPException(status_code=400, detail=f"Instance is not running (status: {instance.get('status')})")
+
+        result = await _ensure_hetzner_services_running(ip, max_retries=3, retry_delay=3)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Failed to ensure services on Hetzner instance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4184,7 +4350,7 @@ async def delete_hetzner_instance(instance_id: int):
 
         return {"success": True, "message": f"Instance {instance_id} deleted"}
     except Exception as e:
-        logger.error(f"Failed to delete Hetzner instance: {e}")
+        print(f"Failed to delete Hetzner instance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4206,7 +4372,7 @@ async def list_hetzner_snapshots():
 
         return {"snapshots": snapshots}
     except Exception as e:
-        logger.error(f"Failed to list Hetzner snapshots: {e}")
+        print(f"Failed to list Hetzner snapshots: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4225,7 +4391,7 @@ async def create_hetzner_snapshot(instance_id: int, request: Request):
 
         return {"success": True, "snapshot": snapshot}
     except Exception as e:
-        logger.error(f"Failed to create Hetzner snapshot: {e}")
+        print(f"Failed to create Hetzner snapshot: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4242,7 +4408,7 @@ async def delete_hetzner_snapshot(snapshot_id: int):
 
         return {"success": True, "message": f"Snapshot {snapshot_id} deleted"}
     except Exception as e:
-        logger.error(f"Failed to delete Hetzner snapshot: {e}")
+        print(f"Failed to delete Hetzner snapshot: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -4300,7 +4466,7 @@ async def get_hetzner_costs():
             "snapshot_cost": round(snapshot_cost, 2),
         }
     except Exception as e:
-        logger.error(f"Failed to calculate Hetzner costs: {e}")
+        print(f"Failed to calculate Hetzner costs: {e}")
         return {
             "hourly": 0,
             "daily": 0,

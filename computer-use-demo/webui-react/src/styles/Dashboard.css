@@ -2,10 +2,14 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  max-width: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg-main);
   padding: 24px;
   gap: 32px;
+  box-sizing: border-box;
 }
 
 .dashboard-header {
@@ -77,6 +81,9 @@
   gap: 24px;
   align-items: start;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-section {
@@ -90,6 +97,8 @@
   max-height: 600px;
   min-width: 0;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-section.full-width {
@@ -498,9 +507,19 @@
 /* ============================================ */
 
 .computers-section {
-  /* Ensure strict containment */
-  min-width: 0;
+  min-width: 0 !important;
+  max-width: 100% !important;
   overflow: hidden;
+  max-height: none;
+  width: 100%;
+}
+
+/* Force ALL descendants to respect container width */
+.computers-section *,
+.computers-section *::before,
+.computers-section *::after {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .computers-grid {
@@ -508,16 +527,15 @@
   flex-direction: column;
   gap: 12px;
   padding: 12px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  flex: 1;
-  min-width: 0;
-  width: 100%;
+  overflow: hidden;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
   box-sizing: border-box;
 }
 
 /* Computer Card Base */
-.computer-card {
+.computers-grid .computer-card {
   background: var(--bg-panel-header);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -526,11 +544,10 @@
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
   box-sizing: border-box;
-  flex-shrink: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
 
 .computer-card:hover {
@@ -548,6 +565,9 @@
   border-bottom: 1px solid var(--border);
   min-width: 0;
   overflow: hidden;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .computer-card-info {
@@ -557,7 +577,7 @@
   color: var(--text-primary);
   min-width: 0;
   overflow: hidden;
-  flex: 1;
+  flex: 1 1 0;
 }
 
 .computer-card-name {
@@ -566,13 +586,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 0;
 }
 
 .computer-card-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Status Badges */
@@ -582,6 +606,10 @@
   font-size: 11px;
   font-weight: 500;
   text-transform: capitalize;
+  white-space: nowrap;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-badge.running {
@@ -676,14 +704,20 @@
 /* Computer Card Preview Area */
 .computer-card-preview {
   width: 100%;
+  min-width: 0;
   height: 100px;
+  min-height: 100px;
   overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .preview-image {
   width: 100%;
+  max-width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .preview-placeholder {
@@ -717,6 +751,9 @@
   color: var(--text-secondary);
   min-width: 0;
   overflow: hidden;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .instance-ip,
@@ -729,6 +766,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  max-width: 45%;
+  flex-shrink: 1;
 }
 
 /* Local Computer Card */
@@ -765,21 +804,28 @@
   padding: 10px 12px;
   background: var(--bg-sidebar);
   border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .computer-card-stopped-actions .action-btn {
-  flex: 1;
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 8px 6px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .computer-card-stopped-actions .action-btn.resume {
@@ -810,15 +856,19 @@
 }
 
 /* New Computer Card */
-.new-computer {
+.computer-card.new-computer {
+  background: var(--bg-panel-header);
   border-style: dashed;
   border-color: var(--border);
-  min-height: 100px;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .new-computer:hover {
   border-color: var(--accent);
-  background: rgba(102, 126, 234, 0.05);
+  background: var(--hover);
 }
 
 .new-computer.creating {
@@ -831,16 +881,21 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
-  height: 100%;
-  padding: 20px;
+  padding: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .new-computer-content svg {
-  opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .new-computer:hover .new-computer-content {
@@ -848,7 +903,7 @@
 }
 
 .new-computer:hover .new-computer-content svg {
-  opacity: 1;
+  color: var(--accent);
 }
 
 /* Spinning animation */
