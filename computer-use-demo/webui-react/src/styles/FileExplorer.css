@@ -28,9 +28,11 @@
 
 .add-path-btn,
 .add-file-btn,
-.close-explorer-btn {
+.close-explorer-btn,
+.explorer-refresh-btn {
   background: none;
   border: none;
+  outline: none;
   color: var(--text-secondary);
   cursor: pointer;
   padding: 6px;
@@ -46,7 +48,8 @@
 
 .add-path-btn:hover:not(:disabled),
 .add-file-btn:hover:not(:disabled),
-.close-explorer-btn:hover {
+.close-explorer-btn:hover,
+.explorer-refresh-btn:hover {
   background: var(--hover);
   color: var(--accent);
 }
@@ -59,21 +62,6 @@
 
 .close-explorer-btn {
   margin-left: auto;
-}
-
-.refresh-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  transition: background var(--transition-fast);
-}
-
-.refresh-btn:hover {
-  background: var(--hover);
 }
 
 .file-explorer-content {
@@ -101,6 +89,7 @@
 }
 
 .file-node {
+  -webkit-user-select: none;
   user-select: none;
 }
 

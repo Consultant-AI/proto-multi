@@ -21,13 +21,14 @@ class ProjectManager:
     Manages project planning folder structure and documents.
 
     Handles:
-    - Creating ~/Proto/{project}/ folders (in user's home directory)
+    - Creating projects/{project}/ folders (in repo root)
     - Checking for existing projects
     - Saving/loading planning documents
     - Managing knowledge base files
     """
 
-    PLANNING_ROOT = Path.home() / "Proto"
+    # Resolve to {repo_root}/projects - this file is at computer-use-demo/computer_use_demo/planning/project_manager.py
+    PLANNING_ROOT = Path(__file__).resolve().parent.parent.parent.parent / "projects"
 
     def __init__(self, base_path: Path | None = None):
         """
@@ -54,10 +55,10 @@ class ProjectManager:
         Create a new project with standardized folder structure.
 
         Creates:
-        - ~/Proto/{project}/planning/ for planning documents and task management
+        - projects/{project}/planning/ for planning documents and task management
           - planning/materials/ for source materials and references
           - planning/reports/ for generated reports and internal documentation
-        - ~/Proto/{project}/ (root) for the actual project files (code, assets, etc.)
+        - projects/{project}/ (root) for the actual project files (code, assets, etc.)
 
         Additional folders created on-demand:
         - planning/agents/ when specialist plans are added
@@ -339,7 +340,7 @@ class ProjectManager:
         Create tasks in planning/tasks.json from the roadmap document.
 
         Parses the roadmap and creates a hierarchical task structure with friendly IDs.
-        All tasks are stored in ~/Proto/{project}/planning/tasks.json.
+        All tasks are stored in projects/{project}/planning/tasks.json.
 
         Args:
             project_name: Name of the project

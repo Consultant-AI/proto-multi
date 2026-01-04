@@ -132,6 +132,9 @@ class ChatSession:
         # Stop/resume functionality
         self._stop_requested = False
         self._current_task: asyncio.Task | None = None
+        self._heartbeat_thread: Any = None  # Heartbeat thread for long-running API calls
+        self._stop_heartbeat_flag = False
+        self._main_loop: Any = None  # Reference to main event loop for heartbeat
         self._executor_future: Any = None  # Future from ThreadPoolExecutor
 
         # Session persistence
@@ -193,6 +196,12 @@ class ChatSession:
             self._current_agent_name = "CEO Agent"
             self._current_agent_role = "ceo"
 
+        # ✅ Immediately broadcast that agent has started (fixes race condition)
+        await self._broadcast_sse_update()
+
+        # ✅ Start heartbeat to keep connection alive during long API calls
+        self._start_heartbeat()
+
         try:
             self.last_active = datetime.now()
 
@@ -228,6 +237,21 @@ class ChatSession:
                 },
             )
 
+            # ✅ Add "Thinking..." message so user sees feedback during long API calls
+            thinking_message_id = str(uuid.uuid4())
+            self.display_messages.append(
+                DisplayMessage(
+                    id=thinking_message_id,
+                    role="assistant",
+                    label="Thinking",
+                    text="Processing your request...",
+                    agent_name=self._current_agent_name,
+                    agent_role=self._current_agent_role,
+                )
+            )
+            # Broadcast immediately so user sees "Thinking..." message
+            await self._broadcast_sse_update()
+
             def output_callback(block: BetaContentBlockParam):
                 if isinstance(block, dict) and block.get("type") == "text":
                     self._pending_assistant_chunks.append(block.get("text", ""))
@@ -238,6 +262,12 @@ class ChatSession:
                     )
 
             def tool_output_callback(result: ToolResult, tool_id: str, tool_name: str, tool_input: dict[str, Any]):
+                # ✅ Remove "Thinking..." message once actual tool work starts
+                self.display_messages[:] = [
+                    msg for msg in self.display_messages
+                    if not (msg.label == "Thinking" and msg.text == "Processing your request...")
+                ]
+
                 # ✅ Track delegation for agent identity display
                 if tool_name == "delegate_task" and "specialist" in tool_input:
                     specialist_role = tool_input["specialist"]
@@ -467,6 +497,12 @@ class ChatSession:
 
             self.messages = updated_messages
 
+            # ✅ Remove "Thinking..." message now that we have actual content
+            self.display_messages = [
+                msg for msg in self.display_messages
+                if not (msg.label == "Thinking" and msg.text == "Processing your request...")
+            ]
+
             assistant_text = "".join(self._pending_assistant_chunks).strip()
             self._pending_assistant_chunks.clear()
             if assistant_text:
@@ -484,6 +520,9 @@ class ChatSession:
                 )
 
         finally:
+            # ✅ Stop heartbeat first
+            await self._stop_heartbeat()
+
             async with self._lock:
                 self._busy = False
             # Final update when agent finishes - send multiple times to ensure delivery
@@ -516,6 +555,49 @@ class ChatSession:
             if ws in self._ws_connections:
                 self._ws_connections.remove(ws)
 
+    def _heartbeat_worker(self):
+        """Background thread that sends periodic updates while agent is processing."""
+        start_time = datetime.now()
+
+        while self._busy and not self._stop_heartbeat_flag:
+            time.sleep(2)  # Sleep 2 seconds
+            if not self._busy or self._stop_heartbeat_flag:
+                break
+
+            # Update the "Thinking..." message with elapsed time
+            elapsed = int((datetime.now() - start_time).total_seconds())
+            for msg in self.display_messages:
+                if msg.label == "Thinking" and "Processing" in msg.text:
+                    msg.text = f"Processing your request... ({elapsed}s)"
+                    break
+
+            # Schedule broadcast on main event loop (thread-safe)
+            try:
+                if self._main_loop and self._main_loop.is_running():
+                    self._main_loop.call_soon_threadsafe(
+                        lambda: asyncio.create_task(self._broadcast_sse_update())
+                    )
+            except Exception as e:
+                print(f"[Heartbeat] Broadcast error: {e}")  # Debug logging
+
+    def _start_heartbeat(self):
+        """Start the heartbeat in a background thread."""
+        # Store reference to current event loop for use in thread
+        try:
+            self._main_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self._main_loop = asyncio.get_event_loop()
+
+        self._stop_heartbeat_flag = False
+        self._heartbeat_thread = threading.Thread(target=self._heartbeat_worker, daemon=True)
+        self._heartbeat_thread.start()
+        print("[Heartbeat] Started background thread")  # Debug logging
+
+    async def _stop_heartbeat(self):
+        """Stop the heartbeat thread."""
+        self._stop_heartbeat_flag = True
+        # Thread will exit on next iteration
+
     def save(self, sessions_dir: Path) -> None:
         """Save session to disk."""
         session_file = sessions_dir / f"{self.session_id}.pkl"
@@ -532,8 +614,8 @@ class ChatSession:
 
         # Also save as JSON for easy access by agents
         try:
-            # Save to default Proto folder as requested
-            # Use ProjectManager.PLANNING_ROOT (~/Proto)
+            # Save to default projects folder (repo_root/projects)
+            # Use ProjectManager.PLANNING_ROOT
             from .planning import ProjectManager
             proto_root = ProjectManager.PLANNING_ROOT
             log_dir = proto_root / "logs" / "conversations"
@@ -2059,9 +2141,10 @@ async def browse_file(path: str):
 async def pick_folder():
     """Open native macOS file/folder picker dialog and return selected path."""
     import subprocess
+    from .planning import ProjectManager
     try:
         # Get default projects path
-        default_path = str(Path.home() / "Proto")
+        default_path = str(ProjectManager.PLANNING_ROOT)
 
         # Use Python/objc to open NSOpenPanel that allows both files and folders
         script = f'''

@@ -462,7 +462,7 @@ export default function Chat({
               className="input-action-btn"
               title="Add attachment"
             >
-              <Plus size={20} />
+              <Plus size={16} />
             </button>
             <div className="input-dropdown-group">
               <select
@@ -595,16 +595,16 @@ export default function Chat({
               className="mic-btn"
               title="Voice input"
             >
-              <Mic size={18} />
+              <Mic size={16} />
             </button>
             {isStreaming ? (
               <button
                 type="button"
-                className="send-btn"
+                className="send-btn stop"
                 onClick={handleStop}
                 title="Stop"
               >
-                <Square size={18} />
+                <Square size={14} />
               </button>
             ) : (
               <button

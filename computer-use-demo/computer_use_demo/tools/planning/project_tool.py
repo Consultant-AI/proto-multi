@@ -29,7 +29,7 @@ class ProjectTool(BaseAnthropicTool):
             "description": """Manage and discover projects (dual-structure architecture).
 
 Use this tool to:
-- List all existing projects from ~/Proto/
+- List all existing projects from projects/
 - Get details about a specific project
 - Check if a project exists
 - Get project context (tasks, knowledge, planning docs from .proto/planning/)
@@ -45,8 +45,8 @@ Operations:
 - context: Get full project context (planning docs, tasks, knowledge from .proto/planning/)
 
 All projects follow dual-structure:
-- Planning/meta in ~/Proto/{project}/.proto/planning/
-- Actual code in ~/Proto/{project}/
+- Planning/meta in projects/{project}/.proto/planning/
+- Actual code in projects/{project}/
 
 Returns project information to help with decision making.""",
             "input_schema": {

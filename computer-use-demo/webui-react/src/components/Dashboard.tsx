@@ -154,7 +154,15 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
             }
           }
 
-          // If no custom paths, try to add the default Proto path
+          // Migration: Remove old ~/Proto entries (they were moved to projects/)
+          const oldProtoPattern = /\/Proto$/
+          const hadOldEntries = customPaths.some(p => oldProtoPattern.test(p.path))
+          if (hadOldEntries) {
+            customPaths = customPaths.filter(p => !oldProtoPattern.test(p.path))
+            localStorage.setItem('explorer_custom_paths', JSON.stringify(customPaths))
+          }
+
+          // If no custom paths, try to add the default projects path
           if (customPaths.length === 0) {
             try {
               const configRes = await fetch('/api/dashboard/config')
@@ -187,7 +195,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                   }
 
                   const defaultNode: FileNode = {
-                    name: 'Proto Projects',
+                    name: 'Projects',
                     path: defaultPath,
                     type: 'folder',
                     children

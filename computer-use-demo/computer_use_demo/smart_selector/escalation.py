@@ -130,14 +130,14 @@ class AdaptiveExecutor:
                 needs_tools=current.needs_tools,
             )
 
-        if current.model == "sonnet" and current.thinking_budget < 31999:
+        if current.model == "sonnet" and current.thinking_budget < 10000:
             return SelectionResult(
                 model="sonnet",
                 model_id=SONNET_4_5.model_id,
-                thinking_budget=31999,
+                thinking_budget=10000,
                 task_type=current.task_type,
                 phase=current.phase,
-                reasoning="Escalated thinking: → 31999 (max)",
+                reasoning="Escalated thinking: → 10000 (max)",
                 is_mechanical=False,
                 quality_critical=True,
                 needs_tools=current.needs_tools,
@@ -147,7 +147,7 @@ class AdaptiveExecutor:
             return SelectionResult(
                 model="opus",
                 model_id=OPUS_4_5.model_id,
-                thinking_budget=31999,
+                thinking_budget=10000,
                 task_type=current.task_type,
                 phase=current.phase,
                 reasoning="Escalated model: sonnet → opus (max)",
@@ -156,7 +156,7 @@ class AdaptiveExecutor:
                 needs_tools=current.needs_tools,
             )
 
-        # Already at max (opus with 31999) - return unchanged
+        # Already at max (opus with 10000) - return unchanged
         return current
 
     @staticmethod

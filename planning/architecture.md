@@ -1125,7 +1125,7 @@ Humans are called ONLY when legally, physically, or regulatorily impossible for 
 ## Directory Structure
 
 ```
-~/Proto/
+projects/
 └── {project-name}/                    # Example: "saas-company"
     │
     ├── .proto/                        # Planning & Meta (System Management)

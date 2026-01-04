@@ -182,9 +182,9 @@ class SmartSelector:
             task_type = TaskType.UNKNOWN
 
         thinking = classification.get("thinking_budget", 4000)
-        # Validate thinking budget
-        if thinking not in (0, 4000, 10000, 31999):
-            thinking = 4000
+        # Validate thinking budget - max 10000 for faster responses
+        if thinking not in (0, 4000, 10000):
+            thinking = min(thinking, 10000) if thinking > 0 else 4000
 
         return SelectionResult(
             model=model,

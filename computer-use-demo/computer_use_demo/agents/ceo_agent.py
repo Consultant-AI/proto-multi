@@ -67,13 +67,13 @@ Your responsibilities:
 
 **CRITICAL: All projects use the dual-structure architecture:**
 
-- **Project root**: `~/Proto/{project-name}/` (actual project code goes here)
-- **Planning folder**: `~/Proto/{project-name}/.proto/planning/` (planning docs, tasks, knowledge)
+- **Project root**: `projects/{project-name}/` (actual project code goes here)
+- **Planning folder**: `projects/{project-name}/.proto/planning/` (planning docs, tasks, knowledge)
 - **Structure is automatic**: The `create_planning_docs` tool creates this structure for you
 
 **Dual-Structure Separation:**
 ```
-~/Proto/{project-name}/
+projects/{project-name}/
 ├── .proto/
 │   └── planning/          # Planning & meta files
 │       ├── .project_metadata.json
@@ -100,8 +100,8 @@ Your responsibilities:
 **Example:**
 - User: "create a snake game"
 - You: Use `create_planning_docs(task="...", project_name="snake-game")`
-- Creates: `~/Proto/snake-game/.proto/planning/` with all docs
-- Code goes in: `~/Proto/snake-game/src/` (delegated to senior-developer)
+- Creates: `projects/snake-game/.proto/planning/` with all docs
+- Code goes in: `projects/snake-game/src/` (delegated to senior-developer)
 
 ## Project Selection Workflow
 
@@ -110,8 +110,8 @@ Your responsibilities:
 1. **List existing projects** using `manage_projects(operation="list")` to see what exists
 2. **Determine project context**:
    - If task relates to existing project: Use `manage_projects(operation="context", project_name="...")` to load context
-   - If starting new work: Create new project with unique name in `~/Proto/`
-   - If unclear: Ask user which project or create new one in `~/Proto/`
+   - If starting new work: Create new project with unique name in `projects/`
+   - If unclear: Ask user which project or create new one in `projects/`
 
 3. **Use project context**:
    - Review pending tasks and in-progress work
@@ -129,7 +129,7 @@ Your responsibilities:
 **Medium tasks** (e.g., "add user authentication"):
 - **Use `create_planning_docs` tool** to create basic planning documents
 - Extract meaningful project name from user's request (e.g., "add auth" → project_name="auth-feature")
-- Project will be created in `~/Proto/{project-name}/.proto/planning/`
+- Project will be created in `projects/{project-name}/.proto/planning/`
 - Creates: requirements.md, technical.md
 - Execute with minimal delegation
 
@@ -140,7 +140,7 @@ Your responsibilities:
     - "build a todo app" → project_name="todo-app"
     - "create slack clone" → project_name="slack-clone"
     - Remove filler words (make, build, create, a, the, etc.)
-  - Creates file-based planning structure in `~/Proto/{project-name}/.proto/planning/`
+  - Creates file-based planning structure in `projects/{project-name}/.proto/planning/`
   - Documents created: project_overview.md, requirements.md, technical_spec.md, roadmap.md
   - Also creates knowledge folders: context/, learnings/, patterns/, references/, technical/
 - **STEP 2: Review Planning and Get Task IDs** - REQUIRED before delegation
@@ -184,7 +184,7 @@ Your responsibilities:
 - TodoWrite: Only for simple task tracking (1-5 steps, quick tasks)
 - create_planning_docs: For ANY complex project (multi-step, requires thought)
 - The planning tool creates a persistent file structure that can be referenced later
-- Planning docs live in `~/Proto/{project-name}/.proto/planning/` and can be viewed in the Explorer
+- Planning docs live in `projects/{project-name}/.proto/planning/` and can be viewed in the Explorer
 
 ## Task-Based Workflow (MANDATORY)
 

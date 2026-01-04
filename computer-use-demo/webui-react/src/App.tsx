@@ -7,9 +7,9 @@ import './styles/App.css'
 function App() {
   const [viewerVisible, setViewerVisible] = useState(true)
   const [chatVisible, setChatVisible] = useState(true)
-  const [viewerWidth, setViewerWidth] = useState(() => {
-    const saved = localStorage.getItem('viewerWidth')
-    return saved ? parseInt(saved, 10) : window.innerWidth - 420
+  const [chatWidth, setChatWidth] = useState(() => {
+    const saved = localStorage.getItem('chatWidth')
+    return saved ? parseInt(saved, 10) : 420
   })
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
   const [selectedComputer, setSelectedComputer] = useState('local')
@@ -19,10 +19,10 @@ function App() {
     setSelectedAgentId(agentId)
   }
 
-  // Save viewer width to localStorage
+  // Save chat width to localStorage
   useEffect(() => {
-    localStorage.setItem('viewerWidth', viewerWidth.toString())
-  }, [viewerWidth])
+    localStorage.setItem('chatWidth', chatWidth.toString())
+  }, [chatWidth])
 
   // Fetch computers on mount
   useEffect(() => {
@@ -40,12 +40,13 @@ function App() {
     fetchComputers()
   }, [])
 
-  const handleViewerResize = (deltaX: number) => {
-    setViewerWidth(prev => {
-      const newWidth = prev + deltaX
-      // Ensure viewer is at least 300px and leaves at least 200px for chat
-      const maxWidth = window.innerWidth - 200 - 5 // 5px for resizer
-      return Math.max(300, Math.min(maxWidth, newWidth))
+  const handleChatResize = (deltaX: number) => {
+    setChatWidth(prev => {
+      // Dragging right = chat gets smaller (negative delta for chat)
+      const newWidth = prev - deltaX
+      // Ensure chat is at least 280px and leaves at least 300px for viewer
+      const maxWidth = window.innerWidth - 300 - 5 // 5px for resizer
+      return Math.max(280, Math.min(maxWidth, newWidth))
     })
   }
 
@@ -53,7 +54,7 @@ function App() {
     <div className="app">
       {/* Viewer Tabs Panel */}
       {viewerVisible && (
-        <div className={`viewer-panel ${!chatVisible ? 'viewer-expanded' : ''}`} style={chatVisible ? { width: `${viewerWidth}px` } : {}}>
+        <div className={`viewer-panel ${!chatVisible ? 'viewer-expanded' : ''}`}>
           <ViewerTabs
             onClose={chatVisible ? () => setViewerVisible(false) : undefined}
             chatVisible={chatVisible}
@@ -67,13 +68,13 @@ function App() {
       {viewerVisible && chatVisible && (
         <Resizer
           orientation="vertical"
-          onResize={handleViewerResize}
+          onResize={handleChatResize}
         />
       )}
 
       {/* Chat Panel */}
       {chatVisible && (
-        <div className="chat-panel">
+        <div className="chat-panel" style={viewerVisible ? { width: `${chatWidth}px` } : {}}>
           <Chat
             viewerVisible={viewerVisible}
             onToggleViewer={() => setViewerVisible(!viewerVisible)}

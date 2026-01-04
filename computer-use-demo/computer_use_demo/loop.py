@@ -138,26 +138,26 @@ def get_system_prompt():
 </SYSTEM_CAPABILITY>
 
 <DEFAULT_PROJECT_FOLDER>
-**CRITICAL: All user-facing projects must be created in the default Proto folder:**
+**CRITICAL: All user-facing projects must be created in the default projects folder:**
 
-- **Default folder path**: ~/Proto (the Proto folder in the user's home directory)
-- **When creating new projects or folders**: ALWAYS create them in ~/Proto/{{project-name}}/
-- **For user-facing projects** (like "make tetris game", "create todo app", "build calculator"): Create in ~/Proto/{{project-name}}/
+- **Default folder path**: projects/ (in the repo root directory)
+- **When creating new projects or folders**: ALWAYS create them in projects/{{project-name}}/
+- **For user-facing projects** (like "make tetris game", "create todo app", "build calculator"): Create in projects/{{project-name}}/
 - **Never** create projects in random locations like ~/tetris-game, /tmp/tetris, or the current working directory unless explicitly requested
-- **Use absolute paths**: When using bash commands like mkdir or cd, always use the full path: ~/Proto/{{project-name}}
+- **Use absolute paths**: When using bash commands like mkdir or cd, use the projects folder path
 
 **Examples:**
 - User: "make tetris game project"
-- You: Create it in ~/Proto/tetris-game/ (NOT ~/tetris-game/ or /tmp/tetris)
-- Correct command: mkdir -p ~/Proto/tetris-game && cd ~/Proto/tetris-game
+- You: Create it in projects/tetris-game/ (NOT ~/tetris-game/ or /tmp/tetris)
+- Correct command: mkdir -p projects/tetris-game && cd projects/tetris-game
 - Wrong commands: mkdir -p ~/tetris-game OR mkdir -p /tmp/tetris OR mkdir -p tetris-game
 
-**When to use ~/Proto:**
+**When to use projects/:**
 - ANY time the user asks you to create a new project, game, app, or website
 - When building something user-facing that they will want to find later
 - Unless the user explicitly specifies a different location
 
-**When NOT to use ~/Proto:**
+**When NOT to use projects/:**
 - Temporary files or test files
 - System configuration files
 - When user explicitly specifies a different path
@@ -384,18 +384,18 @@ Your responsibilities:
 
 ## Default Project Folder
 
-**CRITICAL: All projects must be created in the default Proto folder:**
+**CRITICAL: All projects must be created in the default projects folder:**
 
-- **Default folder path**: `~/Proto` (the Proto folder in the user's home directory)
-- **When creating new projects or folders**: ALWAYS create them in `~/Proto/{project-name}/`
-- **For user-facing projects** (like "make snake game", "create todo app"): Create in `~/Proto/{project-name}/`
+- **Default folder path**: `projects/` (in the repo root directory)
+- **When creating new projects or folders**: ALWAYS create them in `projects/{project-name}/`
+- **For user-facing projects** (like "make snake game", "create todo app"): Create in `projects/{project-name}/`
 - **Never** create projects in random locations like `~/snake-game` or the current working directory unless explicitly requested
-- **Use absolute paths**: When using bash commands like `mkdir` or `cd`, always use the full path: `~/Proto/{project-name}` or `/Users/$(whoami)/Proto/{project-name}`
+- **Use the projects folder path**: When using bash commands like `mkdir` or `cd`, use the projects folder
 
 **Example:**
 - User: "make snake game project"
-- You: Create it in `~/Proto/snake-game/` (NOT `~/snake-game/` or `/tmp/snake-game`)
-- Correct command: `mkdir -p ~/Proto/snake-game && cd ~/Proto/snake-game`
+- You: Create it in `projects/snake-game/` (NOT `~/snake-game/` or `/tmp/snake-game`)
+- Correct command: `mkdir -p projects/snake-game && cd projects/snake-game`
 - Wrong command: `mkdir -p ~/snake-game` or `mkdir -p snake-game`
 
 ## Project Selection Workflow
@@ -405,8 +405,8 @@ Your responsibilities:
 1. **List existing projects** using `manage_projects(operation="list")` to see what exists
 2. **Determine project context**:
    - If task relates to existing project: Use `manage_projects(operation="context", project_name="...")` to load context
-   - If starting new work: Create new project with unique name in `~/Proto/`
-   - If unclear: Ask user which project or create new one in `~/Proto/`
+   - If starting new work: Create new project with unique name in `projects/`
+   - If unclear: Ask user which project or create new one in `projects/`
 
 3. **Use project context**:
    - Review pending tasks and in-progress work
@@ -423,14 +423,14 @@ Your responsibilities:
 
 **Medium tasks** (e.g., "add user authentication"):
 - **Use `create_planning_docs` tool** to create basic planning documents
-- Project will be created in `~/Proto/{project-name}/planning/`
+- Project will be created in `projects/{project-name}/planning/`
 - Creates: requirements.md, technical.md, **TASKS.md** (contains all tasks)
 - Execute with minimal delegation
 - **Track progress in TASKS.md using `manage_tasks` tool** (NOT TodoWrite!)
 
 **Complex tasks** (e.g., "build a dashboard", "create a SaaS product", "make Instagram clone"):
 - **STEP 1**: Use `create_planning_docs` tool first (REQUIRED!)
-  - Creates planning structure in `~/Proto/{project-name}/planning/`
+  - Creates planning structure in `projects/{project-name}/planning/`
   - Generates: project_overview.md, requirements.md, technical_spec.md, roadmap.md, **TASKS.md**
   - Planning tool will tell you which specialist to delegate to
 - **STEP 2**: Read the planning tool output - it includes "NEXT STEPS" with delegation guidance
@@ -668,6 +668,10 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
 
                 try:
                     # Define the API call function for retry
+                    import time as time_module
+                    api_start_time = time_module.time()
+                    print(f"[API] Starting Anthropic API call (model={effective_model}, max_tokens={effective_max_tokens})...")
+
                     def make_api_call():
                         return client.beta.messages.with_raw_response.create(
                             max_tokens=effective_max_tokens,
@@ -685,6 +689,9 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
                         config=RETRY_API_CONFIG,
                     )
 
+                    api_elapsed = time_module.time() - api_start_time
+                    print(f"[API] API call completed in {api_elapsed:.1f}s")
+
                     # Record success
                     circuit_breaker.record_success()
 
@@ -693,6 +700,10 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
                     raise
             else:
                 # Fallback: direct API call without reliability
+                import time as time_module
+                api_start_time = time_module.time()
+                print(f"[API] Starting Anthropic API call (model={effective_model}, max_tokens={effective_max_tokens})...")
+
                 raw_response = client.beta.messages.with_raw_response.create(
                     max_tokens=effective_max_tokens,
                     messages=messages,
@@ -702,6 +713,9 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
                     betas=betas,
                     extra_body=extra_body,
                 )
+
+                api_elapsed = time_module.time() - api_start_time
+                print(f"[API] API call completed in {api_elapsed:.1f}s")
         except CircuitOpenError as e:
             # Circuit breaker is open - return error but don't retry
             api_response_callback(None, None, e)

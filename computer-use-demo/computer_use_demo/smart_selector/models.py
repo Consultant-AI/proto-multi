@@ -210,11 +210,11 @@ TASK_TYPE_THINKING = {
     TaskType.REFACTOR: 4000,
     TaskType.DEBUGGING: 10000,  # Debugging needs more
 
-    # Strategic - maximum thinking
+    # Strategic - moderate thinking (reduced from 31999 for faster responses)
     TaskType.PLANNING: 10000,
-    TaskType.ARCHITECTURE: 31999,
+    TaskType.ARCHITECTURE: 10000,  # Was 31999, too slow
     TaskType.DESIGN: 10000,
-    TaskType.STRATEGY: 31999,
+    TaskType.STRATEGY: 10000,  # Was 31999, too slow
     TaskType.REVIEW: 10000,
 
     # Unknown - moderate thinking

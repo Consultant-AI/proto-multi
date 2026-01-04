@@ -94,21 +94,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
         // Ignore config failure
       }
 
-      // Fallback: Try to resolve using relative path based on known structure
-      if (!defaultPath) {
-        try {
-          const response = await fetch('/api/browse/folder?path=../../../../Proto')
-          if (response.ok) {
-            const data = await response.json()
-            if (data.path) {
-              defaultPath = data.path
-            }
-          }
-        } catch (e) {
-          console.error('Failed to resolve default path fallback:', e)
-        }
-      }
-
+      // Config endpoint should always return the default path
       if (!defaultPath) return
 
       // Check if already in customPaths (re-read from storage to be safe)
@@ -120,13 +106,21 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
         } catch { }
       }
 
+      // Migration: Remove old ~/Proto entries (they were moved to projects/)
+      const oldProtoPattern = /\/Proto$/
+      const hadOldEntries = currentPaths.some(p => oldProtoPattern.test(p.path))
+      if (hadOldEntries) {
+        currentPaths = currentPaths.filter(p => !oldProtoPattern.test(p.path))
+        localStorage.setItem('explorer_custom_paths', JSON.stringify(currentPaths))
+      }
+
       // If default path is not in the list, add it
       const exists = currentPaths.some(p => p.path === defaultPath)
 
       // Also check if we already have it in state (to avoid double render issues)
       if (!exists) {
         const newNode: FileNode = {
-          name: 'Proto Projects', // Friendly name
+          name: 'Projects', // Friendly name
           path: defaultPath,
           type: 'folder',
           children: []
@@ -412,7 +406,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
             <File size={16} />
           </button>
           <button
-            className="refresh-btn"
+            className="explorer-refresh-btn"
             onClick={async () => {
               setLoading(true)
               await loadProjects()

@@ -7,7 +7,7 @@
 - ✅ Session management and persistence working
 - ✅ Tool execution display improved
 - ✅ File Explorer with refresh functionality
-- ✅ Default project folder configured (~/Proto)
+- ✅ Default project folder configured (projects/)
 - ✅ CEO Agent using file-based planning system
 
 ### ✅ Completed Features
@@ -20,7 +20,7 @@
 - Persistent storage architecture (.proto/ folder structure)
 - Git integration for audit trail
 - Training & verification systems (7 test suites, FeedbackLoop)
-- Fixed CEO agent to create projects in ~/Proto folder
+- Fixed CEO agent to create projects in projects/ folder
 - Implemented conversation history system with session switching
 - Updated tool messages for better readability
 - Fixed serialization errors in session management

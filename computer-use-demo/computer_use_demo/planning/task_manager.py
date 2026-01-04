@@ -4,7 +4,7 @@ Task Management System for Project Tracking.
 This module provides task management capabilities for projects, enabling
 agents to create, track, update, and complete tasks throughout project execution.
 
-Tasks are stored in ~/Proto/{project}/planning/tasks.json as the single source of truth.
+Tasks are stored in projects/{project}/planning/tasks.json as the single source of truth.
 """
 
 import json
@@ -254,7 +254,7 @@ class TaskManager:
         Initialize task manager for a project.
 
         Args:
-            project_path: Path to project PLANNING directory (already points to ~/Proto/{project}/planning/)
+            project_path: Path to project PLANNING directory (already points to projects/{project}/planning/)
         """
         self.project_path = Path(project_path)
         self.tasks_file = self.project_path / "tasks.json"

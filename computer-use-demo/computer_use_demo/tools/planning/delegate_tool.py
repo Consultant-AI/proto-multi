@@ -420,7 +420,7 @@ Returns the specialist's output and execution details.""",
             enhanced_parts.append("PROJECT CONTEXT")
             enhanced_parts.append("="*60)
             enhanced_parts.append(f"\n**Project Name:** {project_name}")
-            enhanced_parts.append(f"**Planning Path:** ~/Proto/{project_name}/planning/")
+            enhanced_parts.append(f"**Planning Path:** projects/{project_name}/planning/")
             enhanced_parts.append(f"**Created:** {metadata.get('created_at', 'Unknown')}")
             enhanced_parts.append("")
 

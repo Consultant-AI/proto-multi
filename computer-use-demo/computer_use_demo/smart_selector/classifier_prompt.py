@@ -47,11 +47,10 @@ DECISION FRAMEWORK - Analyze the ACTUAL TASK CONTENT:
 THINKING BUDGET GUIDE:
 - 0: Mechanical tasks, no reasoning needed
 - 4000: Simple implementation, following clear instructions
-- 10000: Complex implementation, debugging, multi-step tasks
-- 31999: Architecture, strategy, ambiguous requirements, deep analysis
+- 10000: Complex tasks, architecture, strategy, planning, debugging (MAX)
 
 Return ONLY valid JSON (no markdown, no explanation):
-{{"model": "haiku|sonnet|opus", "thinking_budget": 0|4000|10000|31999, "task_type": "file_read|file_search|list_files|format_code|run_command|simple_code|feature_implementation|bug_fix|refactor|debugging|planning|architecture|design|strategy|review|unknown", "is_mechanical": true|false, "quality_critical": true|false, "needs_tools": true|false, "reasoning": "brief explanation of why this model/budget based on task content"}}"""
+{{"model": "haiku|sonnet|opus", "thinking_budget": 0|4000|10000, "task_type": "file_read|file_search|list_files|format_code|run_command|simple_code|feature_implementation|bug_fix|refactor|debugging|planning|architecture|design|strategy|review|unknown", "is_mechanical": true|false, "quality_critical": true|false, "needs_tools": true|false, "reasoning": "brief explanation of why this model/budget based on task content"}}"""
 
 
 # Quick classifier for obvious mechanical tasks (uses less tokens)
@@ -63,7 +62,7 @@ MECHANICAL = file read, search, list, format, run simple command (result would b
 INTELLIGENCE = any judgment, coding, planning, debugging, design, ambiguity (result would differ)
 
 Return ONLY valid JSON:
-{{"model": "haiku|sonnet|opus", "thinking_budget": 0|4000|10000|31999, "is_mechanical": true|false, "reasoning": "brief"}}"""
+{{"model": "haiku|sonnet|opus", "thinking_budget": 0|4000|10000, "is_mechanical": true|false, "reasoning": "brief"}}"""
 
 
 # Fallback - when classifier fails, use safe defaults (Sonnet = safe middle ground)

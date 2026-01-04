@@ -40,6 +40,7 @@ coverage.xml
 .proto_todos.json
 .computer-use-cli/
 logs/
+projects/
 *.sqlite
 *.db
 

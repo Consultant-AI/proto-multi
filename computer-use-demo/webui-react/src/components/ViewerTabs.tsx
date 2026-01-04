@@ -408,6 +408,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
                 selectedPath={selectedPath}
                 explorerVisible={explorerVisible}
                 onToggleExplorer={() => setExplorerVisible(!explorerVisible)}
+                isDarkTheme={isDarkTheme}
               />
             </div>
           </div>

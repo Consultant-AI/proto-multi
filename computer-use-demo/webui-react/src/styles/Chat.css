@@ -371,13 +371,13 @@
 }
 
 .input-action-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 400;
   cursor: pointer;
   display: flex;
@@ -594,13 +594,13 @@ button.input-dropdown {
 }
 
 .mic-btn {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -608,7 +608,7 @@ button.input-dropdown {
   transition: all 0.15s ease;
   flex-shrink: 0;
   margin-left: auto;
-  margin-right: -20px;
+  margin-right: -8px;
 }
 
 .mic-btn:hover {
@@ -638,6 +638,13 @@ button.input-dropdown {
   height: 14px;
   margin-left: -2px;
   margin-top: 1px;
+}
+
+.send-btn.stop svg {
+  width: 12px;
+  height: 12px;
+  margin-left: 0;
+  margin-top: 0;
 }
 
 .send-btn:hover:not(:disabled) {
