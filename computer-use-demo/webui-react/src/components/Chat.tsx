@@ -345,7 +345,8 @@ export default function Chat({
               type="button"
               className="toggle-viewer-btn"
               onClick={onToggleViewer}
-              title="Show Viewer"
+              data-tooltip="Show Viewer"
+              aria-label="Show Viewer"
             >
               <PanelLeftOpen size={18} />
             </button>
@@ -364,7 +365,8 @@ export default function Chat({
           <button
             type="button"
             className="new-chat-btn"
-            title="New Chat"
+            data-tooltip="New Chat"
+            aria-label="New Chat"
             onClick={handleNewConversation}
           >
             <Plus size={18} />
@@ -373,7 +375,8 @@ export default function Chat({
             <button
               type="button"
               className="hide-chat-btn"
-              title="Hide Chat"
+              data-tooltip="Hide Chat"
+              aria-label="Hide Chat"
               onClick={onHideChat}
             >
               <X size={18} />
@@ -460,7 +463,8 @@ export default function Chat({
             <button
               type="button"
               className="input-action-btn"
-              title="Add attachment"
+              data-tooltip="Add attachment"
+              aria-label="Add attachment"
             >
               <Plus size={16} />
             </button>
@@ -490,6 +494,7 @@ export default function Chat({
                   type="button"
                   className="input-dropdown tools-dropdown-button"
                   onClick={() => setToolsDropdownOpen(!toolsDropdownOpen)}
+                  aria-label="Select tools"
                 >
                   Tools ({selectedTools.length})
                 </button>
@@ -547,7 +552,7 @@ export default function Chat({
                           onChange={() => toggleTool('drive')}
                         />
                         <span>Google Drive</span>
-                        <button className="tool-configure-btn">Configure</button>
+                        <button className="tool-configure-btn" aria-label="Configure integration">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -556,7 +561,7 @@ export default function Chat({
                           onChange={() => toggleTool('notion')}
                         />
                         <span>Notion</span>
-                        <button className="tool-configure-btn">Configure</button>
+                        <button className="tool-configure-btn" aria-label="Configure integration">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -565,7 +570,7 @@ export default function Chat({
                           onChange={() => toggleTool('calendar')}
                         />
                         <span>Calendar</span>
-                        <button className="tool-configure-btn">Configure</button>
+                        <button className="tool-configure-btn" aria-label="Configure integration">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -574,7 +579,7 @@ export default function Chat({
                           onChange={() => toggleTool('gmail')}
                         />
                         <span>Gmail</span>
-                        <button className="tool-configure-btn">Configure</button>
+                        <button className="tool-configure-btn" aria-label="Configure integration">Configure</button>
                       </label>
                       <label className="tool-option">
                         <input
@@ -583,7 +588,7 @@ export default function Chat({
                           onChange={() => toggleTool('mcp')}
                         />
                         <span>Custom MCP</span>
-                        <button className="tool-configure-btn">Configure</button>
+                        <button className="tool-configure-btn" aria-label="Configure integration">Configure</button>
                       </label>
                     </div>
                   </div>
@@ -593,7 +598,8 @@ export default function Chat({
             <button
               type="button"
               className="mic-btn"
-              title="Voice input"
+              data-tooltip="Voice input"
+              aria-label="Voice input"
             >
               <Mic size={16} />
             </button>
@@ -602,7 +608,8 @@ export default function Chat({
                 type="button"
                 className="send-btn stop"
                 onClick={handleStop}
-                title="Stop"
+                data-tooltip="Stop"
+                aria-label="Stop"
               >
                 <Square size={14} />
               </button>
@@ -612,6 +619,8 @@ export default function Chat({
                 className="send-btn"
                 onClick={handleSend}
                 disabled={!input.trim()}
+                data-tooltip="Send message"
+                aria-label="Send message"
               >
                 <Send size={18} />
               </button>

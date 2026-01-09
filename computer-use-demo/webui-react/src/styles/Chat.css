@@ -662,6 +662,10 @@ button.input-dropdown {
   color: white;
 }
 
+.light-theme .send-btn:disabled {
+  color: var(--text-secondary);
+}
+
 /* Loading indicator */
 .loading-indicator {
   display: flex;

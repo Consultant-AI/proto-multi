@@ -453,7 +453,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                   <div className="card-title">{page.title}</div>
                   <div className="card-subtitle">{page.url}</div>
                 </div>
-                <button className="card-close">×</button>
+                <button className="card-close" data-tooltip="Remove from recent" aria-label="Remove from recent">×</button>
               </div>
             ))}
             <div className="resource-card new-resource dashed">
@@ -525,7 +525,8 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                           <button
                             type="button"
                             className="menu-btn"
-                            title="Instance actions"
+                            data-tooltip="Instance actions"
+                            aria-label="Instance actions"
                             onClick={(e) => {
                               e.stopPropagation()
                               setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)
@@ -539,6 +540,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                                 type="button"
                                 onClick={() => handleStopInstance(instance.id)}
                                 disabled={actionLoading === instance.id}
+                                aria-label="Pause instance"
                               >
                                 <Pause size={14} /> Pause
                               </button>
@@ -547,6 +549,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                                 className="delete-action"
                                 onClick={() => handleDeleteInstance(instance.id, instance.name)}
                                 disabled={actionLoading === instance.id}
+                                aria-label="Delete instance"
                               >
                                 <Trash2 size={14} /> Delete
                               </button>
@@ -581,6 +584,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                         className="action-btn resume"
                         onClick={() => handleStartInstance(instance.id)}
                         disabled={actionLoading === instance.id}
+                        aria-label="Start instance"
                       >
                         <Power size={14} /> {actionLoading === instance.id ? 'Starting...' : 'Resume'}
                       </button>
@@ -589,6 +593,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                         className="action-btn delete"
                         onClick={() => handleDeleteInstance(instance.id, instance.name)}
                         disabled={actionLoading === instance.id}
+                        aria-label="Delete instance"
                       >
                         <Trash2 size={14} /> Delete
                       </button>
@@ -637,7 +642,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                     {terminal.preview}
                   </div>
                 </div>
-                <button className="card-external">⧉</button>
+                <button className="card-external" data-tooltip="Open in new window" aria-label="Open in new window">⧉</button>
               </div>
             ))}
             <div className="resource-card new-resource">

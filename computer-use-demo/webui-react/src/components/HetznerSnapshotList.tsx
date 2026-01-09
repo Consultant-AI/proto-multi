@@ -100,7 +100,8 @@ export default function HetznerSnapshotList({ snapshots, onRefresh }: Props) {
                 onClick={() => handleClone(snapshot.id)}
                 disabled={loading === snapshot.id}
                 className="action-btn clone-btn"
-                title="Clone from snapshot"
+                data-tooltip="Clone from snapshot"
+                aria-label="Clone from snapshot"
               >
                 <Copy size={16} />
               </button>
@@ -108,7 +109,8 @@ export default function HetznerSnapshotList({ snapshots, onRefresh }: Props) {
                 onClick={() => handleDelete(snapshot.id, snapshot.description)}
                 disabled={loading === snapshot.id}
                 className="action-btn delete-btn"
-                title="Delete snapshot"
+                data-tooltip="Delete snapshot"
+                aria-label="Delete snapshot"
               >
                 <Trash2 size={16} />
               </button>

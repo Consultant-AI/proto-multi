@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Folder, File, FileText, PanelLeft, Eye, Code } from 'lucide-react'
+import { Folder, File, FileText, PanelLeft, ExternalLink, Eye, Pencil } from 'lucide-react'
 import { Task } from '../types'
 import TaskViewer from './TaskViewer'
 import '../styles/FileViewer.css'
@@ -20,227 +20,45 @@ interface FolderContents {
 // File types that can be rendered in browser (v2)
 const RENDERABLE_EXTENSIONS = ['.html', '.htm', '.md', '.markdown']
 
+// Binary file types that should NOT be edited (everything else is editable)
+const BINARY_EXTENSIONS = [
+  // Images
+  '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.webp', '.avif', '.tiff', '.psd',
+  // Audio/Video
+  '.mp3', '.mp4', '.wav', '.ogg', '.webm', '.avi', '.mov', '.mkv', '.flac', '.aac', '.m4a',
+  // Documents
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.ods', '.odp',
+  // Archives
+  '.zip', '.tar', '.gz', '.rar', '.7z', '.bz2', '.xz', '.dmg', '.iso',
+  // Executables/Libraries
+  '.exe', '.dll', '.so', '.dylib', '.bin', '.app', '.msi',
+  // Fonts
+  '.ttf', '.otf', '.woff', '.woff2', '.eot',
+  // Database/Compiled
+  '.sqlite', '.db', '.pyc', '.pyo', '.class', '.o', '.obj', '.a', '.lib',
+  // Other binary
+  '.dat', '.lock', '.DS_Store'
+]
+
 // Check if file can be rendered
 const isRenderableFile = (path: string): boolean => {
   const lower = path.toLowerCase()
   return RENDERABLE_EXTENSIONS.some(ext => lower.endsWith(ext))
 }
 
+// Check if file can be edited (anything that's not binary)
+const isEditableFile = (path: string): boolean => {
+  const lower = path.toLowerCase()
+  // If it has no extension or is not a binary type, it's editable
+  const lastDot = lower.lastIndexOf('.')
+  if (lastDot === -1) return true // No extension, assume text
+  return !BINARY_EXTENSIONS.some(ext => lower.endsWith(ext))
+}
+
 // Check if it's a markdown file
 const isMarkdownFile = (path: string): boolean => {
   const lower = path.toLowerCase()
   return lower.endsWith('.md') || lower.endsWith('.markdown')
-}
-
-// Check if it's an HTML file
-const isHtmlFile = (path: string): boolean => {
-  const lower = path.toLowerCase()
-  return lower.endsWith('.html') || lower.endsWith('.htm')
-}
-
-// Get theme colors
-const getThemeColors = (isDark: boolean) => isDark ? {
-  bg: '#0d1117',
-  text: '#c9d1d9',
-  heading: '#f0f6fc',
-  code: '#21262d',
-  link: '#58a6ff'
-} : {
-  bg: '#ffffff',
-  text: '#1f2328',
-  heading: '#1f2328',
-  code: '#f6f8fa',
-  link: '#0969da'
-}
-
-// Wrap HTML content with theme-aware styles
-const wrapHtmlWithTheme = (html: string, isDark: boolean): string => {
-  const colors = getThemeColors(isDark)
-
-  // Check if HTML already has a complete structure
-  const hasHtmlTag = /<html/i.test(html)
-  const hasBodyTag = /<body/i.test(html)
-
-  // More comprehensive theme overrides for all elements
-  const cardBg = isDark ? '#161b22' : '#f6f8fa'
-  const cardBorder = isDark ? '#30363d' : '#d0d7de'
-  const inputBg = isDark ? '#0d1117' : '#ffffff'
-
-  const themeStyles = `
-    <style data-theme-inject="true">
-      /* Base overrides */
-      html, body {
-        background: ${colors.bg} !important;
-        color: ${colors.text} !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        line-height: 1.6;
-      }
-      body {
-        padding: 20px;
-      }
-
-      /* Text elements */
-      a { color: ${colors.link} !important; }
-      h1, h2, h3, h4, h5, h6 { color: ${colors.heading} !important; }
-      p, span, div, li, td, th, label { color: ${colors.text} !important; }
-
-      /* Code blocks */
-      pre, code {
-        background: ${colors.code} !important;
-        color: ${colors.text} !important;
-      }
-
-      /* Override ALL divs, sections, articles - force theme background */
-      div, section, article, aside, main, header, footer, nav {
-        background-color: transparent !important;
-      }
-
-      /* Cards, panels, columns - common component patterns */
-      [class*="card"], [class*="Card"],
-      [class*="panel"], [class*="Panel"],
-      [class*="column"], [class*="Column"],
-      [class*="item"], [class*="Item"],
-      [class*="box"], [class*="Box"],
-      [class*="tile"], [class*="Tile"],
-      [class*="block"], [class*="Block"],
-      [class*="container"], [class*="Container"],
-      [class*="wrapper"], [class*="Wrapper"],
-      [class*="section"], [class*="Section"],
-      [class*="header"], [class*="Header"],
-      [class*="footer"], [class*="Footer"],
-      [class*="list"], [class*="List"],
-      [class*="board"], [class*="Board"],
-      [class*="lane"], [class*="Lane"],
-      [class*="task"], [class*="Task"],
-      [class*="todo"], [class*="Todo"],
-      [class*="kanban"], [class*="Kanban"] {
-        background-color: ${cardBg} !important;
-        border-color: ${cardBorder} !important;
-        color: ${colors.text} !important;
-      }
-
-      /* Specific board.html classes - use background shorthand to override */
-      .kanban-board {
-        background: ${colors.bg} !important;
-      }
-      .kanban-column,
-      .column-header,
-      .column-tasks,
-      .header,
-      .header-stats,
-      .view-toggle {
-        background: ${cardBg} !important;
-        border-color: ${cardBorder} !important;
-        color: ${colors.text} !important;
-      }
-      .column-count,
-      .view-btn,
-      .stat,
-      .tag,
-      .agent-badge {
-        background: ${isDark ? '#30363d' : '#e1e4e8'} !important;
-        color: ${colors.text} !important;
-      }
-      .task-card {
-        background: ${colors.bg} !important;
-        border-color: ${cardBorder} !important;
-        color: ${colors.text} !important;
-      }
-      .task-title {
-        color: ${colors.heading} !important;
-        background: transparent !important;
-      }
-      .task-description,
-      .task-meta {
-        color: ${isDark ? '#8b949e' : '#57606a'} !important;
-        background: transparent !important;
-      }
-
-      /* Keep priority badges colorful */
-      .priority-low { background: #238636 !important; color: #fff !important; }
-      .priority-medium { background: #1f6feb !important; color: #fff !important; }
-      .priority-high { background: #d29922 !important; color: ${isDark ? '#000' : '#000'} !important; }
-      .priority-critical { background: #f85149 !important; color: #fff !important; }
-
-      /* Status colors */
-      .view-btn.active {
-        background: #238636 !important;
-        color: #fff !important;
-      }
-
-      /* Nested content should be transparent */
-      [class*="card"] > div,
-      [class*="Card"] > div,
-      [class*="column"] > div,
-      [class*="Column"] > div {
-        background-color: transparent !important;
-      }
-
-      /* Form elements */
-      input, textarea, select, button {
-        background-color: ${inputBg} !important;
-        color: ${colors.text} !important;
-        border-color: ${cardBorder} !important;
-      }
-
-      button {
-        background-color: ${cardBg} !important;
-      }
-
-      button:hover {
-        background-color: ${isDark ? '#21262d' : '#eaeef2'} !important;
-      }
-
-      /* Tables */
-      table, tr, td, th {
-        background-color: transparent !important;
-        border-color: ${cardBorder} !important;
-        color: ${colors.text} !important;
-      }
-
-      th {
-        background-color: ${cardBg} !important;
-      }
-
-      /* Override inline background styles - use [style] attribute selector */
-      [style*="background"] {
-        background-color: ${cardBg} !important;
-      }
-
-      /* But keep body background */
-      body[style*="background"], html[style*="background"] {
-        background-color: ${colors.bg} !important;
-      }
-    </style>
-  `
-
-  // Inject at BOTH end of head AND end of body for maximum override
-  let result = html
-
-  if (hasHtmlTag) {
-    // Inject styles at END of head (before </head>) to override page styles
-    if (/<\/head>/i.test(result)) {
-      result = result.replace(/<\/head>/i, `${themeStyles}</head>`)
-    } else if (/<head/i.test(result)) {
-      // Has <head> but no </head>, inject after <head>
-      result = result.replace(/<head([^>]*)>/i, `<head$1>${themeStyles}`)
-    } else {
-      result = result.replace(/<html([^>]*)>/i, `<html$1><head>${themeStyles}</head>`)
-    }
-
-    // Also inject at end of body for double coverage
-    if (/<\/body>/i.test(result)) {
-      result = result.replace(/<\/body>/i, `${themeStyles}</body>`)
-    }
-
-    return result
-  } else if (hasBodyTag) {
-    // Wrap with html/head and inject styles
-    return `<html><head>${themeStyles}</head>${html.replace(/<\/body>/i, `${themeStyles}</body>`)}</html>`
-  } else {
-    // No structure, wrap completely
-    return `<html><head>${themeStyles}</head><body>${html}${themeStyles}</body></html>`
-  }
 }
 
 // Simple markdown to HTML converter (theme-aware)
@@ -298,6 +116,12 @@ const markdownToHtml = (md: string, isDark: boolean = true): string => {
         pre { background: ${colors.code}; padding: 16px; border-radius: 8px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
         a { color: ${colors.link}; }
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: ${isDark ? '#21262d' : '#f0f0f0'}; }
+        ::-webkit-scrollbar-thumb { background: ${isDark ? '#484f58' : '#c1c1c1'}; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${isDark ? '#6e7681' : '#a1a1a1'}; }
+        * { scrollbar-width: thin; scrollbar-color: ${isDark ? '#484f58 #21262d' : '#c1c1c1 #f0f0f0'}; }
         li { margin: 4px 0; }
       </style>
     </head>
@@ -320,8 +144,8 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
   // Sync currentPath with selectedPath from parent
   useEffect(() => {
     setCurrentPath(selectedPath)
-    setIsEditing(false) // Reset editing when path changes
-    setViewMode('view') // Reset to view mode for new files
+    setIsEditing(false)
+    setViewMode('view')
   }, [selectedPath])
 
   useEffect(() => {
@@ -333,6 +157,16 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
 
     loadPathContents()
   }, [currentPath])
+
+  // Send theme to iframe when theme changes
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        { type: 'theme-change', theme: isDarkTheme ? 'dark' : 'light' },
+        '*'
+      )
+    }
+  }, [isDarkTheme, fileContent])
 
   const loadPathContents = async () => {
     if (!currentPath) return
@@ -470,9 +304,17 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
     }
   }
 
-  const handleEdit = () => {
-    setEditedContent(fileContent || '')
-    setIsEditing(true)
+  const handleToggleEditMode = () => {
+    if (viewMode === 'view') {
+      // Switch to edit mode
+      setEditedContent(fileContent || '')
+      setViewMode('edit')
+      setIsEditing(true)
+    } else {
+      // Switch back to view mode (discard changes)
+      setViewMode('view')
+      setIsEditing(false)
+    }
   }
 
   const handleSave = async () => {
@@ -486,6 +328,7 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
       })
       if (response.ok) {
         setFileContent(editedContent)
+        setViewMode('view')
         setIsEditing(false)
       } else {
         const error = await response.json()
@@ -497,10 +340,6 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleCancel = () => {
-    setIsEditing(false)
   }
 
   if (!currentPath) {
@@ -527,45 +366,53 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
             <button
               className="show-explorer-title-btn"
               onClick={onToggleExplorer}
-              title="Show Explorer"
+              data-tooltip="Show Explorer"
+              aria-label="Show Explorer"
             >
               <PanelLeft size={16} />
             </button>
           )}
           <div className="file-viewer-title-text">
             <h2>{currentPath.split('/').pop()}</h2>
-            <div className="file-viewer-path">{currentPath}</div>
           </div>
         </div>
         <div className="file-viewer-actions">
-          {/* View/Edit toggle for renderable files */}
-          {fileContent && currentPath && isRenderableFile(currentPath) && !isEditing && (
-            <div className="view-mode-toggle">
-              <button
-                className={`toggle-btn ${viewMode === 'view' ? 'active' : ''}`}
-                onClick={() => setViewMode('view')}
-                title="View rendered"
-              >
-                <Eye size={14} />
-                View
-              </button>
-              <button
-                className={`toggle-btn ${viewMode === 'edit' ? 'active' : ''}`}
-                onClick={() => setViewMode('edit')}
-                title="View source"
-              >
-                <Code size={14} />
-                Code
-              </button>
-            </div>
-          )}
-          {!isEditing && fileContent && viewMode === 'edit' && (
-            <button className="edit-btn" onClick={handleEdit}>
-              Edit
+          {/* For renderable files: toggle between View and Edit */}
+          {fileContent && currentPath && isRenderableFile(currentPath) && (
+            <button
+              className="toggle-mode-btn"
+              onClick={handleToggleEditMode}
+              data-tooltip={viewMode === 'view' ? 'Edit file' : 'View rendered'}
+              aria-label={viewMode === 'view' ? 'Edit file' : 'View rendered'}
+            >
+              {viewMode === 'view' ? <Pencil size={16} /> : <Eye size={16} />}
             </button>
           )}
-          <button className="open-btn" onClick={handleOpen} title="Open in Finder">
-            Open
+          {/* For non-renderable but editable files: show Edit button when not editing */}
+          {fileContent && currentPath && !isRenderableFile(currentPath) && isEditableFile(currentPath) && !isEditing && (
+            <button
+              className="toggle-mode-btn"
+              onClick={handleToggleEditMode}
+              data-tooltip="Edit file"
+              aria-label="Edit file"
+            >
+              <Pencil size={16} />
+            </button>
+          )}
+          {/* Show Save button when editing */}
+          {isEditing && (
+            <button type="button" className="save-btn" onClick={handleSave} disabled={loading}>
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+          )}
+          {/* Show Cancel button when editing non-renderable files */}
+          {isEditing && currentPath && !isRenderableFile(currentPath) && (
+            <button type="button" className="cancel-btn" onClick={() => { setIsEditing(false); setViewMode('view') }}>
+              Cancel
+            </button>
+          )}
+          <button className="open-btn icon-only" onClick={handleOpen} data-tooltip="Open in Finder" aria-label="Open in Finder">
+            <ExternalLink size={16} />
           </button>
         </div>
       </div>
@@ -578,23 +425,14 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
         ) : fileContent ? (
           <div className="file-content">
             {isEditing ? (
-              <div className="editor-container">
-                <textarea
-                  className="file-editor"
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  spellCheck={false}
-                />
-                <div className="editor-actions">
-                  <button className="save-btn" onClick={handleSave} disabled={loading}>
-                    {loading ? 'Saving...' : 'Save'}
-                  </button>
-                  <button className="cancel-btn" onClick={handleCancel} disabled={loading}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : currentPath && isRenderableFile(currentPath) && viewMode === 'view' ? (
+              <textarea
+                className="file-editor"
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                spellCheck={false}
+                aria-label="File editor"
+              />
+            ) : currentPath && isRenderableFile(currentPath) ? (
               <div className="rendered-content">
                 <iframe
                   key={`${currentPath}-${isDarkTheme ? 'dark' : 'light'}`}
@@ -602,13 +440,20 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
                   srcDoc={
                     isMarkdownFile(currentPath)
                       ? markdownToHtml(fileContent, isDarkTheme)
-                      : isHtmlFile(currentPath)
-                        ? wrapHtmlWithTheme(fileContent, isDarkTheme)
-                        : fileContent
+                      : fileContent  // HTML files render as-is
                   }
                   title="Rendered content"
                   sandbox="allow-scripts allow-same-origin"
                   className="content-iframe"
+                  onLoad={() => {
+                    // Send theme to iframe after it loads
+                    if (iframeRef.current?.contentWindow) {
+                      iframeRef.current.contentWindow.postMessage(
+                        { type: 'theme-change', theme: isDarkTheme ? 'dark' : 'light' },
+                        '*'
+                      )
+                    }
+                  }}
                 />
               </div>
             ) : (

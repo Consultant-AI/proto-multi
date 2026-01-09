@@ -368,7 +368,7 @@ export default function ComputerManagement({ onComputersUpdate }: ComputerManage
                   <button
                     className="test-btn"
                     onClick={() => handleTestConnection(computer.id)}
-                    title="Test SSH connection"
+                    aria-label="Test SSH connection"
                   >
                     Test
                   </button>
@@ -377,7 +377,8 @@ export default function ComputerManagement({ onComputersUpdate }: ComputerManage
                   <button
                     className="delete-btn"
                     onClick={() => handleDeleteComputer(computer.id)}
-                    title="Delete computer"
+                    data-tooltip="Delete computer"
+                    aria-label="Delete computer"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -397,7 +398,7 @@ export default function ComputerManagement({ onComputersUpdate }: ComputerManage
               type="button"
               onClick={() => setShowHetznerSection(!showHetznerSection)}
               className="toggle-hetzner-btn"
-              title={showHetznerSection ? 'Hide Hetzner section' : 'Show Hetzner section'}
+              aria-label={showHetznerSection ? 'Hide Hetzner section' : 'Show Hetzner section'}
             >
               {showHetznerSection ? <EyeOff size={18} /> : <Eye size={18} />}
               {showHetznerSection ? 'Hide' : 'Show'}

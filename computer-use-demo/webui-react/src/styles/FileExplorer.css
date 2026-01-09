@@ -7,16 +7,16 @@
 
 .file-explorer-header {
   background: var(--bg-panel-header);
-  padding: 12px 16px;
+  padding: 6px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border);
-  height: 60px;
+  height: 40px;
 }
 
 .file-explorer-header h2 {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
 }

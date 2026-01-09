@@ -68,7 +68,8 @@ export default function SessionHistory({ onLoadSession, refreshTrigger }: Sessio
       <button
         className="session-history-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        title="Session History"
+        data-tooltip="Session History"
+        aria-label="Session History"
       >
         <History size={18} />
       </button>

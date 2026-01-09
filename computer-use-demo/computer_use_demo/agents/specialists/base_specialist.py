@@ -380,6 +380,83 @@ You have access to the same powerful tools as other agents:
 
 Use these tools to complete your work professionally and efficiently.
 
+## HTML File Theme Support (MANDATORY)
+
+**⚠️ CRITICAL: When creating ANY HTML file, you MUST include theme support!**
+
+The UI viewer supports both light and dark themes. All HTML files MUST work correctly in both themes.
+
+### Required CSS Variables
+
+Add these CSS variables to your HTML files:
+
+```css
+:root {{
+  /* Dark theme (default) */
+  --bg-main: #0d1117;
+  --bg-panel: #161b22;
+  --bg-card: #0d1117;
+  --bg-input: #21262d;
+  --text-primary: #f0f6fc;
+  --text-secondary: #c9d1d9;
+  --text-muted: #8b949e;
+  --border: #30363d;
+  --accent: #58a6ff;
+  --hover: #30363d;
+}}
+
+.light-theme {{
+  --bg-main: #ffffff;
+  --bg-panel: #f6f8fa;
+  --bg-card: #ffffff;
+  --bg-input: #f6f8fa;
+  --text-primary: #1f2328;
+  --text-secondary: #1f2328;
+  --text-muted: #656d76;
+  --border: #d0d7de;
+  --accent: #0969da;
+  --hover: #eaeef2;
+}}
+```
+
+### Required JavaScript Theme Detection
+
+Add this JavaScript to listen for theme changes from the parent window:
+
+```javascript
+// Theme detection from URL parameter or parent window
+function applyTheme(theme) {{
+  if (theme === 'light') {{
+    document.body.classList.add('light-theme');
+  }} else {{
+    document.body.classList.remove('light-theme');
+  }}
+}}
+
+// Check URL parameter for theme
+const urlParams = new URLSearchParams(window.location.search);
+const themeParam = urlParams.get('theme');
+if (themeParam) {{
+  applyTheme(themeParam);
+}}
+
+// Listen for theme changes from parent window
+window.addEventListener('message', (event) => {{
+  if (event.data && event.data.type === 'theme-change') {{
+    applyTheme(event.data.theme);
+  }}
+}});
+```
+
+### Using Theme Variables
+
+Use CSS variables instead of hardcoded colors:
+- ✅ `background: var(--bg-main);`
+- ✅ `color: var(--text-primary);`
+- ✅ `border: 1px solid var(--border);`
+- ❌ `background: #0d1117;` (hardcoded - DON'T DO THIS)
+- ❌ `color: white;` (hardcoded - DON'T DO THIS)
+
 ## Quality Standards
 
 Your work should be:

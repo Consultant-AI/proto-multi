@@ -27,33 +27,31 @@
   gap: 2px;
   flex: 1;
   padding: 0 4px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
   height: 100%;
-}
-
-.viewer-tabs-list::-webkit-scrollbar {
-  height: 0;
+  min-width: 0;
 }
 
 .viewer-tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: var(--bg-sidebar);
   border: 1px solid var(--border);
   border-bottom: none;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   transition: all 0.15s ease;
   white-space: nowrap;
-  min-width: 120px;
-  max-width: 200px;
+  min-width: 60px;
+  max-width: 180px;
+  flex: 1 1 auto;
   position: relative;
+  overflow: hidden;
 }
 
 .viewer-tab:hover {
@@ -123,6 +121,7 @@
   padding: 6px;
   border-radius: var(--radius-md);
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .new-tab-btn:hover {

@@ -135,7 +135,8 @@ export default function HetznerInstanceList({ instances, onRefresh }: Props) {
                     onClick={() => handleSnapshot(instance.id)}
                     disabled={loading === instance.id}
                     className="action-btn snapshot-btn"
-                    title="Create snapshot"
+                    data-tooltip="Create snapshot"
+                    aria-label="Create snapshot"
                   >
                     <Camera size={16} />
                   </button>
@@ -143,7 +144,8 @@ export default function HetznerInstanceList({ instances, onRefresh }: Props) {
                     onClick={() => handleStop(instance.id)}
                     disabled={loading === instance.id}
                     className="action-btn stop-btn"
-                    title="Stop instance"
+                    data-tooltip="Stop instance"
+                    aria-label="Stop instance"
                   >
                     <Power size={16} />
                   </button>
@@ -155,7 +157,8 @@ export default function HetznerInstanceList({ instances, onRefresh }: Props) {
                   onClick={() => handleStart(instance.id)}
                   disabled={loading === instance.id}
                   className="action-btn start-btn"
-                  title="Start instance"
+                  data-tooltip="Start instance"
+                  aria-label="Start instance"
                 >
                   <Power size={16} />
                 </button>
@@ -165,7 +168,8 @@ export default function HetznerInstanceList({ instances, onRefresh }: Props) {
                 onClick={() => handleDelete(instance.id, instance.name)}
                 disabled={loading === instance.id}
                 className="action-btn delete-btn"
-                title="Delete instance"
+                data-tooltip="Delete instance"
+                aria-label="Delete instance"
               >
                 <Trash2 size={16} />
               </button>

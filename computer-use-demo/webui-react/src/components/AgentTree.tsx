@@ -75,7 +75,6 @@ function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
         <div
           className={`agent-item ${selectedAgentId === agent.id ? 'selected' : ''}`}
           style={{ marginLeft: `${level * 20}px` }}
-          title={agent.description}
         >
           {hasSubAgents && (
             <span

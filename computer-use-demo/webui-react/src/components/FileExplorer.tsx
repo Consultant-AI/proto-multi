@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Folder, FolderOpen, File, FileText, FileCode, RefreshCw, Plus, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Folder, FolderOpen, File, FileText, FileCode, Plus, X } from 'lucide-react'
 import { FileNode, Project } from '../types'
 import '../styles/FileExplorer.css'
 
@@ -7,9 +7,10 @@ interface FileExplorerProps {
   onSelectPath: (path: string) => void
   selectedPath: string | null
   onToggleVisible?: () => void
+  refreshKey?: number
 }
 
-export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisible }: FileExplorerProps) {
+export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisible, refreshKey }: FileExplorerProps) {
   const [, setProjects] = useState<Project[]>([])
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [fileTree, setFileTree] = useState<FileNode[]>([])
@@ -17,6 +18,17 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
   const [customPaths, setCustomPaths] = useState<FileNode[]>([])
   const [isPicking, setIsPicking] = useState(false)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+
+  // Refs to access current state without triggering re-renders
+  const customPathsRef = useRef<FileNode[]>([])
+  const fileTreeRef = useRef<FileNode[]>([])
+  const expandedFoldersRef = useRef<Set<string>>(new Set())
+  const lastExpandedPathRef = useRef<string | null>(null)
+
+  // Keep refs in sync with state
+  useEffect(() => { customPathsRef.current = customPaths }, [customPaths])
+  useEffect(() => { fileTreeRef.current = fileTree }, [fileTree])
+  useEffect(() => { expandedFoldersRef.current = expandedFolders }, [expandedFolders])
 
   // Helper to filter out paths that are already contained within another path in the list
   const filterRedundantPaths = (nodes: FileNode[]): FileNode[] => {
@@ -44,6 +56,127 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
       }
     }
   }, [])
+
+  // Function to expand folders to reveal a path
+  const expandToPath = async (targetPath: string) => {
+    // Use refs to get current state without triggering re-renders
+    const currentCustomPaths = customPathsRef.current
+    const currentFileTree = fileTreeRef.current
+
+    // Wait for data to be loaded
+    if (currentCustomPaths.length === 0 && currentFileTree.length === 0) return false
+
+    // Find all root folders that could contain this path
+    const allRoots = [...currentCustomPaths, ...currentFileTree]
+
+    // Find the root that contains this path
+    const matchingRoot = allRoots.find(root =>
+      targetPath === root.path || targetPath.startsWith(root.path + '/')
+    )
+
+    if (!matchingRoot) return false
+
+    // Build list of all paths that need to be expanded
+    const pathsToExpand: string[] = []
+
+    // If it's the root itself, just expand it
+    if (targetPath === matchingRoot.path) {
+      if (matchingRoot.type === 'folder') {
+        pathsToExpand.push(matchingRoot.path)
+      }
+    } else {
+      // Get the relative path from root
+      const relativePath = targetPath.slice(matchingRoot.path.length + 1)
+      const parts = relativePath.split('/')
+
+      // Start from root and add each parent folder
+      let currentPath = matchingRoot.path
+      pathsToExpand.push(currentPath)
+
+      // Add all parent folders (not the file itself if it's a file)
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentPath = currentPath + '/' + parts[i]
+        pathsToExpand.push(currentPath)
+      }
+
+      // If the selected path is a folder, also expand it
+      const lastPart = parts[parts.length - 1]
+      if (lastPart && !lastPart.includes('.')) {
+        // Likely a folder (no extension)
+        pathsToExpand.push(targetPath)
+      }
+    }
+
+    // Load folder contents for each path that needs expanding
+    for (const path of pathsToExpand) {
+      await loadFolderContentsForPath(path)
+    }
+
+    // Update expanded folders state
+    setExpandedFolders(prev => {
+      const newExpanded = new Set(prev)
+      for (const path of pathsToExpand) {
+        newExpanded.add(path)
+      }
+      return newExpanded
+    })
+
+    return true
+  }
+
+  // Auto-expand folders to reveal the selected path
+  useEffect(() => {
+    if (!selectedPath) return
+    // Skip if we already expanded for this path
+    if (lastExpandedPathRef.current === selectedPath) return
+
+    const tryExpand = async () => {
+      const success = await expandToPath(selectedPath)
+      if (success) {
+        lastExpandedPathRef.current = selectedPath
+      }
+    }
+
+    tryExpand()
+  }, [selectedPath])
+
+  // Retry expansion when data loads (in case selectedPath was set before data was ready)
+  useEffect(() => {
+    if (!selectedPath) return
+    if (lastExpandedPathRef.current === selectedPath) return
+    if (customPaths.length === 0 && fileTree.length === 0) return
+
+    const tryExpand = async () => {
+      const success = await expandToPath(selectedPath)
+      if (success) {
+        lastExpandedPathRef.current = selectedPath
+      }
+    }
+
+    tryExpand()
+  }, [customPaths.length, fileTree.length, selectedPath])
+
+  // Handle external refresh trigger
+  useEffect(() => {
+    if (refreshKey === undefined || refreshKey === 0) return
+
+    const doRefresh = async () => {
+      // Capture the current expanded folders before refresh
+      const currentExpanded = Array.from(expandedFoldersRef.current)
+
+      setLoading(true)
+      await loadProjects()
+      await loadFileTree()
+
+      // Only reload contents of folders that were already expanded (using ref to get current value)
+      for (const expandedPath of currentExpanded) {
+        await loadFolderContentsForPath(expandedPath)
+      }
+      setLoading(false)
+    }
+
+    doRefresh()
+  }, [refreshKey])
 
   const loadProjects = async () => {
     try {
@@ -149,7 +282,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
       }
 
       const path = data.path
-      const pathType = data.type || 'folder' // Default to folder for backward compatibility
+      const pathType = data.type || 'folder'
 
       // Check if path already exists
       const exists = customPaths.some(p => p.path === path) || fileTree.some(p => p.path === path)
@@ -159,7 +292,6 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
         return
       }
 
-      // Get the name from the path
       const name = path.split('/').pop() || path
 
       const newNode: FileNode = {
@@ -173,56 +305,9 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
       setCustomPaths(updatedCustomPaths)
       localStorage.setItem('explorer_custom_paths', JSON.stringify(updatedCustomPaths))
 
-      // Auto-select the new path
       onSelectPath(path)
     } catch (error) {
       console.error('Failed to pick folder:', error)
-    } finally {
-      setIsPicking(false)
-    }
-  }
-
-  const handlePickFile = async () => {
-    if (isPicking) return
-    setIsPicking(true)
-
-    try {
-      const response = await fetch('/api/browse/pick-file', { method: 'POST' })
-      const data = await response.json()
-
-      if (data.cancelled || !data.path) {
-        setIsPicking(false)
-        return
-      }
-
-      const path = data.path
-
-      // Check if path already exists
-      const exists = customPaths.some(p => p.path === path)
-      if (exists) {
-        setIsPicking(false)
-        onSelectPath(path)
-        return
-      }
-
-      // Get the file name from the path
-      const name = path.split('/').pop() || path
-
-      const newNode: FileNode = {
-        name,
-        path,
-        type: 'file',
-        children: undefined
-      }
-
-      const updatedCustomPaths = [...customPaths, newNode]
-      setCustomPaths(updatedCustomPaths)
-      localStorage.setItem('explorer_custom_paths', JSON.stringify(updatedCustomPaths))
-
-      // Auto-select the new path
-      onSelectPath(path)
-    } catch (error) {
-      console.error('Failed to pick file:', error)
     } finally {
       setIsPicking(false)
     }
@@ -267,7 +352,8 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
     setExpandedFolders(newExpanded)
   }
 
-  const loadFolderContents = async (path: string) => {
+  // Load folder contents - uses functional updates to avoid stale closures
+  const loadFolderContentsForPath = async (path: string) => {
     try {
       // Use browse API for absolute paths
       const isAbsolutePath = path.startsWith('/')
@@ -307,11 +393,16 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
         })
       }
 
-      setFileTree(updateTreeNode(fileTree))
-      setCustomPaths(updateTreeNode(customPaths))
+      // Use functional updates to avoid stale closures
+      setFileTree(prev => updateTreeNode(prev))
+      setCustomPaths(prev => updateTreeNode(prev))
     } catch (error) {
       console.error('Failed to load folder contents:', error)
     }
+  }
+
+  const loadFolderContents = async (path: string) => {
+    await loadFolderContentsForPath(path)
   }
 
   const renderFileNode = (node: FileNode, level: number = 0, isCustom: boolean = false) => {
@@ -347,7 +438,8 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
               <button
                 className="menu-dots-btn"
                 onClick={(e) => handleMenuClick(node.path, e)}
-                title="More options"
+                data-tooltip="More options"
+                aria-label="More options"
               >
                 ...
               </button>
@@ -388,49 +480,16 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
     <div className="file-explorer">
       <div className="file-explorer-header">
         <h2>Explorer</h2>
-        <div className="header-buttons">
+        {onToggleVisible && (
           <button
-            className="add-path-btn"
-            onClick={handlePickFolder}
-            title="Add folder"
-            disabled={isPicking}
+            className="close-explorer-btn"
+            onClick={onToggleVisible}
+            data-tooltip="Close Explorer"
+            aria-label="Close Explorer"
           >
-            {isPicking ? '...' : <Plus size={16} />}
+            <X size={16} />
           </button>
-          <button
-            className="add-file-btn"
-            onClick={handlePickFile}
-            title="Add file"
-            disabled={isPicking}
-          >
-            <File size={16} />
-          </button>
-          <button
-            className="explorer-refresh-btn"
-            onClick={async () => {
-              setLoading(true)
-              await loadProjects()
-              await loadFileTree()
-              // Reload contents of all expanded folders
-              for (const expandedPath of Array.from(expandedFolders)) {
-                await loadFolderContents(expandedPath)
-              }
-              setLoading(false)
-            }}
-            title="Refresh"
-          >
-            <RefreshCw size={16} />
-          </button>
-          {onToggleVisible && (
-            <button
-              className="close-explorer-btn"
-              onClick={onToggleVisible}
-              title="Close Explorer"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       <div className="file-explorer-content">
@@ -450,7 +509,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
               return (
                 <div className="empty-explorer">
                   <p>No folders to display</p>
-                  <button onClick={handlePickFolder} disabled={isPicking}>
+                  <button onClick={handlePickFolder} disabled={isPicking} aria-label="Add a folder or file">
                     {isPicking ? 'Opening...' : 'Add a folder'}
                   </button>
                 </div>
@@ -464,6 +523,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
                   className="add-bottom-btn"
                   onClick={handlePickFolder}
                   disabled={isPicking}
+                  aria-label="Add a folder or file"
                 >
                   <Plus size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Add Folder / File
                 </button>

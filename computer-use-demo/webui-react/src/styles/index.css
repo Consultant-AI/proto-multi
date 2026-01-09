@@ -167,3 +167,65 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Custom Tooltips - Instant appearance, always on top */
+/* Uses data-tooltip attribute to avoid browser's native title tooltip */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-panel-header);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  z-index: 99999;
+  pointer-events: none;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  opacity: 1;
+}
+
+/* No arrow for cleaner look */
+[data-tooltip]:hover::before {
+  display: none;
+}
+
+/* Ensure tooltip containers allow overflow */
+.file-explorer-header,
+.file-viewer-header,
+.chat-header,
+.viewer-tabs-header,
+.viewer-header-controls,
+.viewer-tabs-list,
+.viewer-tab,
+.new-tab-btn {
+  overflow: visible !important;
+}
+
+/* Position variants for buttons near right edge */
+.viewer-header-controls [data-tooltip]:hover::after,
+.chat-header-right [data-tooltip]:hover::after,
+.file-viewer-actions [data-tooltip]:hover::after,
+.file-explorer-header [data-tooltip]:hover::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.viewer-header-controls [data-tooltip]:hover::before,
+.chat-header-right [data-tooltip]:hover::before,
+.file-viewer-actions [data-tooltip]:hover::before,
+.file-explorer-header [data-tooltip]:hover::before {
+  left: auto;
+  right: 10px;
+  transform: none;
+}

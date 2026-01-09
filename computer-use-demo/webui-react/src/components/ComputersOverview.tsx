@@ -176,12 +176,12 @@ export default function ComputersOverview({ onSelectComputer }: Props) {
             className="create-btn"
             onClick={handleCreateInstance}
             disabled={creating}
-            title="Create new cloud instance"
+            aria-label="Create new cloud instance"
           >
             {creating ? <RefreshCw size={16} className="spinning" /> : <Plus size={16} />}
             New Instance
           </button>
-          <button className="refresh-btn" onClick={refreshAll} title="Refresh">
+          <button className="refresh-btn" onClick={refreshAll} data-tooltip="Refresh" aria-label="Refresh">
             <RefreshCw size={18} />
           </button>
         </div>
@@ -284,7 +284,8 @@ export default function ComputersOverview({ onSelectComputer }: Props) {
                 <button
                   type="button"
                   className="menu-btn"
-                  title="More actions"
+                  data-tooltip="More actions"
+                  aria-label="More actions"
                   onClick={(e) => {
                     e.stopPropagation()
                     setActiveMenu(activeMenu === `instance-${instance.id}` ? null : `instance-${instance.id}`)

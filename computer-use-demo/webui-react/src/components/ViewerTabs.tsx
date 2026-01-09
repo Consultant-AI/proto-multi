@@ -48,19 +48,105 @@ interface TabHistory {
   currentIndex: number
 }
 
+// Serializable formats for localStorage (no JSX)
+interface SerializableTab {
+  id: string
+  type: TabType
+  title: string
+  iconUrl?: string  // Only for string icons (favicons)
+  resourceId?: string
+}
+
+interface SerializableTabHistory {
+  tabId: string
+  history: SerializableTab[]
+  currentIndex: number
+}
+
+interface StoredState {
+  tabs: SerializableTab[]
+  activeTabId: string
+  tabHistories: SerializableTabHistory[]
+  selectedPath: string | null
+  isDarkTheme: boolean
+}
+
+const STORAGE_KEY = 'viewerTabsState'
+
+// Convert tab to serializable format
+const serializeTab = (tab: Tab): SerializableTab => ({
+  id: tab.id,
+  type: tab.type,
+  title: tab.title,
+  iconUrl: typeof tab.icon === 'string' ? tab.icon : undefined,
+  resourceId: tab.resourceId
+})
+
+// Convert serializable tab back to Tab with JSX icon
+const deserializeTab = (serialized: SerializableTab): Tab => ({
+  id: serialized.id,
+  type: serialized.type,
+  title: serialized.title,
+  icon: serialized.iconUrl
+    ? serialized.iconUrl
+    : serialized.type === 'files' && serialized.resourceId
+      ? getFileIcon(serialized.resourceId.split('/').pop() || '')
+      : DEFAULT_TAB_ICONS[serialized.type],
+  resourceId: serialized.resourceId
+})
+
+// Load state from localStorage
+const loadStoredState = (): StoredState | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return null
+    return JSON.parse(stored)
+  } catch {
+    return null
+  }
+}
+
+// Initialize state from localStorage or defaults
+const getInitialState = () => {
+  const stored = loadStoredState()
+  if (stored && stored.tabs.length > 0) {
+    const tabs = stored.tabs.map(deserializeTab)
+    const tabHistories = stored.tabHistories.map(th => ({
+      tabId: th.tabId,
+      history: th.history.map(deserializeTab),
+      currentIndex: th.currentIndex
+    }))
+    return {
+      tabs,
+      activeTabId: stored.activeTabId,
+      tabHistories,
+      selectedPath: stored.selectedPath,
+      isDarkTheme: stored.isDarkTheme
+    }
+  }
+
+  // Default state
+  const defaultTab: Tab = { id: '1', type: 'newtab', title: 'New Tab', icon: <Plus size={14} /> }
+  return {
+    tabs: [defaultTab],
+    activeTabId: '1',
+    tabHistories: [{ tabId: '1', history: [defaultTab], currentIndex: 0 }],
+    selectedPath: null,
+    isDarkTheme: true
+  }
+}
+
 export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selectedComputer }: ViewerTabsProps) {
-  const [tabs, setTabs] = useState<Tab[]>([
-    { id: '1', type: 'newtab', title: 'New Tab', icon: <Plus size={14} /> }
-  ])
-  const [activeTabId, setActiveTabId] = useState('1')
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const initialState = getInitialState()
+  const [tabs, setTabs] = useState<Tab[]>(initialState.tabs)
+  const [activeTabId, setActiveTabId] = useState(initialState.activeTabId)
+  const [selectedPath, setSelectedPath] = useState<string | null>(initialState.selectedPath)
   const [explorerWidth, setExplorerWidth] = useState(250)
   const [explorerVisible, setExplorerVisible] = useState(true)
-  const [tabHistories, setTabHistories] = useState<TabHistory[]>([
-    { tabId: '1', history: [{ id: '1', type: 'newtab', title: 'New Tab', icon: <Plus size={14} /> }], currentIndex: 0 }
-  ])
+  const [tabHistories, setTabHistories] = useState<TabHistory[]>(initialState.tabHistories)
   const [addressBarInput, setAddressBarInput] = useState('')
-  const [isDarkTheme, setIsDarkTheme] = useState(true)
+  const [isDarkTheme, setIsDarkTheme] = useState(initialState.isDarkTheme)
+  const [explorerRefreshKey, setExplorerRefreshKey] = useState(0)
 
   // Apply theme on mount and when it changes
   useEffect(() => {
@@ -72,6 +158,26 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       document.documentElement.classList.add('light-theme')
     }
   }, [isDarkTheme])
+
+  // Save state to localStorage whenever tabs or related state changes
+  useEffect(() => {
+    const state: StoredState = {
+      tabs: tabs.map(serializeTab),
+      activeTabId,
+      tabHistories: tabHistories.map(th => ({
+        tabId: th.tabId,
+        history: th.history.map(serializeTab),
+        currentIndex: th.currentIndex
+      })),
+      selectedPath,
+      isDarkTheme
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch (e) {
+      console.error('Failed to save tabs state:', e)
+    }
+  }, [tabs, activeTabId, tabHistories, selectedPath, isDarkTheme])
 
   const toggleTheme = () => {
     setIsDarkTheme(prev => !prev)
@@ -161,7 +267,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       title: TAB_LABELS[type],
       icon: DEFAULT_TAB_ICONS[type]
     }
-    setTabs([...tabs, newTab])
+    setTabs(prev => [...prev, newTab])
     setActiveTabId(newTab.id)
 
     // Initialize history for new tab
@@ -222,13 +328,56 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
 
   const handleRefresh = () => {
     // Reload current content based on tab type
-    if (activeTab?.type === 'files' && selectedPath) {
-      // Trigger file reload by updating the path
-      const currentPath = selectedPath
-      setSelectedPath(null)
-      setTimeout(() => setSelectedPath(currentPath), 0)
+    if (activeTab?.type === 'files') {
+      // Trigger explorer refresh
+      setExplorerRefreshKey(prev => prev + 1)
+
+      // Also trigger file content reload if a file is selected
+      if (selectedPath) {
+        const currentPath = selectedPath
+        setSelectedPath(null)
+        setTimeout(() => setSelectedPath(currentPath), 0)
+      }
     }
     // Add other refresh logic for web, computer, terminal tabs as needed
+  }
+
+  // Handle file path selection with history tracking
+  const handleSelectPath = (path: string) => {
+    // If we're not on a files tab, use handleOpenResource to create/switch tabs
+    if (!activeTab || activeTab.type !== 'files') {
+      handleOpenResource('files', path)
+      return
+    }
+
+    // If selecting the same path, do nothing
+    if (selectedPath === path) return
+
+    // Update selectedPath
+    setSelectedPath(path)
+
+    // Update the tab title and icon
+    const filename = path.split('/').pop() || path
+    const updatedTab = {
+      ...activeTab,
+      title: filename,
+      icon: getFileIcon(filename),
+      resourceId: path
+    }
+
+    setTabs(prev => prev.map(tab =>
+      tab.id === activeTabId ? updatedTab : tab
+    ))
+
+    // Add to history
+    setTabHistories(prev => prev.map(th => {
+      if (th.tabId === activeTabId) {
+        // Remove any forward history and add new state
+        const newHistory = [...th.history.slice(0, th.currentIndex + 1), updatedTab]
+        return { ...th, history: newHistory, currentIndex: newHistory.length - 1 }
+      }
+      return th
+    }))
   }
 
   const handleAddressBarSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -237,10 +386,16 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
     const input = addressBarInput.trim()
     if (!input) return
 
+    // Regex to detect domain-like patterns (e.g., google.com, example.org, sub.domain.co.uk)
+    const domainPattern = /^[\w-]+(\.[\w-]+)+(\/.*)?(:\d+)?$/
+
     // Determine what type of resource the user wants to open
     if (input.startsWith('http://') || input.startsWith('https://')) {
       // It's a web URL
       handleOpenResource('web', input)
+    } else if (domainPattern.test(input)) {
+      // Looks like a domain (e.g., google.com, facebook.com/path)
+      handleOpenResource('web', `https://${input}`)
     } else if (input.startsWith('/') || input.includes('/')) {
       // It's a file path
       handleOpenResource('files', input)
@@ -340,7 +495,8 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             className="nav-btn"
             onClick={handleBack}
             disabled={!canGoBack}
-            title="Back"
+            data-tooltip="Back"
+            aria-label="Back"
           >
             <ChevronLeft size={16} />
           </button>
@@ -348,14 +504,16 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             className="nav-btn"
             onClick={handleForward}
             disabled={!canGoForward}
-            title="Forward"
+            data-tooltip="Forward"
+            aria-label="Forward"
           >
             <ChevronRight size={16} />
           </button>
           <button
             className="nav-btn refresh-nav-btn"
             onClick={handleRefresh}
-            title="Refresh"
+            data-tooltip="Refresh"
+            aria-label="Refresh"
           >
             <RefreshCw size={16} />
           </button>
@@ -392,9 +550,10 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
                   style={{ width: `${explorerWidth}px` }}
                 >
                   <FileExplorer
-                    onSelectPath={setSelectedPath}
+                    onSelectPath={handleSelectPath}
                     selectedPath={selectedPath}
                     onToggleVisible={() => setExplorerVisible(false)}
+                    refreshKey={explorerRefreshKey}
                   />
                 </div>
                 <Resizer
@@ -417,7 +576,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       case 'web':
         return (
           <div className="web-layout">
-            <BrowserPanel url={activeTab.resourceId} isActive={true} />
+            <BrowserPanel key={activeTab.id} tabId={activeTab.id} url={activeTab.resourceId} isActive={true} />
           </div>
         )
 
@@ -473,7 +632,8 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
               <button
                 className="viewer-tab-close"
                 onClick={(e) => handleCloseTab(tab.id, e)}
-                title="Close tab"
+                data-tooltip="Close tab"
+                aria-label="Close tab"
               >
                 <X size={14} />
               </button>
@@ -484,7 +644,8 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
           <button
             className="new-tab-btn"
             onClick={() => handleAddTab('newtab')}
-            title="New tab"
+            data-tooltip="New tab"
+            aria-label="New tab"
           >
             <Plus size={16} />
           </button>
@@ -495,7 +656,8 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             <button
               className="toggle-chat-btn"
               onClick={onToggleChat}
-              title="Show Chat"
+              data-tooltip="Show Chat"
+              aria-label="Show Chat"
             >
               <MessageSquare size={16} />
             </button>
@@ -503,12 +665,13 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
           <button
             className="toggle-theme-btn"
             onClick={toggleTheme}
-            title={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
+            data-tooltip={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
+            aria-label={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
           >
             {isDarkTheme ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           {onClose && (
-            <button className="viewer-close-btn" onClick={onClose} title="Close Viewer">
+            <button className="viewer-close-btn" onClick={onClose} data-tooltip="Close Viewer" aria-label="Close Viewer">
               <X size={16} />
             </button>
           )}
