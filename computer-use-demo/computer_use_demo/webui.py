@@ -928,9 +928,12 @@ async def lifespan(app: FastAPI):
     app.state.sessions[session.session_id] = session
     app.state.current_session_id = session.session_id
 
-    # Initialize embedded browser
+    # Initialize embedded browser (skip Qt browser if using Electron frontend)
     app.state.browser_manager = BrowserManager()
-    await app.state.browser_manager.start()
+    if not os.getenv("NO_QT_BROWSER"):
+        await app.state.browser_manager.start()
+    else:
+        print("Qt browser disabled (using Electron frontend)")
 
     # Check if Hetzner Cloud integration is enabled
     hetzner_token = os.getenv("HETZNER_API_TOKEN")
@@ -3711,11 +3714,18 @@ async def get_latest_screenshot_endpoint():
         return JSONResponse(status_code=500, content={"error": "Failed to take screenshot"})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+class BrowserNavigateRequest(BaseModel):
+    url: str = None
+    message: str = None  # Backwards compatibility
+
+
 @app.post("/api/computer/browser/navigate")
-async def browser_navigate(request: SendRequest):
+async def browser_navigate(request: BrowserNavigateRequest):
     """Navigate embedded browser to URL."""
     try:
-        url = request.message
+        url = request.url or request.message
+        if not url:
+            raise HTTPException(status_code=400, detail="url is required")
         if not url.startswith('http'):
             url = 'https://' + url
 

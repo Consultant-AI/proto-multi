@@ -15,10 +15,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 0;
+  padding-left: 78px; /* Space for macOS traffic light buttons */
   background: var(--bg-panel-header);
   border-bottom: 1px solid var(--border);
   height: 44px;
   gap: 8px;
+  -webkit-app-region: drag; /* Make header draggable on macOS */
 }
 
 .viewer-tabs-list {
@@ -30,6 +32,7 @@
   overflow: hidden;
   height: 100%;
   min-width: 0;
+  -webkit-app-region: no-drag; /* Make tabs clickable */
 }
 
 .viewer-tab {
@@ -108,6 +111,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  -webkit-app-region: no-drag; /* Make button clickable */
 }
 
 .new-tab-btn {
@@ -167,6 +171,7 @@
   align-items: center;
   gap: 4px;
   margin-right: 4px;
+  -webkit-app-region: no-drag; /* Make buttons clickable */
 }
 
 .toggle-chat-btn,
@@ -246,6 +251,15 @@
 
 .refresh-nav-btn {
   margin-right: 4px;
+}
+
+.nav-btn.loading svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .show-explorer-small-btn {

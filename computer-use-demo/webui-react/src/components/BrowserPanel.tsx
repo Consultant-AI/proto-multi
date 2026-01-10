@@ -1,280 +1,213 @@
-import { useState, useEffect, useRef } from 'react'
-import { RotateCw } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react'
 import '../styles/BrowserPanel.css'
 
-// Track navigation per tab (persists across component remounts)
-const tabNavigationMap = new Map<string, string>()
+// Check if we're running in Electron
+const isElectron = typeof window !== 'undefined' &&
+  (window as any).process?.versions?.electron !== undefined
 
-interface ScreenBounds {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+// Type for Electron webview element
+interface WebviewElement extends HTMLElement {
+  src: string
+  loadURL: (url: string) => void
+  reload: () => void
+  goBack: () => void
+  goForward: () => void
+  canGoBack: () => boolean
+  canGoForward: () => boolean
+  getURL: () => string
+  getTitle: () => string
+  isLoading: () => boolean
+  addEventListener: (event: string, callback: (event: any) => void) => void
+  removeEventListener: (event: string, callback: (event: any) => void) => void
 }
 
 interface BrowserPanelProps {
-    url?: string;
-    tabId?: string;  // Unique tab ID for multi-tab support
-    isActive?: boolean;  // Explicit control from parent
-    useQtBrowser?: boolean;  // If true, use Qt WebEngine streaming instead of iframe
+  url?: string
+  tabId?: string
+  isActive?: boolean
+  onUrlChange?: (url: string) => void
+  onTitleChange?: (title: string) => void
+  onLoadingChange?: (isLoading: boolean) => void
+  onNavigationChange?: (canGoBack: boolean, canGoForward: boolean) => void
 }
 
-export default function BrowserPanel({ url: initialUrl, tabId = 'default', isActive = false, useQtBrowser = true }: BrowserPanelProps) {
-    const [screenshot, setScreenshot] = useState<string | null>(null)
-    const [bounds, setBounds] = useState<ScreenBounds | null>(null)
-    const containerRef = useRef<HTMLDivElement>(null)
-    const imageRef = useRef<HTMLImageElement>(null)
-    const wsRef = useRef<WebSocket | null>(null)
-    const [connected, setConnected] = useState(false)
-    const reconnectTimeoutRef = useRef<number | null>(null)
-    // Use Qt browser by default (works with all sites), iframe mode blocks many sites due to X-Frame-Options
-    const [useIframeFallback, setUseIframeFallback] = useState(!useQtBrowser)
-    const fallbackTimeoutRef = useRef<number | null>(null)
+export interface BrowserPanelRef {
+  navigateTo: (url: string) => void
+  goBack: () => void
+  goForward: () => void
+  reload: () => void
+  canGoBack: () => boolean
+  canGoForward: () => boolean
+}
 
-    // Clear screenshot when tab changes to avoid showing stale content from previous tab
-    useEffect(() => {
-        setScreenshot(null)
-    }, [tabId])
+const BrowserPanel = forwardRef<BrowserPanelRef, BrowserPanelProps>(({
+  url: initialUrl,
+  tabId = 'default',
+  isActive = true,
+  onUrlChange,
+  onTitleChange,
+  onLoadingChange,
+  onNavigationChange
+}, ref) => {
+  const webviewRef = useRef<WebviewElement>(null)
+  const [currentUrl, setCurrentUrl] = useState(initialUrl || '')
+  const [canGoBackState, setCanGoBackState] = useState(false)
+  const [canGoForwardState, setCanGoForwardState] = useState(false)
+  const initializedRef = useRef(false)
 
-    // WebSocket connection for real-time frame streaming with iframe fallback
-    useEffect(() => {
-        // Only connect if active (from parent) and not using iframe fallback
-        if (!isActive || useIframeFallback) {
-            if (wsRef.current) {
-                console.log('Browser panel not visible or using fallback, closing WebSocket')
-                wsRef.current.close()
-                wsRef.current = null
-            }
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current)
-                reconnectTimeoutRef.current = null
-            }
-            if (fallbackTimeoutRef.current) {
-                clearTimeout(fallbackTimeoutRef.current)
-                fallbackTimeoutRef.current = null
-            }
-            return
-        }
+  // Store callbacks in refs to avoid useEffect re-runs
+  const callbacksRef = useRef({ onUrlChange, onTitleChange, onLoadingChange, onNavigationChange })
+  callbacksRef.current = { onUrlChange, onTitleChange, onLoadingChange, onNavigationChange }
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${protocol}//${window.location.host}/ws/browser/stream`
+  // Navigate to URL
+  const navigateTo = useCallback((url: string) => {
+    if (!url) return
 
-        // Set a fallback timeout - if no frames received after 3 seconds, use iframe
-        fallbackTimeoutRef.current = window.setTimeout(() => {
-            if (!screenshot && initialUrl) {
-                console.log('No frames received, switching to iframe fallback')
-                setUseIframeFallback(true)
-            }
-        }, 3000)
-
-        const connectWebSocket = () => {
-            // Don't reconnect if not active or using fallback
-            if (!isActive || useIframeFallback) return
-
-            const ws = new WebSocket(wsUrl)
-
-            ws.onopen = () => {
-                console.log('Browser WebSocket connected')
-                setConnected(true)
-            }
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data)
-                    if (data.type === 'frame') {
-                        setScreenshot(data.image)
-                        setBounds(data.bounds)
-                        // Clear fallback timeout since we got a frame
-                        if (fallbackTimeoutRef.current) {
-                            clearTimeout(fallbackTimeoutRef.current)
-                            fallbackTimeoutRef.current = null
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error parsing WebSocket message:', error)
-                }
-            }
-
-            ws.onerror = (error) => {
-                console.error('Browser WebSocket error:', error)
-            }
-
-            ws.onclose = () => {
-                console.log('Browser WebSocket closed')
-                setConnected(false)
-                // Don't auto-reconnect - parent controls lifecycle via isActive
-            }
-
-            wsRef.current = ws
-        }
-
-        connectWebSocket()
-
-        return () => {
-            if (wsRef.current) {
-                wsRef.current.close()
-                wsRef.current = null
-            }
-            if (reconnectTimeoutRef.current) {
-                clearTimeout(reconnectTimeoutRef.current)
-                reconnectTimeoutRef.current = null
-            }
-            if (fallbackTimeoutRef.current) {
-                clearTimeout(fallbackTimeoutRef.current)
-                fallbackTimeoutRef.current = null
-            }
-        }
-    }, [isActive, useIframeFallback, screenshot, initialUrl])
-
-    // Auto-navigate only when URL actually changes (not on tab switch)
-    useEffect(() => {
-        if (initialUrl && isActive && !useIframeFallback) {
-            // Check if this tab has already navigated to this URL
-            const lastNavigatedUrl = tabNavigationMap.get(tabId)
-            if (lastNavigatedUrl !== initialUrl) {
-                // New URL - navigate to it
-                handleNavigate(initialUrl)
-                tabNavigationMap.set(tabId, initialUrl)
-            } else {
-                // Same URL - just switch to this tab without re-navigating
-                handleSwitchTab()
-            }
-        }
-    }, [initialUrl, isActive, useIframeFallback, tabId])
-
-    const handleSwitchTab = async () => {
-        try {
-            await fetch('/api/computer/browser/switch-tab', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tab_id: tabId })
-            })
-        } catch (error) {
-            console.error('Tab switch failed:', error)
-        }
+    // Add protocol if missing
+    let fullUrl = url
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('file://')) {
+      fullUrl = 'https://' + url
     }
 
-    const handleNavigate = async (url: string) => {
-        if (!url) return
-        try {
-            await fetch('/api/computer/browser/navigate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, tab_id: tabId })
-            })
-        } catch (error) {
-            console.error('Navigation failed:', error)
-        }
+    setCurrentUrl(fullUrl)
+
+    if (webviewRef.current) {
+      webviewRef.current.src = fullUrl
+    }
+  }, [])
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    navigateTo,
+    goBack: () => webviewRef.current?.goBack(),
+    goForward: () => webviewRef.current?.goForward(),
+    reload: () => webviewRef.current?.reload(),
+    canGoBack: () => canGoBackState,
+    canGoForward: () => canGoForwardState
+  }), [navigateTo, canGoBackState, canGoForwardState])
+
+  // Handle URL changes from parent (not initial load)
+  useEffect(() => {
+    // Skip initial mount - handled in the main useEffect
+    if (!initializedRef.current) return
+
+    // Only navigate if URL actually changed from parent
+    if (initialUrl && initialUrl !== currentUrl) {
+      navigateTo(initialUrl)
+    }
+  }, [initialUrl])
+
+  // Set up webview event listeners (only once on mount)
+  useEffect(() => {
+    const webview = webviewRef.current
+    if (!webview || !isElectron) return
+
+    const updateNavigationState = () => {
+      const canBack = webview.canGoBack()
+      const canForward = webview.canGoForward()
+      setCanGoBackState(canBack)
+      setCanGoForwardState(canForward)
+      callbacksRef.current.onNavigationChange?.(canBack, canForward)
     }
 
-    const handleInteraction = async (e: React.MouseEvent<HTMLImageElement>) => {
-        if (!imageRef.current || !bounds) return
-
-        const rect = imageRef.current.getBoundingClientRect()
-        const scaleX = bounds.width / rect.width
-        const scaleY = bounds.height / rect.height
-
-        const x = Math.round((e.clientX - rect.left) * scaleX)
-        const y = Math.round((e.clientY - rect.top) * scaleY)
-
-        try {
-            await fetch('/api/computer/browser/click', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ x, y, button: 'left', tab_id: tabId })
-            })
-        } catch (error) {
-            console.error('Click interaction failed:', error)
-        }
+    const handleDidNavigate = (event: any) => {
+      const url = event.url || webview.getURL()
+      setCurrentUrl(url)
+      callbacksRef.current.onUrlChange?.(url)
+      callbacksRef.current.onLoadingChange?.(false)
+      updateNavigationState()
     }
 
-    const handleKeyDown = async (e: React.KeyboardEvent) => {
-        // Only handle if not in the address bar
-        if (e.target instanceof HTMLInputElement && e.target.className === 'address-input') return
-
-        // Simple key press (ignoring modifiers for now for simplicity)
-        if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
-            try {
-                await fetch('/api/computer/browser/type', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: e.key === 'Enter' ? '' : e.key,
-                        enter: e.key === 'Enter'
-                    })
-                })
-            } catch (error) {
-                console.error('Type interaction failed:', error)
-            }
-        }
+    const handleDidNavigateInPage = (event: any) => {
+      const url = event.url || webview.getURL()
+      setCurrentUrl(url)
+      callbacksRef.current.onUrlChange?.(url)
+      updateNavigationState()
     }
 
-    const handleScroll = async (e: React.WheelEvent<HTMLImageElement>) => {
-        if (!imageRef.current || !bounds) return
-        e.preventDefault()
-
-        const rect = imageRef.current.getBoundingClientRect()
-        const scaleX = bounds.width / rect.width
-        const scaleY = bounds.height / rect.height
-
-        // Get scroll position relative to the image
-        const x = Math.round((e.clientX - rect.left) * scaleX)
-        const y = Math.round((e.clientY - rect.top) * scaleY)
-
-        // deltaY: positive = scroll down, negative = scroll up
-        const deltaX = Math.round(e.deltaX)
-        const deltaY = Math.round(e.deltaY)
-
-        try {
-            await fetch('/api/computer/browser/scroll', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ x, y, deltaX, deltaY, tab_id: tabId })
-            })
-        } catch (error) {
-            console.error('Scroll interaction failed:', error)
-        }
+    const handleDidStartLoading = () => {
+      callbacksRef.current.onLoadingChange?.(true)
     }
 
+    const handleDidStopLoading = () => {
+      callbacksRef.current.onLoadingChange?.(false)
+      updateNavigationState()
+    }
+
+    const handlePageTitleUpdated = (event: any) => {
+      const title = event.title || webview.getTitle()
+      callbacksRef.current.onTitleChange?.(title)
+    }
+
+    const handleDidFailLoad = (event: any) => {
+      console.error('Page load failed:', event.errorDescription)
+      callbacksRef.current.onLoadingChange?.(false)
+    }
+
+    // Add event listeners
+    webview.addEventListener('did-navigate', handleDidNavigate)
+    webview.addEventListener('did-navigate-in-page', handleDidNavigateInPage)
+    webview.addEventListener('did-start-loading', handleDidStartLoading)
+    webview.addEventListener('did-stop-loading', handleDidStopLoading)
+    webview.addEventListener('page-title-updated', handlePageTitleUpdated)
+    webview.addEventListener('did-fail-load', handleDidFailLoad)
+
+    // Navigate to initial URL only once
+    if (initialUrl && !initializedRef.current) {
+      initializedRef.current = true
+      navigateTo(initialUrl)
+    }
+
+    return () => {
+      webview.removeEventListener('did-navigate', handleDidNavigate)
+      webview.removeEventListener('did-navigate-in-page', handleDidNavigateInPage)
+      webview.removeEventListener('did-start-loading', handleDidStartLoading)
+      webview.removeEventListener('did-stop-loading', handleDidStopLoading)
+      webview.removeEventListener('page-title-updated', handlePageTitleUpdated)
+      webview.removeEventListener('did-fail-load', handleDidFailLoad)
+    }
+  }, []) // Empty deps - only run once on mount
+
+  // Fallback for non-Electron (regular browser)
+  if (!isElectron) {
     return (
-        <div className="browser-panel" onKeyDown={useQtBrowser ? handleKeyDown : undefined} tabIndex={useQtBrowser ? 0 : undefined}>
-            <div className="browser-viewport" ref={containerRef}>
-                {useIframeFallback ? (
-                    initialUrl ? (
-                        <iframe
-                            src={initialUrl}
-                            className="browser-iframe-fallback"
-                            title="Web Page"
-                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
-                        />
-                    ) : (
-                        <div className="browser-loading">
-                            <p>Enter a URL to browse</p>
-                        </div>
-                    )
-                ) : screenshot ? (
-                    <div className="browser-canvas">
-                        <img
-                            ref={imageRef}
-                            src={`data:image/jpeg;base64,${screenshot}`}
-                            alt="Chromium Browser"
-                            onClick={handleInteraction}
-                            onWheel={handleScroll}
-                            draggable={false}
-                        />
-                        {!connected && (
-                            <div className="connection-status">
-                                <span>Reconnecting...</span>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="browser-loading">
-                        <RotateCw size={48} className="spin" />
-                        <p>Connecting to Qt Browser...</p>
-                    </div>
-                )}
+      <div className="browser-panel">
+        <div className="browser-viewport">
+          {initialUrl ? (
+            <iframe
+              src={initialUrl}
+              className="browser-iframe-fallback"
+              title="Web Page"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
+            />
+          ) : (
+            <div className="browser-loading">
+              <p>Enter a URL to browse</p>
+              <p className="browser-note">Note: Run as Electron app for full browser features</p>
             </div>
+          )}
         </div>
+      </div>
     )
-}
+  }
+
+  // Electron webview version - just the webview, no toolbar
+  return (
+    <div className="browser-panel">
+      <div className="browser-viewport">
+        {/* @ts-ignore - webview is Electron-specific */}
+        <webview
+          ref={webviewRef as any}
+          src={currentUrl || 'about:blank'}
+          className="browser-webview"
+          allowpopups="true"
+          partition="persist:main"
+        />
+      </div>
+    </div>
+  )
+})
+
+BrowserPanel.displayName = 'BrowserPanel'
+
+export default BrowserPanel

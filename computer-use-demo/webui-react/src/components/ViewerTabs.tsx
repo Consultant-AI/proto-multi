@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw, Sun, Moon, Layers } from 'lucide-react'
 import { Tab, TabType } from '../types/tabs'
 import Dashboard from './Dashboard'
 import FileExplorer from './FileExplorer'
 import FileViewer from './FileViewer'
-import BrowserPanel from './BrowserPanel'
+import BrowserPanel, { BrowserPanelRef } from './BrowserPanel'
 import ComputerPanel from './ComputerPanel'
 import ComputersOverview from './ComputersOverview'
 import Resizer from './Resizer'
@@ -148,6 +148,12 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   const [isDarkTheme, setIsDarkTheme] = useState(initialState.isDarkTheme)
   const [explorerRefreshKey, setExplorerRefreshKey] = useState(0)
 
+  // Web tab state
+  const [webTabUrls, setWebTabUrls] = useState<Record<string, string>>({})
+  const [webTabNavState, setWebTabNavState] = useState<Record<string, { canGoBack: boolean; canGoForward: boolean }>>({})
+  const [webTabLoading, setWebTabLoading] = useState<Record<string, boolean>>({})
+  const browserRefs = useRef<Record<string, BrowserPanelRef | null>>({})
+
   // Apply theme on mount and when it changes
   useEffect(() => {
     if (isDarkTheme) {
@@ -226,12 +232,10 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
         tab.id === activeTabId ? updatedTab : tab
       ))
 
-      // Add to history
+      // Replace history - don't keep newtab in history (user shouldn't go back to newtab)
       setTabHistories(prev => prev.map(th => {
         if (th.tabId === activeTabId) {
-          // Remove any forward history and add new state
-          const newHistory = [...th.history.slice(0, th.currentIndex + 1), updatedTab]
-          return { ...th, history: newHistory, currentIndex: newHistory.length - 1 }
+          return { ...th, history: [updatedTab], currentIndex: 0 }
         }
         return th
       }))
@@ -279,6 +283,13 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   }
 
   const handleBack = () => {
+    // For web tabs, use browser's native back
+    if (activeTab?.type === 'web') {
+      const browserRef = browserRefs.current[activeTab.id]
+      browserRef?.goBack()
+      return
+    }
+
     if (!activeTabHistory || activeTabHistory.currentIndex <= 0) return
 
     const newIndex = activeTabHistory.currentIndex - 1
@@ -303,6 +314,13 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   }
 
   const handleForward = () => {
+    // For web tabs, use browser's native forward
+    if (activeTab?.type === 'web') {
+      const browserRef = browserRefs.current[activeTab.id]
+      browserRef?.goForward()
+      return
+    }
+
     if (!activeTabHistory || activeTabHistory.currentIndex >= activeTabHistory.history.length - 1) return
 
     const newIndex = activeTabHistory.currentIndex + 1
@@ -327,6 +345,13 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   }
 
   const handleRefresh = () => {
+    // For web tabs, use browser's reload
+    if (activeTab?.type === 'web') {
+      const browserRef = browserRefs.current[activeTab.id]
+      browserRef?.reload()
+      return
+    }
+
     // Reload current content based on tab type
     if (activeTab?.type === 'files') {
       // Trigger explorer refresh
@@ -339,7 +364,6 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
         setTimeout(() => setSelectedPath(currentPath), 0)
       }
     }
-    // Add other refresh logic for web, computer, terminal tabs as needed
   }
 
   // Handle file path selection with history tracking
@@ -449,23 +473,46 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
     }
   }
 
+  // Handle web address bar changes
+  const handleWebAddressChange = (tabId: string, value: string) => {
+    setWebTabUrls(prev => ({ ...prev, [tabId]: value }))
+  }
+
+  // Handle web address bar submit
+  const handleWebAddressSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter' || !activeTab || activeTab.type !== 'web') return
+
+    const url = webTabUrls[activeTab.id] || ''
+    if (!url) return
+
+    // Add protocol if missing
+    let fullUrl = url
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      fullUrl = 'https://' + url
+    }
+
+    const browserRef = browserRefs.current[activeTab.id]
+    browserRef?.navigateTo(fullUrl)
+  }
+
   const renderPathBar = () => {
     if (!activeTab) return null
 
     const isNewTab = activeTab.type === 'newtab'
+    const isWebTab = activeTab.type === 'web'
     let pathText = ''
     let placeholder = 'Path or URL'
 
     if (isNewTab) {
       pathText = addressBarInput
       placeholder = '/path/to/file • https://url • computer:// • terminal://'
+    } else if (isWebTab) {
+      // For web tabs, use the tracked URL or resourceId
+      pathText = webTabUrls[activeTab.id] ?? activeTab.resourceId ?? ''
     } else {
       switch (activeTab.type) {
         case 'files':
           pathText = selectedPath || activeTab.resourceId || ''
-          break
-        case 'web':
-          pathText = activeTab.resourceId || ''
           break
         case 'computer':
           // Show computer:// URL with resourceId or localhost
@@ -485,8 +532,21 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       }
     }
 
-    const canGoBack = activeTabHistory ? activeTabHistory.currentIndex > 0 : false
-    const canGoForward = activeTabHistory ? activeTabHistory.currentIndex < activeTabHistory.history.length - 1 : false
+    // For web tabs, use browser's navigation state; for others, use tab history
+    let canGoBack = false
+    let canGoForward = false
+
+    if (isWebTab) {
+      const navState = webTabNavState[activeTab.id]
+      canGoBack = navState?.canGoBack ?? false
+      canGoForward = navState?.canGoForward ?? false
+    } else {
+      canGoBack = activeTabHistory ? activeTabHistory.currentIndex > 0 : false
+      canGoForward = activeTabHistory ? activeTabHistory.currentIndex < activeTabHistory.history.length - 1 : false
+    }
+
+    const isEditable = isNewTab || isWebTab
+    const isLoading = isWebTab && webTabLoading[activeTab.id]
 
     return (
       <div className="tab-path-bar">
@@ -510,7 +570,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             <ChevronRight size={16} />
           </button>
           <button
-            className="nav-btn refresh-nav-btn"
+            className={`nav-btn refresh-nav-btn ${isLoading ? 'loading' : ''}`}
             onClick={handleRefresh}
             data-tooltip="Refresh"
             aria-label="Refresh"
@@ -523,9 +583,21 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             type="text"
             className="path-input"
             value={pathText}
-            onChange={isNewTab ? (e) => setAddressBarInput(e.target.value) : undefined}
-            onKeyDown={isNewTab ? handleAddressBarSubmit : undefined}
-            readOnly={!isNewTab}
+            onChange={
+              isNewTab
+                ? (e) => setAddressBarInput(e.target.value)
+                : isWebTab
+                  ? (e) => handleWebAddressChange(activeTab.id, e.target.value)
+                  : undefined
+            }
+            onKeyDown={
+              isNewTab
+                ? handleAddressBarSubmit
+                : isWebTab
+                  ? handleWebAddressSubmit
+                  : undefined
+            }
+            readOnly={!isEditable}
             placeholder={placeholder}
           />
         </div>
@@ -576,7 +648,32 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       case 'web':
         return (
           <div className="web-layout">
-            <BrowserPanel key={activeTab.id} tabId={activeTab.id} url={activeTab.resourceId} isActive={true} />
+            <BrowserPanel
+              key={activeTab.id}
+              ref={(ref) => { browserRefs.current[activeTab.id] = ref }}
+              tabId={activeTab.id}
+              url={activeTab.resourceId}
+              isActive={true}
+              onUrlChange={(url) => {
+                setWebTabUrls(prev => ({ ...prev, [activeTab.id]: url }))
+                // Also update tab title, icon, and resourceId so URL persists when switching tabs
+                try {
+                  const urlObj = new URL(url)
+                  const hostname = urlObj.hostname
+                  setTabs(prev => prev.map(tab =>
+                    tab.id === activeTab.id
+                      ? { ...tab, title: hostname, icon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`, resourceId: url }
+                      : tab
+                  ))
+                } catch {}
+              }}
+              onLoadingChange={(loading) => {
+                setWebTabLoading(prev => ({ ...prev, [activeTab.id]: loading }))
+              }}
+              onNavigationChange={(canBack, canForward) => {
+                setWebTabNavState(prev => ({ ...prev, [activeTab.id]: { canGoBack: canBack, canGoForward: canForward } }))
+              }}
+            />
           </div>
         )
 

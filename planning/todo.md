@@ -44,8 +44,37 @@
 
 ### 🚧 Active Tasks
 
+file explorer top look not good, maybe
+see more ui improvements
+לראות וליישם
+https://youtu.be/-4nUCaMNBR8?si=uwiFpgPm9jORC5fZ
+https://venturebeat.com/technology/the-creator-of-claude-code-just-revealed-his-workflow-and-developers-are
+https://www.youtube.com/watch?v=EHDzlot7LKU
+https://medium.com/@joe.njenga/17-best-claude-code-workflows-that-separate-amateurs-from-pros-instantly-level-up-5075680d4c49
+לקחת דברים מהפרויקט שיואה שלח והזה שאחי שלח
+לתת פידבק בתוך התכנה שתשפר את עצמה ושתלמד
+להמשיך את האפגרייד של של פרוטו
+להוסיף למשימות מהפתק בקלוד קוד
+לתת פידבק בתוך התכמה שתשפר את עצמה ושתלמד
+להכניס למשימות של התכנה את הדברים מהפתק של קלוד קוד
+להכניס למשימות של התכנה את הדברים מהפתק של קלוד קוד ולעשות משימה
+להשתמש בטכניקות מהפתק בקלוד קוד
+לחקור לרעיונות שלי אמסיפי a2a for human
+
+
+scrolling, cursor and glitching on browser
+make multiple terminals
+
+plus icon on on other icon
+
+
+planning should be relative to the task - tictactoe was planning too big
+
+the task list isnt good
 
 add to archtecture to build more determistic playbooks / code scripts to be more reliable
+
+multiple computer - sass version that control other computers
 
 use the not wrong system
 
@@ -53,7 +82,8 @@ controlling other computer
 full screen
 able to add resume stopped item
 
-the default project folder is inside the folder of the proto and not go into the repo
+
+make it create updaate and follow playbooks
 
 think of master archtecture with the concepets: specialisied agent to agents (subagent), tools and mcps, context and memory, plugins,lsp, skills and parrallel work inside computer and between computers
 feature of ask to clearify maaybe in a mode in the chat like planning add mode ask to clearify
@@ -89,7 +119,6 @@ best models + use less strong when needed
 
 bugs
 api calls for browser and computer when not shown
-when i run the software the browser not working, it should be start with the system
 proto folder should be called proto and not proto project
 stuck when i ask it to do slack task
 when changing folder file it should change the address
@@ -97,7 +126,6 @@ need to delegate to other boths and need to see it in the chat
 continue conversation if context finish like claude code
 
 
-all files should be openned and editable like vscode
 in the web ui also can see vms and other chrome
 good planning and files
 delegations to sub
@@ -106,7 +134,6 @@ parrallel work on same computer
 using multiple computers like any desk and they control each other
 
 *Client Improvements *
-new tab make look better for smaller screen
 make tool selection functional
 image and file selection on chat
 fix web, support multitab

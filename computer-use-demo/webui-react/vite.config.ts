@@ -15,11 +15,18 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         ws: true,
+      },
+      '/ws': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        ws: true,
       }
     }
   },
   build: {
-    outDir: '../static',
+    outDir: 'dist',
     emptyOutDir: true,
-  }
+  },
+  // For Electron renderer
+  base: './',
 })
