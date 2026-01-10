@@ -42,13 +42,14 @@ export interface BrowserPanelRef {
 
 const BrowserPanel = forwardRef<BrowserPanelRef, BrowserPanelProps>(({
   url: initialUrl,
-  tabId = 'default',
-  isActive = true,
+  tabId: _tabId = 'default',
+  isActive: _isActive = true,
   onUrlChange,
   onTitleChange,
   onLoadingChange,
   onNavigationChange
 }, ref) => {
+  // Note: _tabId and _isActive are kept for API compatibility but not used internally
   const webviewRef = useRef<WebviewElement>(null)
   const [currentUrl, setCurrentUrl] = useState(initialUrl || '')
   const [canGoBackState, setCanGoBackState] = useState(false)
@@ -200,6 +201,7 @@ const BrowserPanel = forwardRef<BrowserPanelRef, BrowserPanelProps>(({
           ref={webviewRef as any}
           src={currentUrl || 'about:blank'}
           className="browser-webview"
+          // @ts-ignore - Electron webview attributes
           allowpopups="true"
           partition="persist:main"
         />

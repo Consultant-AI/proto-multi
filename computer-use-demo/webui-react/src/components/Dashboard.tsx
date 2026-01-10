@@ -645,7 +645,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
                 <button className="card-external" data-tooltip="Open in new window" aria-label="Open in new window">⧉</button>
               </div>
             ))}
-            <div className="resource-card new-resource">
+            <div className="resource-card new-resource" onClick={() => onOpenResource?.('terminal', '')}>
               <Plus size={20} />
               <span>New Terminal</span>
             </div>

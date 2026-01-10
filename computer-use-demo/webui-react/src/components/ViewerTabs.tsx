@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw, Sun, Moon, Layers } from 'lucide-react'
 import { Tab, TabType } from '../types/tabs'
 import Dashboard from './Dashboard'
@@ -7,6 +7,7 @@ import FileViewer from './FileViewer'
 import BrowserPanel, { BrowserPanelRef } from './BrowserPanel'
 import ComputerPanel from './ComputerPanel'
 import ComputersOverview from './ComputersOverview'
+import TerminalPanel from './TerminalPanel'
 import Resizer from './Resizer'
 import '../styles/ViewerTabs.css'
 
@@ -221,6 +222,9 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       title = id === 'main' || id === 'local' ? 'This Computer' : id
       icon = <Monitor size={14} />
     } else if (type === 'terminal') {
+      // Generate unique session ID if not provided
+      const sessionId = id || `terminal-${Date.now()}`
+      id = sessionId
       title = 'Terminal'
       icon = <Terminal size={14} />
     }
@@ -283,34 +287,61 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   }
 
   const handleBack = () => {
-    // For web tabs, use browser's native back
+    // For web tabs, check if browser can go back first
     if (activeTab?.type === 'web') {
       const browserRef = browserRefs.current[activeTab.id]
-      browserRef?.goBack()
+      const navState = webTabNavState[activeTab.id]
+      if (navState?.canGoBack) {
+        browserRef?.goBack()
+        return
+      }
+      // If browser can't go back, fall through to go back to newtab
+    }
+
+    // If there's history to go back to, use it
+    if (activeTabHistory && activeTabHistory.currentIndex > 0) {
+      const newIndex = activeTabHistory.currentIndex - 1
+      const previousState = activeTabHistory.history[newIndex]
+
+      // Update tab to previous state
+      setTabs(prev => prev.map(tab =>
+        tab.id === activeTabId ? previousState : tab
+      ))
+
+      // Update selected path based on tab type
+      if (previousState.type === 'files' && previousState.resourceId) {
+        setSelectedPath(previousState.resourceId)
+      } else {
+        setSelectedPath(null)
+      }
+
+      // Update history index
+      setTabHistories(prev => prev.map(th =>
+        th.tabId === activeTabId ? { ...th, currentIndex: newIndex } : th
+      ))
       return
     }
 
-    if (!activeTabHistory || activeTabHistory.currentIndex <= 0) return
+    // No history - go back to newtab screen if not already on newtab
+    if (activeTab && activeTab.type !== 'newtab') {
+      const newTabState: Tab = {
+        id: activeTab.id,
+        type: 'newtab',
+        title: 'New Tab',
+        icon: <Plus size={14} />
+      }
 
-    const newIndex = activeTabHistory.currentIndex - 1
-    const previousState = activeTabHistory.history[newIndex]
+      setTabs(prev => prev.map(tab =>
+        tab.id === activeTabId ? newTabState : tab
+      ))
 
-    // Update tab to previous state
-    setTabs(prev => prev.map(tab =>
-      tab.id === activeTabId ? previousState : tab
-    ))
-
-    // Update selected path based on tab type
-    if (previousState.type === 'files' && previousState.resourceId) {
-      setSelectedPath(previousState.resourceId)
-    } else {
       setSelectedPath(null)
-    }
 
-    // Update history index
-    setTabHistories(prev => prev.map(th =>
-      th.tabId === activeTabId ? { ...th, currentIndex: newIndex } : th
-    ))
+      // Reset history to just the newtab
+      setTabHistories(prev => prev.map(th =>
+        th.tabId === activeTabId ? { ...th, history: [newTabState], currentIndex: 0 } : th
+      ))
+    }
   }
 
   const handleForward = () => {
@@ -368,15 +399,24 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
 
   // Handle file path selection with history tracking
   const handleSelectPath = (path: string) => {
+    console.log('[handleSelectPath] called with path:', path)
+    console.log('[handleSelectPath] activeTab:', activeTab?.type, activeTab?.id)
+    console.log('[handleSelectPath] current selectedPath:', selectedPath)
+
     // If we're not on a files tab, use handleOpenResource to create/switch tabs
     if (!activeTab || activeTab.type !== 'files') {
+      console.log('[handleSelectPath] not on files tab, calling handleOpenResource')
       handleOpenResource('files', path)
       return
     }
 
     // If selecting the same path, do nothing
-    if (selectedPath === path) return
+    if (selectedPath === path) {
+      console.log('[handleSelectPath] same path, skipping')
+      return
+    }
 
+    console.log('[handleSelectPath] updating selectedPath to:', path)
     // Update selectedPath
     setSelectedPath(path)
 
@@ -513,6 +553,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       switch (activeTab.type) {
         case 'files':
           pathText = selectedPath || activeTab.resourceId || ''
+          console.log('[renderPathBar] files tab - selectedPath:', selectedPath, 'resourceId:', activeTab.resourceId, 'pathText:', pathText)
           break
         case 'computer':
           // Show computer:// URL with resourceId or localhost
@@ -538,10 +579,16 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
 
     if (isWebTab) {
       const navState = webTabNavState[activeTab.id]
-      canGoBack = navState?.canGoBack ?? false
+      // Web tabs can go back if browser has history OR if we can go back to newtab
+      canGoBack = (navState?.canGoBack ?? false) || true // Always can go back to newtab from web
       canGoForward = navState?.canGoForward ?? false
+    } else if (isNewTab) {
+      // New tab has no back
+      canGoBack = false
+      canGoForward = activeTabHistory ? activeTabHistory.currentIndex < activeTabHistory.history.length - 1 : false
     } else {
-      canGoBack = activeTabHistory ? activeTabHistory.currentIndex > 0 : false
+      // Content tabs (files, terminal, computer) can always go back (to newtab if no history)
+      canGoBack = true
       canGoForward = activeTabHistory ? activeTabHistory.currentIndex < activeTabHistory.history.length - 1 : false
     }
 
@@ -637,6 +684,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             <div className="file-viewer-section">
               <FileViewer
                 selectedPath={selectedPath}
+                onPathChange={handleSelectPath}
                 explorerVisible={explorerVisible}
                 onToggleExplorer={() => setExplorerVisible(!explorerVisible)}
                 isDarkTheme={isDarkTheme}
@@ -680,11 +728,11 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
       case 'terminal':
         return (
           <div className="terminal-layout">
-            <div className="terminal-placeholder">
-              <Terminal size={48} />
-              <h3>Terminal Sessions</h3>
-              <p>Terminal view coming soon</p>
-            </div>
+            <TerminalPanel
+              key={activeTab.id}
+              sessionId={activeTab.resourceId || activeTab.id}
+              isActive={true}
+            />
           </div>
         )
 
@@ -717,28 +765,31 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
     <div className="viewer-tabs">
       {/* Tab bar */}
       <div className="viewer-tabs-header">
-        <div className="viewer-tabs-list">
-          {tabs.map(tab => (
-            <div
-              key={tab.id}
-              className={`viewer-tab ${activeTabId === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTabId(tab.id)}
-            >
-              <span className="viewer-tab-icon">{getTabIcon(tab)}</span>
-              <span className="viewer-tab-title">{tab.title}</span>
-              <button
-                className="viewer-tab-close"
-                onClick={(e) => handleCloseTab(tab.id, e)}
-                data-tooltip="Close tab"
-                aria-label="Close tab"
+        <div className="viewer-tabs-area">
+          <div className="viewer-tabs-list">
+            {tabs.map(tab => (
+              <div
+                key={tab.id}
+                className={`viewer-tab ${activeTabId === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTabId(tab.id)}
               >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
+                <span className="viewer-tab-icon">{getTabIcon(tab)}</span>
+                <span className="viewer-tab-title">{tab.title}</span>
+                <button
+                  className="viewer-tab-close"
+                  onClick={(e) => handleCloseTab(tab.id, e)}
+                  data-tooltip="Close tab"
+                  aria-label="Close tab"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
 
-          {/* New tab button */}
+          {/* New tab button - next to tabs */}
           <button
+            type="button"
             className="new-tab-btn"
             onClick={() => handleAddTab('newtab')}
             data-tooltip="New tab"

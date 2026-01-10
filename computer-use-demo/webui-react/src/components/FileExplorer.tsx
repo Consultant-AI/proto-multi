@@ -416,6 +416,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
           className={`file-node-label ${isSelected ? 'selected' : ''}`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
+            console.log('[FileExplorer] clicked:', node.type, node.path)
             if (node.type === 'folder') {
               toggleFolder(node.path)
             }

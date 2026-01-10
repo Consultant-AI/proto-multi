@@ -4628,5 +4628,167 @@ def _maybe_launch_native_window(host: str, port: int):
         pass
 
 
+# ============================================================================
+# Terminal Sessions API
+# ============================================================================
+
+# Store terminal sessions (process + pty) by session ID
+_terminal_sessions: dict[str, dict] = {}
+
+
+@app.post("/api/terminal/sessions")
+async def create_terminal_session(request: Request):
+    """Create a new terminal session."""
+    import uuid
+    import pty
+    import select
+
+    data = await request.json()
+    session_id = data.get("session_id") or str(uuid.uuid4())
+
+    if session_id in _terminal_sessions:
+        return {"session_id": session_id, "status": "already_exists"}
+
+    # Create a pseudo-terminal
+    master_fd, slave_fd = pty.openpty()
+
+    # Start bash in the slave end
+    pid = os.fork()
+    if pid == 0:
+        # Child process
+        os.setsid()
+        os.dup2(slave_fd, 0)
+        os.dup2(slave_fd, 1)
+        os.dup2(slave_fd, 2)
+        os.close(master_fd)
+        os.close(slave_fd)
+        os.execvp("/bin/bash", ["/bin/bash", "-i"])
+    else:
+        # Parent process
+        os.close(slave_fd)
+        _terminal_sessions[session_id] = {
+            "pid": pid,
+            "master_fd": master_fd,
+            "created_at": time.time(),
+        }
+
+    return {"session_id": session_id, "status": "created"}
+
+
+@app.delete("/api/terminal/sessions/{session_id}")
+async def delete_terminal_session(session_id: str):
+    """Close a terminal session."""
+    import signal
+
+    if session_id not in _terminal_sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = _terminal_sessions.pop(session_id)
+    try:
+        os.close(session["master_fd"])
+        os.kill(session["pid"], signal.SIGTERM)
+    except Exception:
+        pass
+
+    return {"status": "closed"}
+
+
+@app.post("/api/terminal/sessions/{session_id}/execute")
+async def terminal_execute(session_id: str, request: Request):
+    """Execute a command in a terminal session."""
+    import select
+
+    if session_id not in _terminal_sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    data = await request.json()
+    command = data.get("command", "")
+
+    session = _terminal_sessions[session_id]
+    master_fd = session["master_fd"]
+
+    # Write command to terminal
+    os.write(master_fd, (command + "\n").encode())
+
+    # Wait a bit for output
+    await asyncio.sleep(0.1)
+
+    # Read available output
+    output = ""
+    try:
+        import fcntl
+        # Set non-blocking
+        flags = fcntl.fcntl(master_fd, fcntl.F_GETFL)
+        fcntl.fcntl(master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+        # Read all available data
+        while True:
+            try:
+                chunk = os.read(master_fd, 4096)
+                if chunk:
+                    output += chunk.decode("utf-8", errors="replace")
+                else:
+                    break
+            except BlockingIOError:
+                break
+            await asyncio.sleep(0.05)
+
+        # Restore blocking mode
+        fcntl.fcntl(master_fd, fcntl.F_SETFL, flags)
+    except Exception as e:
+        output = f"Error reading output: {e}"
+
+    return {"output": output}
+
+
+@app.get("/api/terminal/sessions/{session_id}/output")
+async def terminal_get_output(session_id: str):
+    """Get any pending output from a terminal session."""
+    import fcntl
+
+    if session_id not in _terminal_sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = _terminal_sessions[session_id]
+    master_fd = session["master_fd"]
+
+    output = ""
+    try:
+        # Set non-blocking
+        flags = fcntl.fcntl(master_fd, fcntl.F_GETFL)
+        fcntl.fcntl(master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+        # Read all available data
+        while True:
+            try:
+                chunk = os.read(master_fd, 4096)
+                if chunk:
+                    output += chunk.decode("utf-8", errors="replace")
+                else:
+                    break
+            except BlockingIOError:
+                break
+
+        # Restore blocking mode
+        fcntl.fcntl(master_fd, fcntl.F_SETFL, flags)
+    except Exception:
+        pass
+
+    return {"output": output}
+
+
+@app.get("/api/terminal/sessions")
+async def list_terminal_sessions():
+    """List all terminal sessions."""
+    sessions = []
+    for session_id, session in _terminal_sessions.items():
+        sessions.append({
+            "session_id": session_id,
+            "created_at": session["created_at"],
+            "pid": session["pid"],
+        })
+    return {"sessions": sessions}
+
+
 if __name__ == "__main__":
     main()
