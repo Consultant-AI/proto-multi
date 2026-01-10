@@ -447,7 +447,7 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
               {isMenuOpen && (
                 <div className="file-node-dropdown">
                   <button onClick={(e) => handleOpenInOS(node.path, e)}>
-                    {node.type === 'folder' ? 'Open in Finder' : 'Open with Default App'}
+                    Open
                   </button>
                   {isCustom && (
                     <button onClick={(e) => handleRemoveCustomPath(node.path, e)}>

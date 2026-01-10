@@ -43,9 +43,8 @@
   - ✅ Continuous learning AND active self-improvement while working
 
 ### 🚧 Active Tasks
+qa for ui + fixes
 
-file explorer top look not good, maybe
-see more ui improvements
 לראות וליישם
 https://youtu.be/-4nUCaMNBR8?si=uwiFpgPm9jORC5fZ
 https://venturebeat.com/technology/the-creator-of-claude-code-just-revealed-his-workflow-and-developers-are
@@ -62,10 +61,7 @@ https://medium.com/@joe.njenga/17-best-claude-code-workflows-that-separate-amate
 לחקור לרעיונות שלי אמסיפי a2a for human
 
 
-scrolling, cursor and glitching on browser
-make multiple terminals
 
-plus icon on on other icon
 
 
 planning should be relative to the task - tictactoe was planning too big
@@ -121,7 +117,6 @@ bugs
 api calls for browser and computer when not shown
 proto folder should be called proto and not proto project
 stuck when i ask it to do slack task
-when changing folder file it should change the address
 need to delegate to other boths and need to see it in the chat
 continue conversation if context finish like claude code
 
@@ -136,7 +131,6 @@ using multiple computers like any desk and they control each other
 *Client Improvements *
 make tool selection functional
 image and file selection on chat
-fix web, support multitab
 support terminal + choose computer
 history
 address bar fixes + back, forward, refresh

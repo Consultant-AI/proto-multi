@@ -411,7 +411,7 @@ export default function FileViewer({ selectedPath, onPathChange, explorerVisible
               Cancel
             </button>
           )}
-          <button className="open-btn icon-only" onClick={handleOpen} data-tooltip="Open in Finder" aria-label="Open in Finder">
+          <button className="open-btn icon-only" onClick={handleOpen} data-tooltip="Open" aria-label="Open">
             <ExternalLink size={16} />
           </button>
         </div>
