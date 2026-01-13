@@ -1082,12 +1082,20 @@ async def list_sessions():
     """List all available sessions."""
     sessions = []
     for session_id, session in app.state.sessions.items():
+        # Get first user message as preview (DisplayMessage is a dataclass)
+        preview = ""
+        for msg in session.display_messages:
+            if msg.role == "user":
+                preview = msg.text[:100] if msg.text else ""
+                break
+
         sessions.append({
             "id": session_id,
             "createdAt": session.created_at.isoformat(),
             "lastActive": session.last_active.isoformat(),
             "messageCount": len(session.display_messages),
             "isCurrent": session_id == app.state.current_session_id,
+            "preview": preview,
         })
 
     # Also check for saved sessions on disk
@@ -1097,12 +1105,20 @@ async def list_sessions():
             try:
                 with open(session_file, "rb") as f:
                     data = pickle.load(f)
+                # Get first user message as preview
+                preview = ""
+                for msg in data["display_messages"]:
+                    if msg.role == "user":
+                        preview = msg.text[:100] if msg.text else ""
+                        break
+
                 sessions.append({
                     "id": session_id,
                     "createdAt": data["created_at"].isoformat(),
                     "lastActive": data["last_active"].isoformat(),
                     "messageCount": len(data["display_messages"]),
                     "isCurrent": False,
+                    "preview": preview,
                 })
             except:
                 pass

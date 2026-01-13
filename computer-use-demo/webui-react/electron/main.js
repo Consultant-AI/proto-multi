@@ -1,10 +1,16 @@
-const { app, BrowserWindow, session } = require('electron')
+const { app, BrowserWindow, session, screen, ipcMain } = require('electron')
 const path = require('path')
 
 function createWindow() {
+  // Get full screen dimensions
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height } = primaryDisplay.workAreaSize
+
   const win = new BrowserWindow({
-    width: 1600,
-    height: 1000,
+    width,
+    height,
+    x: 0,
+    y: 0,
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
@@ -42,6 +48,25 @@ function createWindow() {
   // Handle window close
   win.on('closed', () => {
     app.quit()
+  })
+
+  // IPC handler for toggling window maximize (macOS double-click title bar behavior)
+  ipcMain.handle('toggle-maximize', () => {
+    const { width: fullWidth, height: fullHeight } = screen.getPrimaryDisplay().workAreaSize
+    const bounds = win.getBounds()
+
+    // Check if currently at full size
+    if (bounds.width === fullWidth && bounds.height === fullHeight && bounds.x === 0 && bounds.y === 0) {
+      // Shrink to smaller centered window
+      const smallWidth = 1200
+      const smallHeight = 800
+      const x = Math.round((fullWidth - smallWidth) / 2)
+      const y = Math.round((fullHeight - smallHeight) / 2)
+      win.setBounds({ x, y, width: smallWidth, height: smallHeight })
+    } else {
+      // Go to full size
+      win.setBounds({ x: 0, y: 0, width: fullWidth, height: fullHeight })
+    }
   })
 }
 

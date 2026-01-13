@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Files, Globe, Terminal, Monitor, X, Plus, MessageSquare, FileText, FileCode, File, ChevronLeft, ChevronRight, RefreshCw, Sun, Moon, Layers } from 'lucide-react'
 import { Tab, TabType } from '../types/tabs'
 import Dashboard from './Dashboard'
@@ -188,6 +188,31 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
 
   const toggleTheme = () => {
     setIsDarkTheme(prev => !prev)
+  }
+
+  // Double-click on header toggles window maximize (macOS-style behavior)
+  const handleHeaderDoubleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    console.log('[double-click] event fired on:', target.className)
+
+    // Only trigger if clicking on empty space (not on tabs, buttons, icons)
+    const clickedOnInteractive = target.closest('button, .viewer-tab, .new-tab-btn, .toggle-chat-btn, .toggle-theme-btn, .viewer-close-btn')
+    if (clickedOnInteractive) {
+      console.log('[double-click] clicked on interactive element, ignoring')
+      return
+    }
+
+    console.log('[double-click] attempting to toggle maximize')
+    console.log('[double-click] window.require exists:', typeof window.require)
+
+    // Use Electron IPC to toggle maximize
+    try {
+      const { ipcRenderer } = window.require('electron')
+      console.log('[double-click] ipcRenderer:', ipcRenderer)
+      ipcRenderer.invoke('toggle-maximize')
+    } catch (err) {
+      console.error('[double-click] error:', err)
+    }
   }
 
   const activeTab = tabs.find(tab => tab.id === activeTabId)
@@ -397,52 +422,62 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
     }
   }
 
-  // Handle file path selection with history tracking
-  const handleSelectPath = (path: string) => {
+  // Memoized callback for toggling explorer visibility - prevents FileExplorer rerenders
+  const handleToggleExplorerVisible = useCallback(() => {
+    setExplorerVisible(false)
+  }, [])
+
+  // Handle file path selection with history tracking - memoized to prevent FileExplorer rerenders
+  const handleSelectPath = useCallback((path: string) => {
     console.log('[handleSelectPath] called with path:', path)
-    console.log('[handleSelectPath] activeTab:', activeTab?.type, activeTab?.id)
-    console.log('[handleSelectPath] current selectedPath:', selectedPath)
 
-    // If we're not on a files tab, use handleOpenResource to create/switch tabs
-    if (!activeTab || activeTab.type !== 'files') {
-      console.log('[handleSelectPath] not on files tab, calling handleOpenResource')
-      handleOpenResource('files', path)
-      return
-    }
+    setSelectedPath(currentSelectedPath => {
+      // If selecting the same path, do nothing
+      if (currentSelectedPath === path) {
+        console.log('[handleSelectPath] same path, skipping')
+        return currentSelectedPath
+      }
+      return path
+    })
 
-    // If selecting the same path, do nothing
-    if (selectedPath === path) {
-      console.log('[handleSelectPath] same path, skipping')
-      return
-    }
+    // Update tab and history using functional updates to avoid stale closures
+    setTabs(prev => {
+      const currentActiveTab = prev.find(t => t.id === activeTabId)
+      if (!currentActiveTab || currentActiveTab.type !== 'files') {
+        // Not on files tab - this shouldn't happen if called from FileExplorer
+        return prev
+      }
 
-    console.log('[handleSelectPath] updating selectedPath to:', path)
-    // Update selectedPath
-    setSelectedPath(path)
+      const filename = path.split('/').pop() || path
+      const updatedTab = {
+        ...currentActiveTab,
+        title: filename,
+        icon: getFileIcon(filename),
+        resourceId: path
+      }
 
-    // Update the tab title and icon
-    const filename = path.split('/').pop() || path
-    const updatedTab = {
-      ...activeTab,
-      title: filename,
-      icon: getFileIcon(filename),
-      resourceId: path
-    }
-
-    setTabs(prev => prev.map(tab =>
-      tab.id === activeTabId ? updatedTab : tab
-    ))
+      return prev.map(tab => tab.id === activeTabId ? updatedTab : tab)
+    })
 
     // Add to history
     setTabHistories(prev => prev.map(th => {
-      if (th.tabId === activeTabId) {
-        // Remove any forward history and add new state
-        const newHistory = [...th.history.slice(0, th.currentIndex + 1), updatedTab]
-        return { ...th, history: newHistory, currentIndex: newHistory.length - 1 }
+      if (th.tabId !== activeTabId) return th
+
+      const filename = path.split('/').pop() || path
+      const currentTab = th.history[th.currentIndex]
+      if (!currentTab || currentTab.type !== 'files') return th
+
+      const updatedTab = {
+        ...currentTab,
+        title: filename,
+        icon: getFileIcon(filename),
+        resourceId: path
       }
-      return th
+
+      const newHistory = [...th.history.slice(0, th.currentIndex + 1), updatedTab]
+      return { ...th, history: newHistory, currentIndex: newHistory.length - 1 }
     }))
-  }
+  }, [activeTabId])
 
   const handleAddressBarSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return
@@ -671,7 +706,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
                   <FileExplorer
                     onSelectPath={handleSelectPath}
                     selectedPath={selectedPath}
-                    onToggleVisible={() => setExplorerVisible(false)}
+                    onToggleVisible={handleToggleExplorerVisible}
                     refreshKey={explorerRefreshKey}
                   />
                 </div>
@@ -764,7 +799,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   return (
     <div className="viewer-tabs">
       {/* Tab bar */}
-      <div className="viewer-tabs-header">
+      <div className="viewer-tabs-header" onDoubleClick={handleHeaderDoubleClick}>
         <div className="viewer-tabs-area">
           <div className="viewer-tabs-list">
             {tabs.map(tab => (

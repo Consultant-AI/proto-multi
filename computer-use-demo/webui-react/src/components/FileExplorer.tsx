@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Folder, FolderOpen, File, FileText, FileCode, Plus, X } from 'lucide-react'
+import { useState, useEffect, useRef, memo } from 'react'
+import { Folder, FolderOpen, File, FileText, FileCode, Plus, X, ChevronRight, ChevronDown } from 'lucide-react'
 import { FileNode, Project } from '../types'
 import '../styles/FileExplorer.css'
 
@@ -10,9 +10,39 @@ interface FileExplorerProps {
   refreshKey?: number
 }
 
-export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisible, refreshKey }: FileExplorerProps) {
+const EXPANDED_FOLDERS_KEY = 'explorer_expanded_folders'
+
+// Module-level persistent storage for expanded folders
+// This survives component remounts and re-renders
+let persistentExpandedFolders: Set<string> | null = null
+
+// Load expanded folders from localStorage (only once)
+const loadExpandedFolders = (): Set<string> => {
+  if (persistentExpandedFolders !== null) {
+    return persistentExpandedFolders
+  }
+  try {
+    const saved = localStorage.getItem(EXPANDED_FOLDERS_KEY)
+    if (saved) {
+      persistentExpandedFolders = new Set(JSON.parse(saved))
+      return persistentExpandedFolders
+    }
+  } catch { }
+  persistentExpandedFolders = new Set()
+  return persistentExpandedFolders
+}
+
+// Save expanded folders to localStorage and update persistent storage
+const saveExpandedFolders = (folders: Set<string>) => {
+  persistentExpandedFolders = folders
+  try {
+    localStorage.setItem(EXPANDED_FOLDERS_KEY, JSON.stringify(Array.from(folders)))
+  } catch { }
+}
+
+function FileExplorer({ onSelectPath, selectedPath, onToggleVisible, refreshKey }: FileExplorerProps) {
   const [, setProjects] = useState<Project[]>([])
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => loadExpandedFolders())
   const [fileTree, setFileTree] = useState<FileNode[]>([])
   const [loading, setLoading] = useState(true)
   const [customPaths, setCustomPaths] = useState<FileNode[]>([])
@@ -23,12 +53,14 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
   const customPathsRef = useRef<FileNode[]>([])
   const fileTreeRef = useRef<FileNode[]>([])
   const expandedFoldersRef = useRef<Set<string>>(new Set())
-  const lastExpandedPathRef = useRef<string | null>(null)
 
-  // Keep refs in sync with state
+  // Keep refs in sync with state (but DON'T save to persistent storage here - that's done in toggleFolder/expandToPath)
   useEffect(() => { customPathsRef.current = customPaths }, [customPaths])
   useEffect(() => { fileTreeRef.current = fileTree }, [fileTree])
-  useEffect(() => { expandedFoldersRef.current = expandedFolders }, [expandedFolders])
+  useEffect(() => {
+    expandedFoldersRef.current = expandedFolders
+    // Don't call saveExpandedFolders here - it would overwrite persistent storage with potentially stale state
+  }, [expandedFolders])
 
   // Helper to filter out paths that are already contained within another path in the list
   const filterRedundantPaths = (nodes: FileNode[]): FileNode[] => {
@@ -46,91 +78,115 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
   useEffect(() => {
     loadProjects()
     loadFileTree()
-    // Load custom paths from localStorage
+
+    // Clear expanded folders on page load - folders should start collapsed
+    // User can expand them again as needed
+    persistentExpandedFolders = new Set()
+    saveExpandedFolders(persistentExpandedFolders)
+    setExpandedFolders(new Set())
+
+    // Load custom paths from localStorage (but clear children to prevent auto-expansion)
     const saved = localStorage.getItem('explorer_custom_paths')
     if (saved) {
       try {
-        setCustomPaths(JSON.parse(saved))
+        const parsed = JSON.parse(saved) as FileNode[]
+        // Clear children to ensure folders start collapsed on page refresh
+        const withoutChildren = parsed.map((node: FileNode) => ({
+          ...node,
+          children: node.type === 'folder' ? [] : undefined
+        }))
+        setCustomPaths(withoutChildren)
       } catch {
         // Invalid JSON, ignore
       }
     }
   }, [])
 
-  // Function to expand folders to reveal a path
+  // Expand parent folders to reveal a path (for address bar navigation)
+  // Only ADDS to expanded set, never removes - so it won't interfere with toggleFolder
   const expandToPath = async (targetPath: string) => {
-    // Use refs to get current state without triggering re-renders
     const currentCustomPaths = customPathsRef.current
     const currentFileTree = fileTreeRef.current
-
-    // Wait for data to be loaded
     if (currentCustomPaths.length === 0 && currentFileTree.length === 0) return false
 
-    // Find all root folders that could contain this path
     const allRoots = [...currentCustomPaths, ...currentFileTree]
-
-    // Find the root that contains this path
     const matchingRoot = allRoots.find(root =>
       targetPath === root.path || targetPath.startsWith(root.path + '/')
     )
-
     if (!matchingRoot) return false
 
-    // Build list of all paths that need to be expanded
     const pathsToExpand: string[] = []
 
-    // If it's the root itself, just expand it
     if (targetPath === matchingRoot.path) {
-      if (matchingRoot.type === 'folder') {
-        pathsToExpand.push(matchingRoot.path)
-      }
+      // Target is the root itself - expand it if it's a folder
+      if (matchingRoot.type === 'folder') pathsToExpand.push(matchingRoot.path)
     } else {
-      // Get the relative path from root
+      // Target is inside the root - expand all parent folders
       const relativePath = targetPath.slice(matchingRoot.path.length + 1)
       const parts = relativePath.split('/')
-
-      // Start from root and add each parent folder
       let currentPath = matchingRoot.path
       pathsToExpand.push(currentPath)
 
-      // Add all parent folders (not the file itself if it's a file)
+      // Add all parent folders
       for (let i = 0; i < parts.length - 1; i++) {
         currentPath = currentPath + '/' + parts[i]
         pathsToExpand.push(currentPath)
       }
 
-      // If the selected path is a folder, also expand it
+      // If target is a folder, expand it too
       const lastPart = parts[parts.length - 1]
       if (lastPart && !lastPart.includes('.')) {
-        // Likely a folder (no extension)
         pathsToExpand.push(targetPath)
       }
     }
 
-    // Load folder contents for each path that needs expanding
+    // Load folder contents for each path
     for (const path of pathsToExpand) {
       await loadFolderContentsForPath(path)
     }
 
-    // Update expanded folders state
-    setExpandedFolders(prev => {
-      const newExpanded = new Set(prev)
-      for (const path of pathsToExpand) {
-        newExpanded.add(path)
-      }
-      return newExpanded
-    })
+    // Only ADD to expanded set (never remove) - this prevents interfering with toggleFolder
+    const currentPersistent = persistentExpandedFolders || new Set<string>()
+    const newExpanded = new Set(currentPersistent)
+    for (const path of pathsToExpand) {
+      newExpanded.add(path)
+    }
+    saveExpandedFolders(newExpanded)
+    setExpandedFolders(newExpanded)
 
     return true
   }
 
-  // Auto-expand folders to reveal the selected path
+  // Track if path change came from clicking in explorer (internal) vs address bar (external)
+  const internalClickRef = useRef(false)
+  const lastExpandedPathRef = useRef<string | null>(null)
+
+  // Auto-expand parent folders ONLY for external path changes (address bar, not explorer clicks)
   useEffect(() => {
     if (!selectedPath) return
-    // Skip if we already expanded for this path
     if (lastExpandedPathRef.current === selectedPath) return
 
+    // Skip if this was an internal click - toggleFolder already handled it
+    if (internalClickRef.current) {
+      internalClickRef.current = false
+      lastExpandedPathRef.current = selectedPath
+      return
+    }
+
+    // If data not loaded yet, poll until it is (max 2 seconds)
+    let attempts = 0
+    const maxAttempts = 20
+
     const tryExpand = async () => {
+      if (customPathsRef.current.length === 0 && fileTreeRef.current.length === 0) {
+        // Data not ready, try again in 100ms
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(tryExpand, 100)
+        }
+        return
+      }
+
       const success = await expandToPath(selectedPath)
       if (success) {
         lastExpandedPathRef.current = selectedPath
@@ -139,22 +195,6 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
 
     tryExpand()
   }, [selectedPath])
-
-  // Retry expansion when data loads (in case selectedPath was set before data was ready)
-  useEffect(() => {
-    if (!selectedPath) return
-    if (lastExpandedPathRef.current === selectedPath) return
-    if (customPaths.length === 0 && fileTree.length === 0) return
-
-    const tryExpand = async () => {
-      const success = await expandToPath(selectedPath)
-      if (success) {
-        lastExpandedPathRef.current = selectedPath
-      }
-    }
-
-    tryExpand()
-  }, [customPaths.length, fileTree.length, selectedPath])
 
   // Handle external refresh trigger
   useEffect(() => {
@@ -340,15 +380,28 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
     setOpenMenu(openMenu === path ? null : path)
   }
 
-  const toggleFolder = async (path: string) => {
-    const newExpanded = new Set(expandedFolders)
-    if (newExpanded.has(path)) {
+  // Toggle folder expand/collapse - only affects the clicked folder, never others
+  // isVisuallyExpanded: true if children are currently visible on screen
+  const toggleFolder = (path: string, isVisuallyExpanded: boolean) => {
+    // Use persistent storage as the source of truth
+    const currentExpanded = persistentExpandedFolders || new Set<string>()
+
+    // Create new set
+    const newExpanded = new Set(currentExpanded)
+
+    if (isVisuallyExpanded) {
+      // Folder is visually expanded (children visible) - collapse it
       newExpanded.delete(path)
     } else {
+      // Folder is not visually expanded - expand it and load children
       newExpanded.add(path)
-      // Load folder contents if not already loaded
-      await loadFolderContents(path)
+      loadFolderContents(path)
     }
+
+    // Update persistent storage FIRST
+    saveExpandedFolders(newExpanded)
+
+    // Then update React state
     setExpandedFolders(newExpanded)
   }
 
@@ -406,7 +459,10 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
   }
 
   const renderFileNode = (node: FileNode, level: number = 0, isCustom: boolean = false) => {
-    const isExpanded = expandedFolders.has(node.path)
+    // Use React state for rendering (triggers re-renders when it changes)
+    // Only consider expanded if children are actually loaded and visible
+    const hasVisibleChildren = !!(node.children && node.children.length > 0)
+    const isExpanded = expandedFolders.has(node.path) && hasVisibleChildren
     const isSelected = selectedPath === node.path
     const isMenuOpen = openMenu === node.path
 
@@ -416,13 +472,28 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
           className={`file-node-label ${isSelected ? 'selected' : ''}`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => {
-            console.log('[FileExplorer] clicked:', node.type, node.path)
+            // Mark this as an internal click so expandToPath doesn't run
+            internalClickRef.current = true
             if (node.type === 'folder') {
-              toggleFolder(node.path)
+              toggleFolder(node.path, isExpanded)
             }
             onSelectPath(node.path)
           }}
         >
+          {node.type === 'folder' ? (
+            <span
+              className="file-node-chevron"
+              onClick={(e) => {
+                e.stopPropagation()
+                internalClickRef.current = true
+                toggleFolder(node.path, isExpanded)
+              }}
+            >
+              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </span>
+          ) : (
+            <span className="file-node-chevron-spacer" />
+          )}
           <span className="file-node-icon">
             {node.type === 'folder' ? (
               isExpanded ? <FolderOpen size={16} /> : <Folder size={16} />
@@ -536,3 +607,5 @@ export default function FileExplorer({ onSelectPath, selectedPath, onToggleVisib
     </div>
   )
 }
+
+export default memo(FileExplorer)

@@ -1,5 +1,24 @@
 ## System Status
 
+** Requirments **
+
+software run on client and controlling computer
+this clients (on cloud) can control each other
+network of instances can run many projects like compnies
+system for self improve during a project + parralel system that improves.
+hosted website version can control other computers
+views - tabs system - show computers and can control them, files from computers / unified file system, terminals, urls,
+chat - agents with same base agent but with special code/prompts to be reliable
+agent call each other for special tasks.
+tools - reading files, modify files, run bash, write and run code, computer vision + mouse + keyboard, apps like drive, notion, slack..., adding mcps, adding apis, adding custom code.
+planning - each conversation create or part of existing project folder and each project has its planning files that get updated and the results like code, art ect
+multimodal, in+out - text, files, audio, images, video.
+project would make task in parallel when possible inside a computer or between many computers.
+user and agent could create more cloud computers if needed
+context system that knows what data to retrive in the right time
+make the system to make reliablie piplines to make it more deterministic and reliable
+resource optimisation
+
 ### Current Runtime Status
 - ✅ Backend running on port 8000
 - ✅ Frontend running on port 3000
@@ -42,158 +61,151 @@
     - Cross-project knowledge consolidation when idle
   - ✅ Continuous learning AND active self-improvement while working
 
-### 🚧 Active Tasks
-qa for ui + fixes
-
-לראות וליישם
-https://youtu.be/-4nUCaMNBR8?si=uwiFpgPm9jORC5fZ
-https://venturebeat.com/technology/the-creator-of-claude-code-just-revealed-his-workflow-and-developers-are
-https://www.youtube.com/watch?v=EHDzlot7LKU
-https://medium.com/@joe.njenga/17-best-claude-code-workflows-that-separate-amateurs-from-pros-instantly-level-up-5075680d4c49
-לקחת דברים מהפרויקט שיואה שלח והזה שאחי שלח
-לתת פידבק בתוך התכנה שתשפר את עצמה ושתלמד
-להמשיך את האפגרייד של של פרוטו
-להוסיף למשימות מהפתק בקלוד קוד
-לתת פידבק בתוך התכמה שתשפר את עצמה ושתלמד
-להכניס למשימות של התכנה את הדברים מהפתק של קלוד קוד
-להכניס למשימות של התכנה את הדברים מהפתק של קלוד קוד ולעשות משימה
-להשתמש בטכניקות מהפתק בקלוד קוד
-לחקור לרעיונות שלי אמסיפי a2a for human
 
 
+In Progress
+
+### 🚧 Tasks
+
+- qa for ui
+- test and fix address bar fixes + back, forward, refresh
+
+**QA**
+
+*Sprint 1 - Ready for Self-Improve:*
+- qa for ui
+- check logs if there are problems and not needed api calls
+- qa for projects
+
+*Sprint 2 - Self Improve:*
+- test and improve on linux
+
+*Sprint 3 - Domain Specialization:*
+
+*Sprint 4 - Scale & Advanced:*
+
+**Client Improvements**
+*Sprint 1 - Ready for Self-Improve:*
+- on light theme the tool usage color not good
+- image and file selection on chat
+*Sprint 2 - Self Improve:*
+*Sprint 3 - Domain Specialization:*
+*Sprint 4 - Scale & Advanced:*
+- history of chat from all computers
+- support choose computer on: terminal, chat, browser, files , history of tabs, history of chats
+- ui for choosing api key
+- make tool selection functional
+- history
+- Real-time folder visibility as agent creates them
+- connect to another computer and change
+- make microphone works
 
 
+**Agentic Behavior Improvements**
 
-planning should be relative to the task - tictactoe was planning too big
+*Sprint 1 - Ready for Self-Improve:*
+- check if possible to connect claude code user and fallback to api key
+- stuck when i ask it to do slack task
+- need to delegate to other bots and need to see it in the chat
+- continue conversation if context finish like claude code
+- make sure tasks are good
+- for each task plan and then after finish write a summary of the task
+- make good planning and following planning + delegation
+- good context engineering
+- add to archtecture to build more determistic playbooks / code scripts to be more reliable
+- make it create update and follow playbooks
+- add from online and build myself more skills, plugins, mcps, subagents...
+- add ralph
+- processes based on reliable workflows (with human in the loop if needed for verification)
+- Agent Delegation System - Smart task distribution
 
-the task list isnt good
+*Sprint 2 - Self Improve:*
 
-add to archtecture to build more determistic playbooks / code scripts to be more reliable
-
-multiple computer - sass version that control other computers
-
-use the not wrong system
-
-controlling other computer
-full screen
-able to add resume stopped item
-
-
-make it create updaate and follow playbooks
-
-think of master archtecture with the concepets: specialisied agent to agents (subagent), tools and mcps, context and memory, plugins,lsp, skills and parrallel work inside computer and between computers
-feature of ask to clearify maaybe in a mode in the chat like planning add mode ask to clearify
-add ultrathing
-
-add from the note
-
-add skills
-
-add plugins
-
-add mcps
-
-add git
-
-improve managment
-
-ask user  functionallity
+*Sprint 3 - Domain Specialization:*
+- ask user when needed
 
 
+*Sprint 4 - Scale & Advanced:*
+- make sure there is parrallel work inside one computer
+- user could choose model and thinking level (maybe or not because its need to work on big project auotomaticly)
+- parrallel work on same computer
+- planning should be relative to the task - tictactoe was planning too big
+- add git to project
+- Delegate to human, admin or other from pool
+- Multi-project orchestration enhancements
 
-connect claude code user and fallback to api key
+**Research & Learning**
 
-for each task plan and then after finish write a summary of the task
+*Sprint 1 - Ready for Self-Improve:*
+- לראות וליישם
+- https://youtu.be/-4nUCaMNBR8?si=uwiFpgPm9jORC5fZ
+- https://venturebeat.com/technology/the-creator-of-claude-code-just-revealed-his-workflow-and-developers-are
+- https://www.youtube.com/watch?v=EHDzlot7LKU
+- https://medium.com/@joe.njenga/17-best-claude-code-workflows-that-separate-amateurs-from-pros-instantly-level-up-5075680d4c49
+- לקחת דברים מהפרויקט שיואה שלח והזה שאחי שלח
+- להשתמש בטכניקות מהפתק בקלוד קוד
+- לחקור לרעיונות שלי אמסיפי a2a for human
 
-qa + write tasks based on bugs and requirment to make it until self improve
+*Sprint 2 - Self Improve:*
 
-make good planning and following planning + delegation
+*Sprint 3 - Domain Specialization:*
 
-make it show how much money getting spent
+*Sprint 4 - Scale & Advanced:*
 
-best models + use less strong when needed
+**Self Improvement**
 
-bugs
-api calls for browser and computer when not shown
-proto folder should be called proto and not proto project
-stuck when i ask it to do slack task
-need to delegate to other boths and need to see it in the chat
-continue conversation if context finish like claude code
+*Sprint 1 - Ready for Self-Improve:*
+- qa + write tasks based on bugs and requirment to make it until self improve
+- use the not wrong system
+- mechanism to give feedback to the machine
+- - Agent learning/improvement from task outcomes and decide if improve the project or proto
+- mechanism that run test and improve the system
+- Enhanced verification with visual regression testing
 
+*Sprint 2 - Self Improve:*
 
-in the web ui also can see vms and other chrome
-good planning and files
-delegations to sub
-good context engenriing
-parrallel work on same computer
-using multiple computers like any desk and they control each other
+*Sprint 3 - Domain Specialization:*
 
-*Client Improvements *
-make tool selection functional
-image and file selection on chat
-support terminal + choose computer
-history
-address bar fixes + back, forward, refresh
-files there is seperations by computers / one to all
-history of chat from all computers
-connect to another computer and change
-make microphone works
+*Sprint 4 - Scale & Advanced:*
+- ML-based pattern recognition
 
 
+**Multi-Computer**
 
+*Sprint 1 - Ready for Self-Improve:*
 
-- [ ] System stability for autonomous operation and self-monitoring
-- [ ] Real-time folder visibility as agent creates them
-- [ ] Subagents calling each other directly
-- [ ] Add newest models (Claude 3.7, etc.)
-- [ ] Add alternative models (Gemini, GPT-4, etc.)
-- [ ] Remote Computer Connection - SSH/API to Ubuntu servers
-- [ ] Multi-Agent Single Computer - Parallel agents on one machine
-- [ ] Multi-Computer Orchestration - Agents across multiple computers
-- [ ] Agent Delegation System - Smart task distribution
-- [ ] WebSocket Status Updates - Real-time multi-computer status
-- [ ] Resource Monitoring - CPU, RAM, disk, network tracking
-- [ ] Task Progress Tracking - Distributed task monitoring
-- [ ] Error Handling & Retry - Robust failure recovery
-- [ ] Multi-project orchestration enhancements
-- [ ] Delegate to human, admin or other from pool
-- [ ] Computer groups/clusters for logical organization
-- [ ] Load balancing across multiple computers
-- [ ] Agent performance analytics per computer
-- [ ] Cost tracking for cloud-hosted computers
-- [ ] Automated computer provisioning and scaling
+*Sprint 2 - Self Improve:*
 
-- Architecture resilience improvements
+*Sprint 3 - Domain Specialization:*
+
+*Sprint 4 - Scale & Advanced:*
+- multiple computer - sass version that control other computers
+- controlling other computer
+- using multiple computers like any desk and they control each other
+- Remote Computer Connection - SSH/API to Ubuntu servers
+- support choose computer on: terminal, chat, browser, files , history of tabs, history of chats 
+- Multi-Computer Orchestration - Agents across multiple computers
+- WebSocket Status Updates - Real-time multi-computer status
+- Computer groups/clusters for logical organization
+- Load balancing across multiple computers
 - Agent parallelization across multiple computers
 - Cloud computer control & provisioning
 - Distributed agent execution
-- Multi-company management system
-- Marketing automation agents
-- Content generation agents
-- Agency services (marketing, dev, backoffice for clients)
+- Automated computer provisioning and scaling
+- Kubernetes integration for auto-scaling compute resources
+
+**Monitoring & Analytics**
+
+*Sprint 1 - Ready for Self-Improve:*
+
+*Sprint 2 - Self Improve:*
+
+*Sprint 3 - Domain Specialization:*
+
+*Sprint 4 - Scale & Advanced:*
+- showing the model, thinking level, costs
+- make it show how much money getting spent
+- Resource Monitoring - CPU, RAM, disk, network tracking
+- Cost tracking for cloud-hosted computers
+- Agent performance analytics per computer
 - Advanced metrics & analytics dashboard
-- ML-based pattern recognition
-- Enhanced verification with visual regression testing
-- [ ] Agent marketplace - download/install new specialist agents
-- [ ] Kubernetes integration for auto-scaling compute resources
-- [ ] Agent learning/improvement from task outcomes
-- [ ] Team presets (pre-configured agent + computer combinations for common workflows)
-
-** Requirments **
-
-software run on client and controlling computer
-this clients (on cloud) can control each other
-network of instances can run many projects like compnies
-system for self improve during a project + parralel system that improves.
-hosted website version can control other computers
-views - tabs system - show computers and can control them, files from computers / unified file system, terminals, urls,
-chat - agents with same base agent but with special code/prompts to be reliable
-agent call each other for special tasks.
-tools - reading files, modify files, run bash, write and run code, computer vision + mouse + keyboard, apps like drive, notion, slack..., adding mcps, adding apis, adding custom code.
-planning - each conversation create or part of existing project folder and each project has its planning files that get updated and the results like code, art ect
-multimodal, in+out - text, files, audio, images, video.
-project would make task in parallel when possible inside a computer or between many computers.
-user and agent could create more cloud computers if needed
-context system that knows what data to retrive in the right time
-make the system to make reliablie piplines to make it more deterministic and reliable
-resource optimisation

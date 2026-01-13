@@ -335,10 +335,33 @@ export default function Chat({
     }
   }
 
+  // Double-click on header toggles window maximize (macOS-style behavior)
+  const handleHeaderDoubleClick = (e: React.MouseEvent) => {
+    // Only trigger if clicking on empty space (not on buttons, dropdowns, etc.)
+    const target = e.target as HTMLElement
+    const clickedOnInteractive = target.closest('button, .toggle-viewer-btn, .new-chat-btn, .hide-chat-btn, .session-history')
+    if (clickedOnInteractive) {
+      console.log('[double-click] clicked on interactive element, ignoring')
+      return
+    }
+
+    console.log('[double-click] attempting to toggle maximize')
+
+    // Use Electron IPC to toggle maximize
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const electron = window.require('electron')
+      console.log('[double-click] electron module:', electron)
+      electron.ipcRenderer.invoke('toggle-maximize')
+    } catch (err) {
+      console.error('[double-click] error:', err)
+    }
+  }
+
   return (
     <div className="chat">
       {/* Header */}
-      <div className="chat-header">
+      <div className="chat-header" onDoubleClick={handleHeaderDoubleClick}>
         <div className="chat-header-left">
           {!viewerVisible && (
             <button

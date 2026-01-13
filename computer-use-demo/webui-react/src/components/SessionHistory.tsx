@@ -80,24 +80,28 @@ export default function SessionHistory({ onLoadSession, refreshTrigger }: Sessio
             <h3>Session History</h3>
           </div>
           <div className="sessions-list">
-            {sessions.length === 0 ? (
+            {sessions.filter(s => (s.messageCount ?? 0) >= 1).length === 0 ? (
               <div className="empty-sessions">No previous sessions</div>
             ) : (
-              sessions.map(session => (
-                <div
-                  key={session.id}
-                  className={`session-item ${session.isCurrent ? 'current' : ''}`}
-                  onClick={() => handleSelectSession(session.id)}
-                >
-                  <div className="session-preview">
-                    {session.preview || `Session ${session.id.slice(-4)}`}
-                    {session.messageCount !== undefined && ` (${session.messageCount} messages)`}
+              sessions
+                .filter(session => (session.messageCount ?? 0) >= 1)
+                .map(session => (
+                  <div
+                    key={session.id}
+                    className={`session-item ${session.isCurrent ? 'current' : ''}`}
+                    onClick={() => handleSelectSession(session.id)}
+                  >
+                    <div
+                      className="session-preview"
+                      title={`${session.preview || `Session ${session.id.slice(-4)}`}${session.messageCount !== undefined ? ` (${session.messageCount} messages)` : ''}`}
+                    >
+                      {session.preview || `Session ${session.id.slice(-4)}`}
+                    </div>
+                    <div className="session-time">
+                      {new Date(session.timestamp || session.lastActive || session.createdAt || '').toLocaleString()}
+                    </div>
                   </div>
-                  <div className="session-time">
-                    {new Date(session.timestamp || session.lastActive || session.createdAt || '').toLocaleString()}
-                  </div>
-                </div>
-              ))
+                ))
             )}
           </div>
         </div>

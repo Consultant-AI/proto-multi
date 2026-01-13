@@ -1,10 +1,16 @@
-import { app, BrowserWindow, session } from 'electron'
+import { app, BrowserWindow, session, ipcMain, screen } from 'electron'
 import * as path from 'path'
 
 function createWindow() {
+  // Get full screen dimensions
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height } = primaryDisplay.workAreaSize
+
   const win = new BrowserWindow({
-    width: 1600,
-    height: 1000,
+    width,
+    height,
+    x: 0,
+    y: 0,
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
@@ -36,6 +42,16 @@ function createWindow() {
   // Handle window close
   win.on('closed', () => {
     app.quit()
+  })
+
+  // IPC handler for toggling window maximize (macOS double-click title bar behavior)
+  ipcMain.handle('toggle-maximize', () => {
+    if (win.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win.maximize()
+    }
+    return win.isMaximized()
   })
 }
 

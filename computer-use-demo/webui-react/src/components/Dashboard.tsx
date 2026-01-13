@@ -22,12 +22,39 @@ interface HetznerInstance {
   created: string
 }
 
+const EXPANDED_FOLDERS_KEY = 'explorer_expanded_folders'
+
+// Load expanded folders from localStorage
+const loadExpandedFolders = (): Set<string> => {
+  try {
+    const saved = localStorage.getItem(EXPANDED_FOLDERS_KEY)
+    if (saved) {
+      return new Set(JSON.parse(saved))
+    }
+  } catch { }
+  return new Set()
+}
+
+// Save expanded folders to localStorage
+const saveExpandedFolders = (folders: Set<string>) => {
+  try {
+    localStorage.setItem(EXPANDED_FOLDERS_KEY, JSON.stringify(Array.from(folders)))
+  } catch { }
+}
+
 export default function Dashboard({ onOpenResource }: DashboardProps) {
   const [folders, setFolders] = useState<FileNode[]>([])
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => loadExpandedFolders())
+  const expandedFoldersRef = useRef<Set<string>>(new Set())
   const [webPages, setWebPages] = useState<any[]>([])
   const [terminals, setTerminals] = useState<any[]>([])
   const [history, setHistory] = useState<any[]>([])
+
+  // Keep ref in sync with state and save to localStorage when they change
+  useEffect(() => {
+    expandedFoldersRef.current = expandedFolders
+    saveExpandedFolders(expandedFolders)
+  }, [expandedFolders])
 
   // Computer states
   const [hetznerInstances, setHetznerInstances] = useState<HetznerInstance[]>([])
@@ -215,9 +242,15 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
           const filtered = filterRedundantPaths(combined)
           setFolders(filtered)
 
-          // Auto-expand first level folders
-          const firstLevelPaths = new Set(filtered.map(folder => folder.path))
-          setExpandedFolders(firstLevelPaths)
+          // Auto-expand first level folders (merge with existing expanded state)
+          const firstLevelPaths = filtered.map(folder => folder.path)
+          setExpandedFolders(prev => {
+            const merged = new Set(prev)
+            for (const path of firstLevelPaths) {
+              merged.add(path)
+            }
+            return merged
+          })
 
           // Load contents for all first-level folders
           for (const folder of filtered) {
@@ -262,17 +295,74 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
   const runningTerminals = terminals.filter(t => t.status === 'running').length
   const runningInstances = hetznerInstances.filter(i => i.status === 'running').length
 
-  const toggleFolder = async (path: string, e: React.MouseEvent) => {
+  const toggleFolder = (path: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    const newExpanded = new Set(expandedFolders)
-    if (newExpanded.has(path)) {
-      newExpanded.delete(path)
+
+    const isCurrentlyExpanded = expandedFoldersRef.current.has(path)
+
+    // Set state FIRST (synchronously)
+    setExpandedFolders(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(path)) {
+        newExpanded.delete(path)
+      } else {
+        newExpanded.add(path)
+      }
+      return newExpanded
+    })
+
+    // Load contents in background if expanding
+    if (!isCurrentlyExpanded) {
+      loadFolderContents(path)
+    }
+  }
+
+  // Expand parent folders to reveal a path (for clicking nested folders)
+  const expandToPath = async (targetPath: string) => {
+    // Find the root that contains this path
+    const matchingRoot = folders.find(root =>
+      targetPath === root.path || targetPath.startsWith(root.path + '/')
+    )
+    if (!matchingRoot) return
+
+    const pathsToExpand: string[] = []
+
+    if (targetPath === matchingRoot.path) {
+      // Target is the root itself - expand it
+      pathsToExpand.push(matchingRoot.path)
     } else {
-      newExpanded.add(path)
-      // Load folder contents if not already loaded
+      // Target is inside the root - expand all parent folders
+      const relativePath = targetPath.slice(matchingRoot.path.length + 1)
+      const parts = relativePath.split('/')
+      let currentPath = matchingRoot.path
+      pathsToExpand.push(currentPath)
+
+      // Add all parent folders
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentPath = currentPath + '/' + parts[i]
+        pathsToExpand.push(currentPath)
+      }
+
+      // If target is a folder, expand it too
+      const lastPart = parts[parts.length - 1]
+      if (lastPart && !lastPart.includes('.')) {
+        pathsToExpand.push(targetPath)
+      }
+    }
+
+    // Load folder contents for each path
+    for (const path of pathsToExpand) {
       await loadFolderContents(path)
     }
-    setExpandedFolders(newExpanded)
+
+    // Add all paths to expanded set
+    setExpandedFolders(prev => {
+      const newExpanded = new Set(prev)
+      for (const path of pathsToExpand) {
+        newExpanded.add(path)
+      }
+      return newExpanded
+    })
   }
 
   const loadFolderContents = async (path: string) => {
@@ -380,15 +470,22 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
   }
 
   const renderFolder = (folder: FileNode, level: number = 0) => {
-    const isExpanded = expandedFolders.has(folder.path)
-    const hasChildren = folder.children && folder.children.length > 0
+    const hasVisibleChildren = !!(folder.children && folder.children.length > 0)
+    const isExpanded = expandedFolders.has(folder.path) && hasVisibleChildren
+
+    const handleFolderClick = () => {
+      // Expand parent folders to reveal this folder
+      expandToPath(folder.path)
+      // Open in viewer
+      onOpenResource?.('files', folder.path)
+    }
 
     return (
       <div key={folder.path} className="folder-tree-item">
         <div
           className="folder-item"
           style={{ paddingLeft: `${level * 16 + 8}px` }}
-          onClick={() => onOpenResource?.('files', folder.path)}
+          onClick={handleFolderClick}
         >
           {folder.type === 'folder' && (
             <span className="folder-chevron" onClick={(e) => toggleFolder(folder.path, e)}>
@@ -400,7 +497,7 @@ export default function Dashboard({ onOpenResource }: DashboardProps) {
           ) : null}
           <span className="folder-name">{folder.name}</span>
         </div>
-        {isExpanded && hasChildren && (
+        {isExpanded && hasVisibleChildren && (
           <div className="folder-children">
             {folder.children!.map(child => renderFolder(child, level + 1))}
           </div>
