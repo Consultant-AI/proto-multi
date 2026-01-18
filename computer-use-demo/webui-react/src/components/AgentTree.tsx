@@ -10,19 +10,13 @@ interface Agent {
   sub_agents?: Agent[]
 }
 
-interface Department {
-  name: string
-  icon: string
-  agents: Agent[]
-}
-
 interface AgentTreeProps {
   onSelectAgent: (agentId: string, agentName: string, agentIcon: string) => void
   selectedAgentId: string | null
 }
 
 function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
-  const [departments, setDepartments] = useState<Department[]>([])
+  const [rootAgent, setRootAgent] = useState<Agent | null>(null)
   const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
@@ -34,21 +28,27 @@ function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
     try {
       const response = await fetch('/api/agents/tree')
       const data = await response.json()
-      setDepartments(data.departments || [])
+
+      // Get the root agent (CEO) from the first department
+      const root = data.departments?.[0]?.agents?.[0]
+      setRootAgent(root || null)
+
       // Auto-expand all agents by default
-      const allAgentIds = new Set<string>()
-      const collectAgentIds = (agents: Agent[]) => {
-        agents.forEach(agent => {
-          if (agent.sub_agents && agent.sub_agents.length > 0) {
-            allAgentIds.add(agent.id)
-            collectAgentIds(agent.sub_agents)
-          }
-        })
+      const initialExpanded = new Set<string>()
+      const collectAllIds = (agent: Agent) => {
+        if (agent.sub_agents && agent.sub_agents.length > 0) {
+          initialExpanded.add(agent.id)
+          agent.sub_agents.forEach(collectAllIds)
+        }
       }
-      data.departments?.forEach((dept: Department) => {
-        collectAgentIds(dept.agents)
-      })
-      setExpandedAgents(allAgentIds)
+      if (root) {
+        collectAllIds(root)
+        // Select CEO by default if nothing is selected
+        if (!selectedAgentId) {
+          onSelectAgent(root.id, root.name, root.icon)
+        }
+      }
+      setExpandedAgents(initialExpanded)
     } catch (error) {
       console.error('Failed to fetch agent tree:', error)
     } finally {
@@ -74,9 +74,9 @@ function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
       <div key={agent.id}>
         <div
           className={`agent-item ${selectedAgentId === agent.id ? 'selected' : ''}`}
-          style={{ marginLeft: `${level * 20}px` }}
+          style={{ paddingLeft: `${8 + level * 16}px` }}
         >
-          {hasSubAgents && (
+          {hasSubAgents ? (
             <span
               className="agent-expand-icon"
               onClick={(e) => {
@@ -84,12 +84,15 @@ function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
                 toggleAgent(agent.id)
               }}
             >
-              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
+          ) : (
+            <span className="agent-expand-spacer" />
           )}
           <div
             className="agent-content"
             onClick={() => onSelectAgent(agent.id, agent.name, agent.icon)}
+            title={agent.description}
           >
             <span className="agent-icon">{agent.icon}</span>
             <span className="agent-name">{agent.name}</span>
@@ -113,13 +116,17 @@ function AgentTree({ onSelectAgent, selectedAgentId }: AgentTreeProps) {
     )
   }
 
+  if (!rootAgent) {
+    return (
+      <div className="agent-tree-container">
+        <div className="agent-tree-loading">No agents available</div>
+      </div>
+    )
+  }
+
   return (
     <div className="agent-tree-container">
-      {departments.map(dept => (
-        <div key={dept.name}>
-          {dept.agents.map(agent => renderAgent(agent))}
-        </div>
-      ))}
+      {renderAgent(rootAgent)}
     </div>
   )
 }

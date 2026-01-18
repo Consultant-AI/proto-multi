@@ -179,6 +179,7 @@ In Progress
 *Sprint 3 - Domain Specialization:*
 
 *Sprint 4 - Scale & Advanced:*
+- stop not stopping 
 - multiple computer - sass version that control other computers
 - controlling other computer
 - using multiple computers like any desk and they control each other

@@ -1,6 +1,7 @@
 .session-history {
   position: relative;
   z-index: 10000;
+  -webkit-app-region: no-drag;
 }
 
 .session-history-toggle {

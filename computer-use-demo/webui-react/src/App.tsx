@@ -11,7 +11,7 @@ function App() {
     const saved = localStorage.getItem('chatWidth')
     return saved ? parseInt(saved, 10) : 420
   })
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo')
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo-agent')
   const [selectedComputer, setSelectedComputer] = useState('local')
   const [computers, setComputers] = useState<any[]>([])
 
