@@ -41,9 +41,9 @@
     │  └───────┬────────┘  │              │  └───────┬────────┘  │              │  └───────┬────────┘  │
     │          │           │              │          │           │              │          │           │
     │  ┌───────┴────────┐  │              │  ┌───────┴────────┐  │              │  ┌───────┴────────┐  │
-    │  │   20+ AGENTS   │  │              │  │   20+ AGENTS   │  │              │  │   20+ AGENTS   │  │
-    │  │  Dev, QA, PM   │  │              │  │  Dev, QA, PM   │  │              │  │  DevOps, SRE   │  │
-    │  │  Sales, Mktg   │  │              │  │  Sales, Mktg   │  │              │  │  Data, Admin   │  │
+    │  │   159 AGENTS   │  │              │  │   159 AGENTS   │  │              │  │   159 AGENTS   │  │
+    │  │  C-Suite, Dir  │  │              │  │  C-Suite, Dir  │  │              │  │  C-Suite, Dir  │  │
+    │  │  Specialists   │  │              │  │  Specialists   │  │              │  │  Specialists   │  │
     │  └────────────────┘  │              │  └────────────────┘  │              │  └────────────────┘  │
     │                      │              │                      │              │                      │
     │  Assigned: Product A │              │  Assigned: Product B │              │  Assigned: Shared    │
@@ -206,7 +206,7 @@ Product Manager → "Need user research" → UX Designer
                                               │
                                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│  LAYER 3: AGENT LAYER (20+ Specialist Agents)                                                │
+│  LAYER 3: AGENT LAYER (159 Agents: C-Suite → Directors → Specialists)                        │
 │  ─────────────────────────────────────────────────────────────────────────────────────────  │
 │                                                                                              │
 │  ┌──────────────────────────────────────────────────────────────────────────────────────┐  │
@@ -228,15 +228,15 @@ Product Manager → "Need user research" → UX Designer
 │  │  KEY: Any agent can call ANY other agent! Not limited by hierarchy.                  │  │
 │  └──────────────────────────────────────────────────────────────────────────────────────┘  │
 │                                                                                              │
-│  ENGINEERING          PRODUCT           BUSINESS            OPERATIONS                      │
-│  ────────────         ───────           ────────            ──────────                      │
-│  • Sr Developer       • Product Mgr     • Marketing Dir     • HR Manager                    │
-│  • Frontend Dev       • UX Designer     • Sales Director    • Finance Mgr                   │
-│  • Backend Dev        • Strategist      • CS Manager        • Legal/Compliance              │
-│  • Mobile Dev         • User Research   • Account Exec      • Biz Ops                       │
-│  • DevOps Engineer                      • Sales Rep         • Admin                         │
-│  • QA Engineer                          • Support Agent     • Data Analyst                  │
-│  • Security Engineer                                        • Tech Writer                   │
+│  C-SUITE              DIRECTORS         SPECIALISTS                                         │
+│  ────────             ─────────         ───────────                                         │
+│  • CEO                • Product Dir     • Sr Developer      • Marketing Manager             │
+│  • CTO                • Engineering Dir • Frontend Dev      • Sales Rep                     │
+│  • CMO                • Marketing Dir   • Backend Dev       • Support Agent                 │
+│  • CFO                • Sales Dir       • DevOps Engineer   • Data Analyst                  │
+│                       • Operations Dir  • QA Engineer       • Tech Writer                   │
+│                                         • Security Engineer • UX Designer                   │
+│                                         • Mobile Dev        • Content Writer                │
 │                                                                                              │
 └─────────────────────────────────────────────────────────────────────────────────────────────┘
                                               │
