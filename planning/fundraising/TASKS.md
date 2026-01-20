@@ -57,7 +57,7 @@ After documentation review is complete, generate these files:
   - 30 Israeli micro-VC / pre-seed
   - 50 US angels/micro-VCs
   - 20 Accelerators
-- [ ] For each: name, fit reason, intro path, status, next action
+- [ ] For each: name, fit reason, intro path, tier (A/B/C), status, next action
 
 ---
 
@@ -121,8 +121,13 @@ After documentation review is complete, generate these files:
 
 ## INVESTOR PIPELINE
 
+### Prep
+- [ ] Define your "Hook" — the single most impressive thing to lead with (growth, team, tech, market)
+
 ### Build List
 - [ ] Fill investor target list (150 contacts) → `pipeline/investor_list.csv`
+- [ ] Tier the list: Tier A (dream), Tier B (great fit), Tier C (practice rounds)
+- [ ] Map warm intro paths for each investor
 
 ### Advisors
 - [ ] Recruit 2-3 lightweight advisors (operator, technical, risk)
@@ -140,9 +145,10 @@ After documentation review is complete, generate these files:
 
 - [x] Set up outreach tracker → `pipeline/outreach_tracker.csv` + `pipeline/README.md` ✓
 - [x] Set up investor list template → `pipeline/investor_list.csv` ✓
+- [ ] Run practice pitches with Tier C investors first to refine pitch
 - [ ] Daily: ask 10 people for 2 intros each
 - [ ] Daily: 10-20 new cold contacts + 10 follow-ups
-- [ ] Schedule all calls in 2-3 week window
+- [ ] Parallel processing: schedule Tier A/B meetings in same 2-week window (creates FOMO)
 - [ ] Set Close A deadline (creates urgency)
 
 ---
@@ -154,9 +160,10 @@ After documentation review is complete, generate these files:
 - [ ] Practice demo 5+ times
 
 ### Post-Call
-- [ ] Send recap + deck + demo + scoreboard within 2 hours (use `templates/follow_up.md`)
+- [ ] Send follow-up within 24 hours (ideally 2 hours) with recap + materials
 - [ ] Book follow-up date
 - [ ] Log objections → update `faq/investor_faq.md`
+- [ ] Iterate on deck after every few meetings based on feedback
 
 ---
 
@@ -172,9 +179,11 @@ After documentation review is complete, generate these files:
 ## CLOSE
 
 - [ ] Prepare SAFE template → `legal/safe_template.pdf` (use YC SAFE)
+- [ ] Secure a Lead Investor (sets terms, creates momentum)
+- [ ] Review term sheet with startup lawyer (liquidation preferences, board seats)
 - [ ] Collect soft commits
 - [ ] Convert soft → signed → wired (Close A: $300-500k)
-- [ ] Announce momentum to pipeline
+- [ ] Announce momentum to pipeline (use FOMO to accelerate followers)
 - [ ] Extend to Close B ($1-2M total)
 
 ---
