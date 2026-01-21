@@ -28,6 +28,46 @@ Proto is a multi-agent orchestration platform built on a modern stack: Python/Fa
 - Playbooks for domain specialization and repeatable processes
 
 **Self-Improvement Systems (On Roadmap):**
+
+Two-loop mechanism for continuous improvement:
+
+**Loop 1: Real-Time (During Work)**
+```
+User Task → CEO Agent
+    ↓
+[SMART RETRIEVAL] Search all projects for relevant knowledge
+    ↓
+Task Execution by Specialist
+    ↓
+[SELF-HEALING RETRY LOOP]
+├── Success? → Continue ✓
+├── Fail? → Search knowledge for similar past failures
+│   ├── Inject learnings into retry context
+│   ├── Retry with improved approach (max 3 attempts)
+│   └── Success after retry? → Capture recovery pattern
+    ↓
+[AUTO-CAPTURE] Extract patterns, tools used, duration, outcome
+    ↓
+Knowledge Stored → System improves immediately
+```
+
+**Loop 2: Background (Idle Time)**
+```
+CompanyOrchestrator Event Loop (every ~100 seconds)
+    ↓
+[LOG MINING] Analyze session logs for patterns
+    ↓
+[ERROR ANALYSIS] Identify recurring failures
+    ↓
+[KNOWLEDGE-BASED OPTIMIZATION]
+├── 5+ failures? → Queue root cause analysis
+├── 5+ patterns? → Queue component creation
+└── Multiple projects? → Queue cross-project consolidation
+    ↓
+Improvement Tasks Queued → System improves continuously
+```
+
+**Key Capabilities:**
 - Task evaluation—what worked, what failed, what to improve
 - Automatic code/playbook updates based on evaluations
 - Continuous improvement that makes each sub-agent more reliable over time
@@ -123,11 +163,26 @@ CEO
     └── Quality & Audit → Policy, Governance
 ```
 
+**Peer-to-Peer Collaborative Network:**
+
+This is NOT a strict hierarchy where only CEO delegates. It's a **peer-to-peer collaborative network**:
+- ✅ Any agent can delegate to any other specialist
+- ✅ Delegation chains can be unlimited depth (specialist → specialist → specialist...)
+- ✅ No restrictions on who calls whom
+
+**Example Delegation Chains:**
+```
+Backend Dev → "Need secure auth" → Security Engineer
+Frontend Dev → "Need deployment" → DevOps Engineer
+QA Engineer → "Found arch issue" → Senior Developer
+Product Manager → "Need user research" → UX Designer
+```
+
 **Agent Implementation:**
 - Each agent has: system prompt, tool permissions, knowledge context
 - Agents are defined in Python with specialized prompts
-- CEO analyzes tasks, creates plans, delegates to appropriate specialists
-- Specialists execute and return results up the chain
+- CEO analyzes tasks, creates plans, coordinates—but specialists work together fluidly
+- Any specialist can call any other specialist when expertise is needed
 
 **Agents are continuously added** to cover all standard business functions
 
@@ -269,6 +324,28 @@ Every action logged with:
 - Max spend per session
 - Configurable per action type
 
+### Human Escalation (Last Resort Only)
+
+Humans are called ONLY when legally, physically, or regulatorily impossible for AI:
+
+**✅ WHEN TO CALL HUMAN (Exhaustive list):**
+
+| Category | Examples |
+|----------|----------|
+| **Legal/Regulatory** | Sign legal contracts, company formation docs, tax filings, patents |
+| **Financial** | Open bank accounts (KYC), sign loan docs, authorize large wires (>$10K) |
+| **Physical World** | Mail notarized documents, hardware requiring presence, mandated in-person meetings |
+
+**❌ NEVER CALL HUMAN FOR:**
+- Writing code (system does this)
+- Debugging (system does this)
+- Customer support (system does this)
+- Marketing content (system does this)
+- Sales outreach (system does this)
+- ANY computer-based task (system MUST do this)
+
+This reinforces the autonomy goal—humans only when legally/physically required.
+
 ---
 
 ## API Integration
@@ -290,6 +367,38 @@ Every action logged with:
 - Third-party tool integration
 - Server discovery and registration
 - Extensible tool ecosystem
+
+### Smart Model Selection (Cost Efficiency)
+
+The system uses an intelligent **SmartSelector** that routes tasks to the optimal model with appropriate thinking budget:
+
+**Philosophy: "Act Like Opus Is Always On"**
+- The system BEHAVES like the smartest model is always running
+- Only uses weaker models when the RESULT WOULD BE IDENTICAL
+- Purely content-based selection (no hardcoded rules based on agent type)
+
+**Model Hierarchy:**
+| Model | Role | Usage |
+|-------|------|-------|
+| Opus 4.5 | CEO-level decisions | 20-30% of calls—strategy, architecture, planning |
+| Sonnet 4.5 | Senior implementation | 50-60% of calls—complex features, debugging, judgment |
+| Haiku 4.5 | Mechanical tasks | 20-30% of calls—file reads, searches, formatting |
+
+**Selection Flow:**
+```
+Task → Haiku Classifier (~$0.001) → "Would Opus produce a DIFFERENT result?"
+  │
+  ├── If MECHANICAL (identical result) → Haiku
+  └── If JUDGMENT NEEDED → Sonnet or Opus
+```
+
+**Cost Savings:** 70-90% reduction while maintaining quality
+- Example project cost: ~$0.35 vs $2-5+ with naive approach
+
+**Adaptive Escalation:**
+- Start with recommended model, escalate only when needed
+- Escalation path: Haiku → Sonnet → Opus
+- Thinking budget: 0 → 4K → 10K → 31,999 tokens
 
 ---
 
@@ -345,6 +454,44 @@ Every action logged with:
 
 ---
 
+## Complete Autonomous Business Loop
+
+How Proto runs a business end-to-end:
+
+```
+1. PRODUCT DEVELOPMENT
+   Global CEO → Assigns product to Computer → Local CEO builds with Agents
+   → Code pushed to GitHub → Deployed via Vercel/AWS
+
+2. CUSTOMER ACQUISITION
+   Marketing Agent → Creates content → Posts via Social MCPs
+   → SEO Agent optimizes → Leads captured in HubSpot
+
+3. SALES
+   Sales Agent → Sends outreach via SendGrid → Follows up
+   → Demo scheduled → Contract sent → Human signs if needed
+
+4. REVENUE
+   Customer signs up → Stripe processes payment → Invoice generated
+   → Revenue tracked → Metrics updated
+
+5. SUPPORT
+   Customer issue → Support Agent via Intercom → Resolves or escalates
+   → Knowledge captured for future
+
+6. SELF-IMPROVEMENT
+   Metrics analyzed → Inefficiencies detected → Code modified
+   → Tests pass → Deployed → Performance improves
+
+7. HUMAN ESCALATION (RARE)
+   Legal/regulatory block → Human notified → Human acts
+   → System continues autonomously
+```
+
+This is the end state: Proto runs complete business operations with minimal human involvement.
+
+---
+
 ## Roadmap: Technical Milestones
 
 **Near-term (1-3 months):**
@@ -368,5 +515,5 @@ Every action logged with:
 
 ---
 
-*Document version: 1.0*
-*Last updated: [Date]*
+*Document version: 1.1*
+*Last updated: Jan 2026*
