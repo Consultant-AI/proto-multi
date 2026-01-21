@@ -14,9 +14,11 @@ Quick update on Proto:
 
 We've had strong interest and are now [X]% allocated on the round. Expecting to close [date] or when we hit [amount].
 
-You mentioned [what they said about interest/timeline]. Wanted to check in before things move forward—is now a good time to talk about coming in?
+You mentioned [what they said about interest/timeline]. Wanted to check in before things move forward.
 
-Happy to hop on a quick call this week to discuss terms and next steps.
+Would you consider coming in at $[25K/50K]? That's [specific deliverable—e.g., "3 months of aggressive compute" or "one engineer for 2 months"].
+
+Happy to hop on a quick call this week to finalize.
 
 [Your name]
 
@@ -34,7 +36,7 @@ Update since we last spoke:
 
 This was the proof point you mentioned needing. Round is [X]% allocated, targeting close by [date].
 
-Interested in coming in?
+Would you consider $[amount]? Ready to send the SAFE this week if you're in.
 
 [Your name]
 
@@ -50,7 +52,7 @@ You've been following along with Proto and seemed genuinely interested in [speci
 
 I'm formally asking: want to come in on this round?
 
-**Terms:** SAFE, [details]
+**Terms:** Post-Money SAFE, $5M cap
 **Allocation remaining:** [amount]
 **Close target:** [date]
 

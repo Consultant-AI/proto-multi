@@ -14,7 +14,7 @@
 
 **Fallback:** If anything fails, switch to pre-recorded video in `demo/demo_fallback/`
 
-**Note:** You can demo ANY complex task—the point is showing multi-agent coordination, multi-computer control, and the path to autonomy. Examples:
+**Note:** You can demo ANY complex task—the point is showing multi-agent coordination, cross-platform capability, and the path to autonomy. Examples:
 - Marketing campaign creation
 - Building a simple SaaS feature
 - Research and analysis report
@@ -46,7 +46,7 @@
 
 **[Press Enter, then narrate as agents respond:]**
 
-> "Watch what happens. The CEO agent analyzes this task and creates a plan. It's now breaking down the work and delegating to specialists..."
+> "Watch what happens. The CEO agent analyzes this task and creates a plan—it generates planning files and task lists that agents will follow and update as they work. It's now breaking down the work and delegating to specialists..."
 
 **[Point to agent tree/delegation flow:]**
 
@@ -54,21 +54,21 @@
 
 ---
 
-### PART 2: Multi-Computer Execution (60 seconds)
+### PART 2: Cross-Platform Execution (60 seconds)
 
-**[Click: Computers tab]**
+**[Click: Terminal tab or show local execution]**
 
-> "Proto can control multiple computers simultaneously. Right now it's working on both my local machine and a cloud VM."
+> "Proto is cross-platform—it runs on Mac and cloud Linux. We have Ubuntu instances with the software already installed and working."
 
-**[Show: Different work happening on different machines]**
+**[Show terminal command being executed]**
 
-> "One machine is doing research while another writes content. In a real autonomous company, this could be hundreds of machines working in parallel."
+> "Full terminal access—it can run any command, execute scripts, deploy code, manage infrastructure. Same capabilities on local Mac or cloud Linux."
 
-**[Click: Terminal tab]**
+> "Multi-computer orchestration—having multiple machines work together simultaneously—is on the roadmap. The infrastructure is ready: SSH, VNC, cloud VM provisioning. What we're building next is the coordination layer."
 
-> "Full terminal access—it can run any command, execute scripts, deploy code, manage infrastructure."
+**[If time, show cloud VM or mention it]**
 
-**[Show a terminal command being executed]**
+> "Once that's built, this could be hundreds of machines working in parallel on different parts of the same project."
 
 ---
 
@@ -88,17 +88,17 @@
 
 ---
 
-### PART 4: Approval Gates & Control (60 seconds)
+### PART 4: Enterprise Controls (60 seconds)
 
 **[Back to Chat, show the summary/report:]**
 
-> "The CEO agent summarizes what was done and flags what needs human approval."
+> "The CEO agent summarizes what was done. Proto can run fully autonomously, but for users who want oversight, we have optional controls."
 
-**[Point to approval gate in chat:]**
+**[Point to approval gate in chat if enabled:]**
 
-> "See this approval gate? Proto pauses here for human sign-off on anything sensitive—spending money, publishing externally, making trades, touching production systems."
+> "See this approval gate? This is optional—users can configure Proto to pause for human sign-off on sensitive actions like spending money, publishing, or trading. But it can also run without any gates."
 
-> "The goal is to automate any human labor. When that's not possible, Proto uses hybrid models—it can hire people, delegate tasks, use humans as reviewers. Whatever model fits the task."
+> "The goal is to automate any human labor. When a task genuinely requires human involvement, the AI will hire and delegate—that's on the roadmap. It's about the AI making the decision of when humans are needed—the right playbook and specialized agent for each situation."
 
 ---
 
@@ -106,11 +106,11 @@
 
 **[Show: Full interface again]**
 
-> "What you just saw was a complex, multi-step process executed by coordinated AI agents across multiple computers."
+> "What you just saw was a complex, multi-step process executed by coordinated AI agents. The software runs on Mac and cloud Linux—cross-platform."
 
-> "This same architecture can run any computer-based business—agency work, e-commerce, content, trading, SaaS. Whatever works fastest."
+> "This same architecture can run any business—agency services, e-commerce, content, SaaS products, freelance operations. Even non-computer-based businesses—for physical tasks, Proto hires and manages humans while AI handles everything else. We'll explore different business types and double down on what works."
 
-> "Today it runs with approval gates. The goal is full automation—but when that's not possible, Proto can hire and manage people. That's the autonomous company factory."
+> "Proto can run fully autonomously. The approval gates are optional—enterprise controls for users who want oversight on sensitive actions. It's already capable of spawning thousands of products and services. When tasks need humans, Proto hires and manages them. That's the autonomous company factory."
 
 **[Pause for questions]**
 
@@ -118,11 +118,11 @@
 
 ## Talking Points for Q&A
 
-- **"How do you prevent mistakes?"** → Approval gates for key actions, audit logs for everything, kill switch for emergencies
-- **"Why so many agents?"** → Specialization matters—a trader analyzes markets differently than a designer creates layouts. Just like real companies.
-- **"What if the model hallucinates?"** → Verification loops, real execution (not just text), human review gates
+- **"How do you prevent mistakes?"** → Proto can run fully autonomously. For users who want oversight: optional approval gates, audit logs, kill switch
+- **"Why so many agents?"** → Specialization matters—a developer writes code differently than a designer creates layouts. Just like real companies.
+- **"What if the model hallucinates?"** → Verification loops, real execution (not just text), optional human review gates
 - **"Why not just use ChatGPT/Claude directly?"** → Proto is built for orchestration—coordinating many agents, many computers, many tasks, self-improving. Single-model tools can't do that.
-- **"What business will you run first?"** → Whatever works fastest. We'll experiment with agency work, content, e-commerce, trading—and double down on winners.
+- **"What business will you run first?"** → We'll explore different types: agency services, content, e-commerce, SaaS products, freelance operations. First success proves capability—then we scale to thousands.
 
 ---
 
@@ -140,8 +140,9 @@
 ## Key Messages to Reinforce
 
 1. **Specialist agents** coordinating like a company
-2. **Multi-computer** control (local + cloud)—scales to any size
-3. **Self-improvement** — gets better with each task
-4. **Approval gates** — human oversight that reduces over time
-5. **Any business** — not limited to one domain
-6. **Path to autonomy** — architecture is ready, reliability is the work
+2. **Project planning system** — creates planning files and task lists that agents follow and update for complex projects
+3. **Cross-platform** (Mac + cloud Linux)—multi-computer orchestration on roadmap
+4. **Self-improvement on roadmap** — will get better with each task
+5. **Approval gates** — optional enterprise controls for sensitive actions
+6. **Any business** — not limited to one domain
+7. **Path to autonomy** — architecture is ready, reliability is the work

@@ -6,9 +6,9 @@
 
 | File | Status | Purpose |
 |------|--------|---------|
+| `FUNDRAISING_GUIDE.md` | ✅ | Complete knowledge base (tips, process, legal) |
 | `narrative/executive_summary.md` | ✅ | 2-3 page deeper narrative |
 | `narrative/one_pager.md` | ✅ | 1-page investor memo |
-| `narrative/pitch_best_practices.md` | ✅ | Pitch delivery guidance |
 | `deck/deck_outline.md` | ✅ | 10-slide structure + talking points |
 | `demo/demo_script.md` | ✅ | Click-by-click live demo script |
 | `demo/demo_fallback/README.md` | ✅ | Fallback demo guidance |
@@ -17,8 +17,6 @@
 | `demo/demo_fallback/sample_campaign_report.md` | ✅ | Sample Proto output |
 | `faq/investor_faq.md` | ✅ | Full FAQ for all objections |
 | `faq/objection_responses.md` | ✅ | Quick reference during calls |
-| `legal/fundraising_legal_guide.md` | ✅ | SAFE, legal, structure guidance |
-| `pipeline/README.md` | ✅ | Outreach process + stewardship |
 | `templates/intro_request.md` | ✅ | Email template for asking intros |
 | `templates/cold_outreach.md` | ✅ | Cold investor email template |
 | `templates/follow_up.md` | ✅ | Post-call follow-up email |
@@ -83,10 +81,10 @@
 
 ```
 fundraising/
+├── FUNDRAISING_GUIDE.md          ✅  (all tips, process, legal knowledge)
 ├── narrative/
 │   ├── executive_summary.md      ✅
-│   ├── one_pager.md              ✅
-│   └── pitch_best_practices.md   ✅
+│   └── one_pager.md              ✅
 ├── deck/
 │   ├── deck_outline.md           ✅
 │   ├── proto_deck_v1.pdf         ⏳
@@ -105,12 +103,10 @@ fundraising/
 │   ├── investor_faq.md           ✅
 │   └── objection_responses.md    ✅
 ├── legal/
-│   ├── fundraising_legal_guide.md ✅
 │   ├── company_registration/     ⏳
 │   ├── safe_template.pdf         ⏳
 │   └── ip_assignment.pdf         ⏳
 ├── pipeline/
-│   ├── README.md                 ✅
 │   ├── investor_list.csv         ⏳
 │   └── outreach_tracker.csv      ⏳
 ├── templates/
@@ -137,7 +133,7 @@ fundraising/
 
 | Category | Done | Pending |
 |----------|------|---------|
-| Documentation | 21 | 0 |
+| Documentation | 19 | 0 |
 | Videos | 0 | 2 |
 | Deck (designed) | 0 | 2 |
 | Screenshots | 0 | 1 folder |

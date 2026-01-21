@@ -6,13 +6,32 @@
 
 ## Executive Summary
 
-Proto is a multi-agent orchestration platform built on a modern stack: Python/FastAPI backend, React/Electron frontend, with deep integration into Anthropic's Claude API. The system coordinates specialist AI agents across multiple computers (local and cloud) to execute complex business operations.
+Proto is a multi-agent orchestration platform built on a modern stack: Python/FastAPI backend, React/Electron frontend, with deep integration into Anthropic's Claude API. The system coordinates specialist AI agents to execute complex business operations. Cross-platform (Mac + cloud Linux), with multi-computer orchestration on the roadmap.
 
 **Key technical differentiators:**
-- Multi-computer orchestration via SSH tunneling and VNC
+- Cross-platform: runs on Mac + cloud Linux (Ubuntu instances with software installed)
 - Hierarchical agent system with CEO-led delegation
-- Real browser automation (Qt WebEngine with Chrome DevTools Protocol)
-- Enterprise controls (approval gates, audit logs, kill switch)
+- Multi-computer orchestration on roadmap (SSH tunneling and VNC infrastructure ready)
+- GUI control via screenshot → analyze → mouse/keyboard actions—giving agents access to any tool a human can use on a computer (real computer use, not browser automation)
+- Enterprise controls (optional)—Proto can run fully autonomously; optional approval gates, audit logs, kill switch
+
+**On roadmap:**
+- Self-improvement: evaluation per task, automatic code/playbook updates, continuous improvement
+- Hybrid human delegation: AI hiring and managing humans for tasks that require it
+- Multi-computer orchestration: multiple machines working together simultaneously
+
+**Core Capabilities (Built Today):**
+- **Project planning system**: For each project, creates planning files and task lists that agents follow and update—enables complex, multi-step projects to be broken down and executed systematically
+- Programming (code generation, debugging, deployment)
+- GUI control via screenshot → analyze → mouse/keyboard actions—giving agents access to any tool a human can use on a computer
+- Integrations with third-party tools and APIs
+- Playbooks for domain specialization and repeatable processes
+
+**Self-Improvement Systems (On Roadmap):**
+- Task evaluation—what worked, what failed, what to improve
+- Automatic code/playbook updates based on evaluations
+- Continuous improvement that makes each sub-agent more reliable over time
+- Building reusable playbooks from successful patterns
 
 ---
 
@@ -112,19 +131,13 @@ CEO
 
 **Agents are continuously added** to cover all standard business functions
 
-### 2. Multi-Computer Control
+### 2. Cross-Platform & Cloud Infrastructure
 
-**Local Control:**
-- PyAutoGUI for mouse/keyboard
-- Screenshot capture and analysis
+**Built Today:**
+- Proto runs on Mac locally (PyAutoGUI for mouse/keyboard, screenshot capture)
+- Proto runs on cloud Linux (Ubuntu instances with software already installed)
+- Cross-platform capability proven
 - Qt WebEngine browser with Chrome DevTools Protocol (CDP)
-- Real DOM access for trusted browser events
-
-**Remote Control:**
-- SSH tunneling via `SSHManager`
-- VNC integration via `VNCTunnel`
-- NoVNC in frontend for visual display
-- Command execution over SSH
 
 **Cloud VM Management:**
 - Hetzner Cloud API integration
@@ -132,16 +145,23 @@ CEO
 - Snapshot creation/restoration
 - Cost tracking
 
-**Computer Registry:**
-- Tracks all connected computers
-- Manages connection state
-- Routes commands to correct machine
+**Infrastructure Ready (for multi-computer orchestration):**
+- SSH tunneling via `SSHManager`
+- VNC integration via `VNCTunnel`
+- NoVNC in frontend for visual display
+- Command execution over SSH
+- Computer Registry for tracking connected machines
+
+**On Roadmap:**
+- Multi-computer orchestration—multiple machines working together simultaneously
+- Message bus coordination between machines
+- Parallel task execution across local and cloud
 
 ### 3. Tool Ecosystem
 
 | Tool | Purpose | Implementation |
 |------|---------|----------------|
-| `ComputerTool` | Screenshot, mouse, keyboard | PyAutoGUI + Qt |
+| `ComputerTool` | Screenshot → analyze → mouse/keyboard actions | PyAutoGUI + Qt |
 | `BashTool` | Shell command execution | Subprocess |
 | `EditTool` | File editing (str_replace) | File I/O |
 | `GlobTool` | File pattern matching | Glob library |
@@ -328,6 +348,7 @@ Every action logged with:
 ## Roadmap: Technical Milestones
 
 **Near-term (1-3 months):**
+- [ ] Multi-computer orchestration (multiple machines working together simultaneously)
 - [ ] Improve reliability of multi-step task completion
 - [ ] Add verification loops for task outcomes
 - [ ] Expand audit logging granularity
@@ -341,7 +362,7 @@ Every action logged with:
 
 **Long-term (6-12 months):**
 - [ ] Fully autonomous operation mode
-- [ ] Self-improvement capabilities
+- [ ] Enhanced self-improvement: expand source code modification scope, deeper evaluation metrics
 - [ ] Multi-business orchestration
 - [ ] Horizontal scaling architecture
 

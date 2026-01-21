@@ -21,12 +21,14 @@ As promised, here's everything in one place:
 - 5-min walkthrough: [link]
 
 **Key numbers:**
-- Raising: $300-500K (Close A)
+- Raising: $500K (Close A)
 - Use: 12 months runway (me + 2 engineers + compute)
-- Monthly burn: ~$37K
+- Monthly burn: ~$42K
 
 **Next steps:**
 You mentioned [what they said they needed to see / think about]. Happy to [provide more info / do deeper technical dive / connect you with reference / whatever makes sense].
+
+Would you consider coming in at $[25K/50K/amount discussed]? That's [what this specific amount enables—e.g., "3 months of aggressive compute for continuous testing" or "one senior engineer for 2 months"].
 
 What does your timeline look like for making a decision?
 

@@ -8,9 +8,9 @@
 
 **Note limit: 300 characters**
 
-### Version A: Direct
+### Version A: Insight-Led
 
-Hi [Name]—building Proto: specialist AI agents coordinating to run businesses autonomously. Raising pre-seed. Thought you'd find the demo interesting: [short link]. Happy to connect.
+Hi [Name]—autonomous companies are inevitable. We believe there's a high chance we're 12-24 months from the threshold. I'm building the infrastructure to cross it first. 90-sec demo: [short link]. Raising pre-seed.
 
 ### Version B: Thesis-Led
 
@@ -26,14 +26,14 @@ Hi [Name]—[Mutual connection] suggested I reach out. Building autonomous compa
 
 Hi [Name], thanks for connecting!
 
-Quick context: I'm building Proto—a system that coordinates specialist AI agents across multiple computers to run business operations autonomously.
+**The insight:** Any business that hires people can be run by AI—and when tasks absolutely require humans, the AI hires them. We believe there's a high chance we're 12-24 months from that threshold. The first system to cross it gets a compounding advantage.
 
-Whatever works fastest—agency, SaaS, content, e-commerce, trading—then scaling to a portfolio of autonomous businesses. Big opportunity—agents aren't maximized yet, and there's massive attention and resources flowing in.
+**What I built:** Proto coordinates specialist AI agents to run business operations autonomously. Cross-platform (Mac + cloud Linux). Self-improvement and human delegation on roadmap. We'll explore different business types—agency services, SaaS products, content, e-commerce, freelance operations.
 
 90-sec demo: [link]
 One-pager: [link]
 
-Raising $300-500K pre-seed. Worth a 20-min call if AI agents/infrastructure is in your wheelhouse.
+Raising $500K pre-seed. Worth a 20-min call?
 
 [Your name]
 

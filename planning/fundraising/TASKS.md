@@ -7,7 +7,7 @@
 **Status:** All documentation files are drafted. Next step is review and improvement.
 
 ### Files to Review (in order):
-1. [ ] `narrative/executive_summary.md`
+1. [x] `narrative/executive_summary.md` ✓
 2. [ ] `narrative/one_pager.md`
 3. [ ] `narrative/pitch_best_practices.md`
 4. [ ] `deck/deck_outline.md`
@@ -182,9 +182,9 @@ After documentation review is complete, generate these files:
 - [ ] Secure a Lead Investor (sets terms, creates momentum)
 - [ ] Review term sheet with startup lawyer (liquidation preferences, board seats)
 - [ ] Collect soft commits
-- [ ] Convert soft → signed → wired (Close A: $300-500k)
+- [ ] Convert soft → signed → wired (Close A: $500K)
 - [ ] Announce momentum to pipeline (use FOMO to accelerate followers)
-- [ ] Extend to Close B ($1-2M total)
+- [ ] Extend to Close B ($1.5M total)
 
 ---
 
@@ -199,9 +199,9 @@ After documentation review is complete, generate these files:
 - [ ] Download YC SAFE template → `legal/safe_template.pdf`
 
 ### Numbers
-- [x] Calculate 12-month burn budget → ₪132k/mo = ₪1.82M/12mo (~$505k) ✓
+- [x] Calculate 12-month burn budget → ~$42k/mo = ~$575k/12mo ✓
 - [x] Define 3 milestones that unlock Close B ✓
-- [x] Set floor raise (~$600k) and staged targets ($300-500k → $1-2M) ✓
+- [x] Set floor raise (~$575k) and staged targets ($500K → $1.5M) ✓
 
 ---
 

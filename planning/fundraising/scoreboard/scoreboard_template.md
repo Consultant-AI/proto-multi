@@ -32,7 +32,8 @@
 | Soft commits (verbal) | $ |
 | Signed SAFEs | $ |
 | Wired (in bank) | $ |
-| **Close A Target** | **$300-500K** |
+| **Close A Target** | **$500K** |
+| **Terms** | **$5M post-money SAFE** |
 | **% to Close A** | % |
 
 ---

@@ -12,13 +12,13 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "Why not just use Claude/ChatGPT directly?"
 
-**Response:** "You can use Claude to help you do a task. You can't use Claude to run your business while you sleep. Proto orchestrates specialist agents across multiple computers for hours or days. It's the difference between a calculator and an accountant."
+**Response:** "You can use Claude to help you do a task. You can't use Claude to run your business while you sleep. Proto orchestrates specialist agents—cross-platform, Mac and cloud Linux—for hours or days. Multi-computer orchestration is on the roadmap. It's the difference between a calculator and an accountant."
 
 ---
 
 ## "What if the AI makes mistakes?"
 
-**Response:** "It will—that's why we have approval gates for anything that spends money, publishes, or trades. Plus audit logs and a kill switch. We're building for trust, not YOLO."
+**Response:** "It will—Proto can run fully autonomously, but for users who want oversight, we have optional approval gates for anything that spends money, publishes, or trades. Plus audit logs and a kill switch. The controls are there for those who want them."
 
 ---
 
@@ -30,19 +30,19 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "Aren't you just riding the AI hype?"
 
-**Response:** "I built this before the hype. Look at the architecture: specialist agents, multi-computer orchestration, self-improvement systems. This isn't a wrapper on ChatGPT. This is infrastructure for autonomous companies."
+**Response:** "I built this before the hype. Look at the architecture: specialist agents, project planning system where agents follow and update task lists for complex projects, cross-platform (Mac and cloud Linux), real computer use, enterprise controls. Multi-computer orchestration and self-improvement systems are on the roadmap. This isn't a wrapper on ChatGPT. This is infrastructure for autonomous companies."
 
 ---
 
 ## "Why would anyone pay for this?"
 
-**Response:** "We're not selling Proto. We're using it to run businesses—whatever works fastest. Could be agency work, content, e-commerce, trading, SaaS. The customer is the business Proto runs, not a SaaS buyer."
+**Response:** "We're not selling Proto. We're using it to run businesses. We'll explore different types—agency services, content, e-commerce, SaaS, freelance operations—and double down on what works. The customer is the business Proto runs, not a SaaS buyer."
 
 ---
 
 ## "Why not pick one business to focus on?"
 
-**Response:** "We don't know which will work fastest. Proto experiments across multiple paths—agency work, e-commerce, trading, SaaS, freelance—and doubles down on what works. The first business is proof of concept. The goal is a portfolio."
+**Response:** "We don't know which will work fastest. Proto experiments across multiple paths—agency services, e-commerce, SaaS, content, freelance—and doubles down on what works. The first business is proof of concept. The goal is a portfolio."
 
 ---
 
@@ -54,25 +54,31 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "It's not fully autonomous yet"
 
-**Response:** "The goal is to automate any human labor. When that's not possible, Proto uses hybrid models—it can hire people, delegate to humans, use humans as reviewers. A trading operation might be fully automated. A creative agency might have AI managing human designers. Whatever model fits the task."
+**Response:** "The goal is to automate any human labor. But when a task genuinely requires human involvement, the AI will hire and delegate to humans—that's on the roadmap. It's not about being 100% without humans—it's about the AI making the decision of when humans are needed. The unlock is the right playbook and specialized agent for each situation."
 
 ---
 
 ## "Why you?"
 
-**Response:** "I built this entire system solo—backend, frontend, specialist agents, multi-computer orchestration, self-improvement. First-principles approach: I started with the end goal—AI that self-improves and runs companies—then broke it down into components and built each one. Not a wrapper on existing tools. Purpose-built from the ground up. Not many people can see this vision AND ship it. I've been doing both."
+**Response:** "I built this entire system solo—backend, frontend, specialist agents, cross-platform (Mac and cloud Linux), real computer use. First-principles approach: I started with the end goal—AI that self-improves and runs companies—then broke it down into components and built each one. Self-improvement is on the roadmap. Not a wrapper on existing tools. Purpose-built from the ground up. Not many people can see this vision AND ship it. I've been doing both."
 
 ---
 
-## "What if OpenAI/Anthropic just does this?"
+## "What if OpenAI/Anthropic/Google just does this?"
 
 **Response:** "They could—but they haven't. They're building models, not operating businesses. They want to sell picks and shovels to millions of developers. I want to own the gold mines. And once Proto starts self-improving, there's a first-mover advantage—by the time they pivot, if they do, we'll have playbooks, data, and running businesses."
 
 ---
 
+## "What about existing companies adding AI?"
+
+**Response:** "It's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies face legacy systems, organizational resistance, technical debt, and cultural friction. Proto is built from the ground up for autonomous operation—no constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes."
+
+---
+
 ## "There are already tons of AI agents—Devin, Cursor, Lindy..."
 
-**Response:** "All domain-specific silos. Devin only writes code. Lindy only does sales. Zendesk AI only answers tickets. Proto does coding AND marketing AND sales AND operations—all coordinated. Plus self-improvement. No one else combines everything into a system that runs businesses."
+**Response:** "All domain-specific silos. Devin only writes code. Lindy only does sales. Zendesk AI only answers tickets. Proto does coding AND marketing AND sales AND operations—all coordinated. Self-improvement is on the roadmap. No one else combines everything into a system that runs businesses."
 
 ---
 
@@ -96,7 +102,7 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "Why raise now vs. later with more traction?"
 
-**Response:** "Limited runway. I can either slow down or raise now to accelerate. The opportunity is time-sensitive—whoever crosses the reliability threshold first captures the market. I'm choosing speed."
+**Response:** "Limited runway. I can either slow down or raise now to accelerate. The opportunity is time-sensitive—the first system to cross the reliability threshold gets a compounding advantage. Each business generates playbooks, data, and revenue while others are still building. I'm choosing speed."
 
 ---
 
@@ -108,19 +114,19 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "What's the actual first business you'll run?"
 
-**Response:** "Whatever works fastest. Could be agency services, content, e-commerce, freelance, trading. We'll experiment across multiple paths and double down on winners. The first success proves the capability—then we scale."
+**Response:** "We'll explore different business types—agency services, content, e-commerce, freelance, SaaS products, even copying successful business models. Not just computer-based businesses either—for physical tasks, Proto hires and manages humans while AI handles everything else. We'll experiment across multiple paths and double down on what works. The first success proves the capability—then we scale to thousands of products and services."
 
 ---
 
 ## "What happens if you take a job?"
 
-**Response:** "Proto is my focus. Any employment would be structured to protect time for this. But honestly—if this raise succeeds, I'm full-time on Proto. That's the point."
+**Response:** "If this raise succeeds, I won't take a job. I'll be full-time on Proto—that's the whole point of the funding. This is what I'm building."
 
 ---
 
 ## "Why Israel? / Why not just raise in the US?"
 
-**Response:** "Starting with Israeli angels and micro-VCs because I have network here and can move faster. Also pursuing US investors in parallel—happy to talk to anyone who gets the vision."
+**Response:** "Israel has a great startup ecosystem and talent, but I'm open to moving to the US. Starting with Israeli angels because I have network here and can move faster, but pursuing US investors in parallel. If the opportunity is in the US, I'll relocate."
 
 ---
 

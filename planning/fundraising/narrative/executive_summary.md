@@ -4,9 +4,11 @@
 
 **Autonomous companies are inevitable.**
 
-AI systems will run entire businesses without constant human supervision. The question isn't "if" but "when" and "who builds it first."
+AI systems will run entire businesses—automating almost all labor, spawning infinite products and services. When absolutely necessary, AI can hire humans for tasks that require it, but the goal is full automation at scale.
 
-Our thesis: we're 12–24 months from a **capability threshold** where AI agents can reliably execute complex, multi-step business processes autonomously. The first system to cross that threshold becomes a **compounding money machine**—capable of spawning and operating multiple businesses simultaneously, self-improving with each iteration.
+Our thesis: we believe there's a high chance we're 12–24 months from a **capability threshold** where AI agents can reliably execute complex, multi-step business processes autonomously. The first system to cross that threshold becomes a **compounding money machine**—capable of spawning and operating unlimited products and services simultaneously, self-improving with each iteration.
+
+Agentic systems are getting better every day—and this will continue throughout 2026 and beyond. The reliability gap is closing fast.
 
 **Proto is purpose-built to be that system.**
 
@@ -14,7 +16,7 @@ Our thesis: we're 12–24 months from a **capability threshold** where AI agents
 
 ## What Proto Is
 
-Proto is a multi-agent orchestration platform that coordinates specialist AI agents across multiple computers to execute **any complex computer-based work**.
+Proto is a multi-agent orchestration platform that coordinates specialist AI agents to execute **any complex computer-based work**. Cross-platform (Mac + cloud Linux), with multi-computer orchestration on the roadmap.
 
 ### Architecture (Built Today)
 
@@ -26,19 +28,21 @@ Proto is a multi-agent orchestration platform that coordinates specialist AI age
 
 The system is a **peer-to-peer collaborative network**—any agent can delegate to any other specialist when expertise is needed. The CEO analyzes tasks, creates plans, and coordinates, but specialists work together fluidly.
 
-**Multi-Computer Control** through a unified interface:
-- Local machine control (mouse, keyboard, screenshots)
-- Remote servers via SSH and VNC
+**Core Tools & Capabilities:**
+- **Project planning system**: For each project, Proto creates planning files and task lists that agents follow and update—enabling complex, multi-step projects to be broken down and executed systematically
+- Programming (code generation, debugging, deployment)
+- GUI control via screenshot → analyze → mouse/keyboard actions—giving agents access to any tool a human can use on a computer
+- Integrations with third-party tools and APIs
+- Playbooks for domain specialization and repeatable processes
+
+**Cross-Platform & Cloud-Ready:**
+- Runs on Mac locally and cloud Linux (Ubuntu instances with software installed)
 - Cloud VMs (Hetzner) provisioned on demand
-- All computers coordinated through a message bus
+- SSH and VNC integration for remote access
+- **Roadmap:** Multi-computer orchestration (multiple machines working together simultaneously) coming next
 
-**Self-Improvement Systems:**
-- Auto-captures learnings from every task execution
-- Retrieves relevant past knowledge for new work
-- Builds reusable playbooks from successes
-- Generates improvement tasks from repeated failures
-
-**Enterprise Controls:**
+**Enterprise Controls (Optional):**
+Proto can run fully autonomously. These controls are available for users who want oversight:
 - Approval gates for spending, publishing, trading, production changes
 - Comprehensive audit logs for every action
 - Kill switch for immediate halt
@@ -52,9 +56,12 @@ The system is a **peer-to-peer collaborative network**—any agent can delegate 
 - GUI automation (screenshots → analyze → mouse/keyboard actions)
 - Browser control for web-based tasks
 
-**The end goal is to automate any human labor.** When that's not possible, Proto uses hybrid models—hiring people, delegating tasks, using humans as reviewers.
+**The architecture is functional.** What we're building toward is reliability at scale.
 
-**The architecture is functional and continuously improving.** What we're building toward is reliability at scale.
+**On Roadmap:**
+- **Multi-computer orchestration**—multiple machines working together simultaneously
+- **Self-improvement systems**—evaluation per task, automatic code/playbook updates, continuous improvement
+- **Hybrid human delegation**—AI hiring and managing humans for tasks that require it
 
 ---
 
@@ -64,21 +71,22 @@ Proto is not a SaaS product. **We're not selling software. We're building a comp
 
 ### The Strategy
 
-Once Proto achieves reliable autonomous operation, it will identify and execute the **fastest path to revenue** from any business that can be run on a computer:
+Once Proto achieves reliable autonomous operation, it will identify and execute the **fastest path to revenue** from any business:
 
 | Business Type | How Proto Executes |
 |--------------|-------------------|
 | **AI/SaaS Products** | Build, launch, and iterate on software products |
 | **Content & Media** | Generate and distribute content at scale |
-| **Agency Services** | Marketing, development, automation—any service work |
+| **Agency Services** | AI agents as the service, or AI + human-in-the-loop agencies |
 | **Domain-Specific Agents** | Build and sell specialized AI agents for specific industries |
 | **Freelance Operations** | Execute work across freelance platforms (Upwork, Fiverr, etc.) |
 | **E-commerce** | Run dropshipping, digital products, marketplaces |
-| **Trading & Arbitrage** | Algorithmic trading, market inefficiencies, arbitrage |
 | **Human-in-Loop Platforms** | Build and operate platforms that coordinate humans |
-| **Service Businesses** | Any business that would hire people—Proto hires AI (and humans when needed) |
+| **Copying Successful Models** | Replicate proven businesses—unlimited labor means unlimited experiments |
+| **Physical/Non-Digital Businesses** | For tasks requiring physical presence, Proto hires and manages humans |
+| **Any Business** | Any business that would hire people—Proto hires AI (and humans when absolutely needed) |
 
-**The key insight:** Any business that would hire people—Proto hires AI (and humans when needed). Not just service businesses—any computer-based business that relies on human labor can be run by Proto.
+**The key insight:** Any business that would hire people—Proto hires AI instead. Even non-computer-based businesses can be automated by hiring humans for physical tasks while AI handles everything else.
 
 The scope expands as AI capabilities improve. Today's impossible becomes tomorrow's automated. Proto is built to grow with the technology.
 
@@ -96,31 +104,29 @@ The system doesn't just run businesses—it **gets better at running businesses*
 We don't know which business will work fastest. Proto will experiment across multiple paths simultaneously:
 - Try agency work while testing e-commerce
 - Build a SaaS product while running freelance operations
-- Explore trading while generating content
+- Run freelance operations while generating content
 
-**The first successful business is proof of concept, not the destination.** The endgame is a portfolio of autonomous companies—potentially dozens or hundreds running simultaneously.
+**The first successful business is proof of concept, not the destination.** The endgame is a portfolio of autonomous companies—potentially hundreds or thousands running simultaneously.
 
 ---
 
-## The Hybrid Model
+## The Hybrid Model (When Needed)
 
-**The end goal: automate any human labor.**
+**The end goal: automate almost all human labor.**
 
-When full automation isn't possible (yet), Proto uses hybrid models—whatever configuration fits the task:
+For the rare cases where full automation isn't possible, Proto can use hybrid models:
 
 | Model | How It Works | Example |
 |-------|--------------|---------|
-| **AI does everything** | Fully automated workflows, end-to-end | Algorithmic trading, content generation |
+| **AI does everything** | Fully automated workflows, end-to-end | Content generation, e-commerce operations |
 | **AI hires people** | Proto recruits, onboards, and manages human workers | Creative agency with AI-managed designers |
 | **AI delegates to humans** | Break down work, assign to people, synthesize results | Consulting with AI analysis, human delivery |
 | **Humans as reviewers** | AI executes, humans approve or course-correct | Marketing campaigns with human sign-off |
 | **Humans for key decisions** | AI prepares options and context, humans decide | Strategic pivots, major investments |
 
-**It's not a ladder—it's different models for different needs.** A trading operation might be fully automated. A creative agency might have AI managing human designers. A consulting firm might have AI doing analysis while humans present to clients.
+Proto adapts to whatever works. But the goal is to minimize human involvement—automation first, humans only when absolutely necessary.
 
-Proto adapts to whatever works. The goal is maximum value with minimum human labor—not a fixed progression toward "full autonomy."
-
-**The unlock is reliability engineering.** Frontier models can already do the work. What we're building is the verification, error correction, and self-improvement systems that let us deploy the right model for each situation.
+**The unlock is the right playbook and a specialized, reliable agent or process.** Frontier models can already do the work. What we're building is the orchestration, verification, error correction, and self-improvement systems that let us deploy the right configuration for each situation.
 
 ---
 
@@ -128,7 +134,7 @@ Proto adapts to whatever works. The goal is maximum value with minimum human lab
 
 ### Why Now
 
-**Winner-take-most:** The first system that can reliably run businesses autonomously captures the entire market. There's no second place in infrastructure.
+**Compounding advantage:** The first system that starts reliably running businesses compounds with every iteration. Early movers build playbooks, data, and running revenue while others are still building.
 
 **Compounding returns:** Each business funds more businesses. Each success makes the system better at succeeding. The growth curve is exponential.
 
@@ -216,7 +222,7 @@ Proto is designed from the ground up to do all domains, self-improve, and work t
 
 **Note:** The open source space is exploding—GitHub now has 4.3M+ AI repositories. But these are frameworks for developers to build agents, not systems that run businesses autonomously. Proto is the mine, not the pickaxe.
 
-### Why Not Wait for OpenAI/Anthropic?
+### Why Not Wait for OpenAI/Anthropic/Google?
 
 They **could** build this—but they haven't. Their business model is selling API access to millions of developers, not running businesses themselves.
 
@@ -227,17 +233,21 @@ They **could** build this—but they haven't. Their business model is selling AP
 
 Different game, different incentives. They want to be the platform. We want to own the gold mines.
 
+### AI-Native Advantage
+
+**It's easier to build an AI-first company from scratch than to retrofit AI into existing operations.** Established companies face legacy systems, organizational resistance, technical debt, and cultural friction. Proto is built from the ground up for autonomous operation—no legacy constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes.
+
 ---
 
 ## The Team
 
-### Founder
+### Founder: Nir Feinstein
 
 Full-stack developer who founded, developed, and released multiple apps independently. Built Proto's entire stack solo:
 - Python/FastAPI backend with agent implementations
 - React/Electron frontend with multi-computer UI
 - SSH tunneling, VNC integration, cloud VM provisioning
-- Planning system, self-improvement architecture
+- Planning system, enterprise controls
 
 **First-principles approach:** I started with the end goal—an AI agent that self-improves and runs companies autonomously. Then I broke it down into components: What does it need to control computers? What specialist skills does it need? How does it learn from failures? How does it coordinate multiple agents? I designed and built each component to work together as a coherent system. Not a wrapper on existing tools—purpose-built from the ground up for autonomous operation.
 
@@ -254,29 +264,34 @@ With funding, immediately adding:
 ## The Raise
 
 ### Amount
-- **Close A:** $300-500K (momentum round)
-- **Close B:** $1-2M total (after proof milestones)
+- **Close A:** $500K (momentum round)
+- **Close B:** $1.5M total (after proof milestones)
 
 ### Terms
-SAFE or convertible note, standard terms. Looking for investors who see the opportunity and want to be part of building autonomous companies.
+**Post-Money SAFE** (YC standard) with **$5M cap**.
+
+- **Close A ($500K):** $5M post-money cap → 10% dilution
+- **Close B ($1.5M total):** $5M post-money cap → 30% total dilution
+
+Looking for investors who see the opportunity and want to be part of building autonomous companies.
 
 ### Use of Funds (12 Months)
 
 | Category | Monthly | 12-Month |
 |----------|---------|----------|
-| Founder salary | ₪35,000 | ₪420,000 |
-| 2 senior engineers | ₪70,000 | ₪840,000 |
-| Compute (API + VMs) | ₪15,000 | ₪180,000 |
-| Overhead | ₪12,000 | ₪144,000 |
-| Buffer (15%) | — | ₪238,000 |
-| **Total** | **~₪132,000** | **~₪1.82M (~$505K)** |
+| Founder salary | $11,000 | $130,000 |
+| 2 senior engineers | $22,000 | $265,000 |
+| Compute (API + VMs) | $5,000 | $60,000 |
+| Overhead | $4,000 | $45,000 |
+| Buffer (15%) | — | $75,000 |
+| **Total** | **~$42,000** | **~$575,000** |
 
 ### Milestones
 
 **What unlocks Close B:**
 1. Self-improvement systems demonstrably working
-2. Mastery of at least one domain (end-to-end execution with minimal intervention)
-3. Complete product or service delivered autonomously
+2. Mastery of at least one domain—marketing campaigns, software development, or company operations running end-to-end with minimal intervention
+3. Complete product or service delivered autonomously (e.g., launched SaaS product, completed client project, or revenue-generating operation)
 
 ---
 
