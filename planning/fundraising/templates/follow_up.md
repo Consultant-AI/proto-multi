@@ -10,7 +10,7 @@
 
 Hi [Name],
 
-Thanks for the call—enjoyed the conversation about [specific topic from call].
+Thanks for the call-enjoyed the conversation about [specific topic from call].
 
 As promised, here's everything in one place:
 
@@ -28,7 +28,7 @@ As promised, here's everything in one place:
 **Next steps:**
 You mentioned [what they said they needed to see / think about]. Happy to [provide more info / do deeper technical dive / connect you with reference / whatever makes sense].
 
-Would you consider coming in at $[25K/50K/amount discussed]? That's [what this specific amount enables—e.g., "3 months of aggressive compute for continuous testing" or "one senior engineer for 2 months"].
+Would you consider coming in at $[25K/50K/amount discussed]? That's [what this specific amount enables-e.g., "3 months of aggressive compute for continuous testing" or "one senior engineer for 2 months"].
 
 What does your timeline look like for making a decision?
 
@@ -43,7 +43,7 @@ Talk soon,
 
 Hi [Name],
 
-Following up on our conversation—you asked about [technical topic].
+Following up on our conversation-you asked about [technical topic].
 
 [2-3 sentences directly addressing their question]
 
@@ -75,8 +75,8 @@ I understand this is a real consideration. Happy to discuss further or connect y
 
 ## Notes:
 
-- Send within 2 hours of call—while you're fresh in their mind
+- Send within 2 hours of call-while you're fresh in their mind
 - Reference something specific from the conversation
-- Don't ask "what did you think?"—ask about timeline/next steps
+- Don't ask "what did you think?"-ask about timeline/next steps
 - Log their objections/concerns in your tracking sheet
 - Schedule follow-up reminder for 5-7 days

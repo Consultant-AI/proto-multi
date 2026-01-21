@@ -100,7 +100,7 @@ Proto executed the following tasks autonomously (with human approval gates):
 ## Client Feedback
 
 > "[Quote from client about working with Proto]"
-> — [Name], [Title] at [Company]
+> - [Name], [Title] at [Company]
 
 **What worked well:**
 - [Point 1]

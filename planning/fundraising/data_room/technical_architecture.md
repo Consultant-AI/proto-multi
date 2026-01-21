@@ -12,8 +12,8 @@ Proto is a multi-agent orchestration platform built on a modern stack: Python/Fa
 - Cross-platform: runs on Mac + cloud Linux (Ubuntu instances with software installed)
 - Hierarchical agent system with CEO-led delegation
 - Multi-computer orchestration on roadmap (SSH tunneling and VNC infrastructure ready)
-- GUI control via screenshot → analyze → mouse/keyboard actions—giving agents access to any tool a human can use on a computer (real computer use, not browser automation)
-- Enterprise controls (optional)—Proto can run fully autonomously; optional approval gates, audit logs, kill switch
+- GUI control via screenshot → analyze → mouse/keyboard actions-giving agents access to any tool a human can use on a computer (real computer use, not browser automation)
+- Enterprise controls (optional)-Proto can run fully autonomously; optional approval gates, audit logs, kill switch
 
 **On roadmap:**
 - Self-improvement: evaluation per task, automatic code/playbook updates, continuous improvement
@@ -21,9 +21,9 @@ Proto is a multi-agent orchestration platform built on a modern stack: Python/Fa
 - Multi-computer orchestration: multiple machines working together simultaneously
 
 **Core Capabilities (Built Today):**
-- **Project planning system**: For each project, creates planning files and task lists that agents follow and update—enables complex, multi-step projects to be broken down and executed systematically
+- **Project planning system**: For each project, creates planning files and task lists that agents follow and update-enables complex, multi-step projects to be broken down and executed systematically
 - Programming (code generation, debugging, deployment)
-- GUI control via screenshot → analyze → mouse/keyboard actions—giving agents access to any tool a human can use on a computer
+- GUI control via screenshot → analyze → mouse/keyboard actions-giving agents access to any tool a human can use on a computer
 - Integrations with third-party tools and APIs
 - Playbooks for domain specialization and repeatable processes
 
@@ -68,7 +68,7 @@ Improvement Tasks Queued → System improves continuously
 ```
 
 **Key Capabilities:**
-- Task evaluation—what worked, what failed, what to improve
+- Task evaluation-what worked, what failed, what to improve
 - Automatic code/playbook updates based on evaluations
 - Continuous improvement that makes each sub-agent more reliable over time
 - Building reusable playbooks from successful patterns
@@ -181,7 +181,7 @@ Product Manager → "Need user research" → UX Designer
 **Agent Implementation:**
 - Each agent has: system prompt, tool permissions, knowledge context
 - Agents are defined in Python with specialized prompts
-- CEO analyzes tasks, creates plans, coordinates—but specialists work together fluidly
+- CEO analyzes tasks, creates plans, coordinates-but specialists work together fluidly
 - Any specialist can call any other specialist when expertise is needed
 
 **Agents are continuously added** to cover all standard business functions
@@ -208,7 +208,7 @@ Product Manager → "Need user research" → UX Designer
 - Computer Registry for tracking connected machines
 
 **On Roadmap:**
-- Multi-computer orchestration—multiple machines working together simultaneously
+- Multi-computer orchestration-multiple machines working together simultaneously
 - Message bus coordination between machines
 - Parallel task execution across local and cloud
 
@@ -344,7 +344,7 @@ Humans are called ONLY when legally, physically, or regulatorily impossible for 
 - Sales outreach (system does this)
 - ANY computer-based task (system MUST do this)
 
-This reinforces the autonomy goal—humans only when legally/physically required.
+This reinforces the autonomy goal-humans only when legally/physically required.
 
 ---
 
@@ -380,9 +380,9 @@ The system uses an intelligent **SmartSelector** that routes tasks to the optima
 **Model Hierarchy:**
 | Model | Role | Usage |
 |-------|------|-------|
-| Opus 4.5 | CEO-level decisions | 20-30% of calls—strategy, architecture, planning |
-| Sonnet 4.5 | Senior implementation | 50-60% of calls—complex features, debugging, judgment |
-| Haiku 4.5 | Mechanical tasks | 20-30% of calls—file reads, searches, formatting |
+| Opus 4.5 | CEO-level decisions | 20-30% of calls-strategy, architecture, planning |
+| Sonnet 4.5 | Senior implementation | 50-60% of calls-complex features, debugging, judgment |
+| Haiku 4.5 | Mechanical tasks | 20-30% of calls-file reads, searches, formatting |
 
 **Selection Flow:**
 ```

@@ -26,7 +26,7 @@
 - Nir Feinstein | Pre-Seed | [Date]
 
 **Talking points:**
-- "Proto is infrastructure for autonomous companies—businesses run entirely by AI agents."
+- "Proto is infrastructure for autonomous companies-businesses run entirely by AI agents."
 - "This is a massive opportunity. Let me show you why."
 
 ---
@@ -41,11 +41,11 @@
 - We believe there's a high chance: 12-24 months to the threshold
 
 **Talking points:**
-- "AI will run entire businesses—not just tasks, entire companies."
+- "AI will run entire businesses-not just tasks, entire companies."
 - "The capabilities exist. What's missing is reliability."
-- "Four things have converged: model capability, computer use, tooling maturity, and massive attention and resources—billions in investment, top talent, breakthroughs every month."
-- "Agentic systems are getting better every day—this will continue throughout 2026 and beyond. The reliability gap is closing fast."
-- "The first system to cross that threshold gets a compounding advantage—playbooks, data, and running revenue while others are still building."
+- "Four things have converged: model capability, computer use, tooling maturity, and massive attention and resources-billions in investment, top talent, breakthroughs every month."
+- "Agentic systems are getting better every day-this will continue throughout 2026 and beyond. The reliability gap is closing fast."
+- "The first system to cross that threshold gets a compounding advantage-playbooks, data, and running revenue while others are still building."
 
 ---
 
@@ -62,20 +62,20 @@
 **Talking points:**
 - "Once you can reliably run one business, you can run ten. Or a hundred. Or thousands."
 - "Each business generates data that makes Proto better."
-- "The prize isn't one company—it's the ability to create unlimited companies."
+- "The prize isn't one company-it's the ability to create unlimited companies."
 
 ---
 
 ## SLIDE 4: What Proto Is
 
-**Visual:** Architecture diagram—agents, computers, roadmap items
+**Visual:** Architecture diagram-agents, computers, roadmap items
 
 **Content:**
 **Built Today:**
 - **Specialist agents** organized like a company (C-Suite → Directors → Specialists)
-- **Project planning system**: creates planning files and task lists for each project—agents follow and update them to handle complex projects systematically
+- **Project planning system**: creates planning files and task lists for each project-agents follow and update them to handle complex projects systematically
 - **Cross-platform & cloud-ready**: runs on Mac + cloud Linux (Ubuntu); cloud VMs (Hetzner) provisioned
-- **Real computer use**: files, terminal, GUI automation (screenshots, mouse, keyboard—giving agents access to any tool a human can use), browser control
+- **Real computer use**: files, terminal, GUI automation (screenshots, mouse, keyboard-giving agents access to any tool a human can use), browser control
 - **Enterprise controls (optional)**: Proto can run fully autonomously; optional approval gates, audit logs, kill switch
 
 **On Roadmap:**
@@ -84,12 +84,12 @@
 - Hybrid human delegation (AI hiring and managing humans when needed)
 
 **Talking points:**
-- "This isn't a concept—it's built. Specialist agents organized like a company."
-- "Any agent can call any other specialist when it needs expertise—peer-to-peer collaboration."
-- "For each project, Proto creates planning files and task lists. Agents follow them and update them as they work. This is how it handles big, complex projects—breaking them down systematically."
-- "It controls real computers—runs on Mac and cloud Linux. Ubuntu instances already set up with the software."
-- "Real tools: file operations, terminal commands, GUI automation—screenshots, mouse, keyboard—giving agents access to any tool a human can use on a computer."
-- "Enterprise controls are optional—Proto can run fully autonomously. Users who want oversight can enable approval gates, audit logs, kill switch."
+- "This isn't a concept-it's built. Specialist agents organized like a company."
+- "Any agent can call any other specialist when it needs expertise-peer-to-peer collaboration."
+- "For each project, Proto creates planning files and task lists. Agents follow them and update them as they work. This is how it handles big, complex projects-breaking them down systematically."
+- "It controls real computers-runs on Mac and cloud Linux. Ubuntu instances already set up with the software."
+- "Real tools: file operations, terminal commands, GUI automation-screenshots, mouse, keyboard-giving agents access to any tool a human can use on a computer."
+- "Enterprise controls are optional-Proto can run fully autonomously. Users who want oversight can enable approval gates, audit logs, kill switch."
 - "On the roadmap: multi-computer orchestration, self-improvement systems, and hybrid human delegation. These are what we're building with the funding."
 
 ---
@@ -130,7 +130,7 @@ When full automation isn't possible, Proto will use hybrid models:
 
 **Talking points:**
 - "The end goal is to automate any human labor."
-- "When full automation isn't possible, Proto will use hybrid models—this is on the roadmap."
+- "When full automation isn't possible, Proto will use hybrid models-this is on the roadmap."
 - "The vision: Proto can hire people, delegate tasks to humans, use humans as reviewers, or bring them in for key decisions."
 - "The unlock is having the right playbook and a specialized, reliable agent for each situation."
 - "Today we have the core agent orchestration. Self-improvement and human delegation are what we're building next."
@@ -143,7 +143,7 @@ When full automation isn't possible, Proto will use hybrid models:
 
 **Content:**
 - Proto is not SaaS. We don't sell software.
-- We run businesses—exploring different business types
+- We run businesses-exploring different business types
 - First business = proof of concept → Goal = portfolio
 
 | Business Type | Examples |
@@ -154,18 +154,18 @@ When full automation isn't possible, Proto will use hybrid models:
 | Domain-Specific Agents | Sell specialized AI agents for industries |
 | Freelance Operations | Execute work on Upwork, Fiverr, etc. |
 | E-commerce | Dropshipping, digital products, marketplaces |
-| Copying Successful Models | Replicate proven businesses—unlimited labor means unlimited experiments |
+| Copying Successful Models | Replicate proven businesses-unlimited labor means unlimited experiments |
 | Human-in-Loop Platforms | Coordinate humans for tasks AI can't do yet |
 | Physical/Non-Digital Businesses | For tasks requiring physical presence, Proto hires and manages humans |
-| Any Business | Any business that would hire people—Proto hires AI (and humans when absolutely needed) |
+| Any Business | Any business that would hire people-Proto hires AI (and humans when absolutely needed) |
 
-**Key insight:** Any business that would hire people—Proto hires AI instead. Even non-computer-based businesses can be automated by hiring humans for physical tasks while AI handles everything else.
+**Key insight:** Any business that would hire people-Proto hires AI instead. Even non-computer-based businesses can be automated by hiring humans for physical tasks while AI handles everything else.
 
 **Talking points:**
-- "The key insight: any business that would hire people, Proto hires AI instead. Even non-computer-based businesses can be automated—for physical tasks, Proto hires and manages humans while AI handles everything else."
+- "The key insight: any business that would hire people, Proto hires AI instead. Even non-computer-based businesses can be automated-for physical tasks, Proto hires and manages humans while AI handles everything else."
 - "We're not selling Proto. We're using it to run businesses."
 - "We'll explore different business types: SaaS products, marketing agencies, content at scale, e-commerce, freelance operations."
-- "We can also sell specialized agents as products—a content agent, a customer support agent, a development agent."
+- "We can also sell specialized agents as products-a content agent, a customer support agent, a development agent."
 - "The scope expands as AI improves. The first business proves the capability. Then we scale to many."
 
 ---
@@ -176,26 +176,26 @@ When full automation isn't possible, Proto will use hybrid models:
 
 **Content:**
 **Current AI Agents:**
-- Coding agents (Devin, Cursor, Claude Code) — only write code
-- Sales agents (Lindy, 11x) — only handle sales
-- Support agents (Zendesk AI) — only answer tickets
-- Open source (AutoGPT, CrewAI) — frameworks, not businesses
+- Coding agents (Devin, Cursor, Claude Code) - only write code
+- Sales agents (Lindy, 11x) - only handle sales
+- Support agents (Zendesk AI) - only answer tickets
+- Open source (AutoGPT, CrewAI) - frameworks, not businesses
 
 **What's Missing:**
 - Cross-domain coordination (coding + marketing + sales + operations)
 - Self-improvement (agents don't learn from failures and get better)
 - Full autonomy goal (everyone builds copilots, not autonomous operations)
 
-**The opportunity:** Agents aren't maximized yet. Self-improvement is the key—each task makes Proto better.
+**The opportunity:** Agents aren't maximized yet. Self-improvement is the key-each task makes Proto better.
 
 **AI-native advantage:** It's easier to build an AI-first company from scratch than retrofit AI into existing operations.
 
 **Talking points:**
-- "Look at current AI agents—they're all domain-specific silos. Devin writes code. Lindy does sales. Zendesk answers tickets."
+- "Look at current AI agents-they're all domain-specific silos. Devin writes code. Lindy does sales. Zendesk answers tickets."
 - "No one combines everything. Almost no one self-improves."
-- "Agents aren't maximized yet—there's so much untapped potential."
+- "Agents aren't maximized yet-there's so much untapped potential."
 - "Self-improvement is the unlock. Each task makes Proto better at all tasks. That's compounding."
-- "There's another advantage: it's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies have legacy systems, organizational resistance, technical debt. Proto is built from the ground up—no constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes."
+- "There's another advantage: it's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies have legacy systems, organizational resistance, technical debt. Proto is built from the ground up-no constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes."
 
 ---
 
@@ -207,7 +207,7 @@ When full automation isn't possible, Proto will use hybrid models:
 - Built entire stack solo: agents, cross-platform (Mac + cloud Linux), real computer use
 - First-principles approach: started with end goal, broke down into components
 - Window: Models work, computer use works, massive resources flowing in, gap in market
-- Self-improvement on roadmap—first mover with that has compounding advantage
+- Self-improvement on roadmap-first mover with that has compounding advantage
 
 **Team Philosophy (for post-raise):**
 - One strong "Alpha" leader who can scale with the company
@@ -215,12 +215,12 @@ When full automation isn't possible, Proto will use hybrid models:
 - Complementary personalities: visionary + executor balance
 
 **Talking points:**
-- "I built all of this solo—backend, frontend, agent orchestration, cross-platform infrastructure."
+- "I built all of this solo-backend, frontend, agent orchestration, cross-platform infrastructure."
 - "Full-stack developer who founded, developed, and released multiple apps independently."
-- "First-principles approach: I started with the end goal—AI that self-improves and runs companies. Then I broke it down into components and built each one. Not a wrapper on existing tools—purpose-built from the ground up."
+- "First-principles approach: I started with the end goal-AI that self-improves and runs companies. Then I broke it down into components and built each one. Not a wrapper on existing tools-purpose-built from the ground up."
 - "Four things converged: model capability, computer use, massive attention and resources, gap in market."
-- "The first system with real self-improvement compounds—every business makes it better. That's the moat."
-- "Post-raise, I'll bring on senior engineers who complement my strengths—people who can execute while I focus on vision and architecture."
+- "The first system with real self-improvement compounds-every business makes it better. That's the moat."
+- "Post-raise, I'll bring on senior engineers who complement my strengths-people who can execute while I focus on vision and architecture."
 
 ---
 
@@ -241,7 +241,7 @@ When full automation isn't possible, Proto will use hybrid models:
 | 2 Engineers | $22,000 | $265,000 | Senior team to build reliability |
 | Compute | $5,000 | $60,000 | Aggressive API + cloud for continuous testing |
 | Overhead | $4,000 | $45,000 | Operations, legal, tools |
-| Buffer | — | $75,000 | Contingency (15%) |
+| Buffer | - | $75,000 | Contingency (15%) |
 | **Total** | ~$42,000 | **~$575,000** | 12 months to hit milestones |
 
 **Talking points:**
@@ -252,10 +252,10 @@ When full automation isn't possible, Proto will use hybrid models:
 - "Looking for investors who see the opportunity in autonomous companies and want to be part of building it."
 
 **Philosophy: Money as Food, Not Oxygen**
-- Don't stockpile cash like oxygen—you can "die from too much of it" (Brian Chesky)
+- Don't stockpile cash like oxygen-you can "die from too much of it" (Brian Chesky)
 - Too much money kills innovation and focus
 - We're raising what we need to hit milestones, not padding a war chest
-- Revenue from customers is the true oxygen—VC is just fuel to get there faster
+- Revenue from customers is the true oxygen-VC is just fuel to get there faster
 
 ---
 
@@ -292,17 +292,17 @@ When full automation isn't possible, Proto will use hybrid models:
 
 | Category | Examples | What They Do | Why Proto Is Different |
 |----------|----------|--------------|------------------------|
-| Coding Agents | Devin, Cursor, Replit, Claude Code, OpenAI Codex | Write and debug code | Only coding—can't do marketing, sales, operations |
+| Coding Agents | Devin, Cursor, Replit, Claude Code, OpenAI Codex | Write and debug code | Only coding-can't do marketing, sales, operations |
 | Agent-First IDEs | Google Antigravity | IDE with agent orchestration | Focused on developer workflows, not running businesses |
-| Sales/CRM Agents | Lindy, 11x, Salesforce Agentforce | Automate sales workflows | Only sales—can't build products or run campaigns |
-| Support Agents | Zendesk AI, Intercom, Ada | Answer customer tickets | Only support—single domain |
+| Sales/CRM Agents | Lindy, 11x, Salesforce Agentforce | Automate sales workflows | Only sales-can't build products or run campaigns |
+| Support Agents | Zendesk AI, Intercom, Ada | Answer customer tickets | Only support-single domain |
 | No-Code Builders | Relevance AI, Gumloop, Dify | Build simple workflow agents | Limited to predefined workflows, no self-improvement |
-| Open Source | AutoGPT, SuperAGI, CrewAI, LangGraph, Agent-S | Build custom agents | Frameworks, not businesses—require development |
+| Open Source | AutoGPT, SuperAGI, CrewAI, LangGraph, Agent-S | Build custom agents | Frameworks, not businesses-require development |
 | Computer Use | Adept, Anthropic Computer Use | Control GUIs | Single-task focused, no multi-agent orchestration |
 | Labs | OpenAI, Anthropic, Google | Build foundation models | Building models, not operating businesses |
 
 **Why not OpenAI/Anthropic/Google?**
-- They could build this—but they haven't
+- They could build this-but they haven't
 - Their business: sell API to millions of developers, not run businesses
 - First-mover with self-improvement has edge
 - Different game: they want to be the platform, we want to own the gold mines
@@ -312,7 +312,7 @@ When full automation isn't possible, Proto will use hybrid models:
 ## Design Notes
 
 **#0 Rule: You Might Not Even Need a Deck**
-- The Retool founder raised his seed round without a deck—just opened his laptop and demoed
+- The Retool founder raised his seed round without a deck-just opened his laptop and demoed
 - If you have a working product, that IS your pitch
 - A rough working prototype beats a polished deck asking for money to build
 - Many angels prefer just talking to the founder over watching slides
@@ -325,17 +325,17 @@ When full automation isn't possible, Proto will use hybrid models:
 **Demo > Deck**
 - Your product demo is your best collateral
 - A rough working prototype > polished slides about a future product
-- If you can show it working, show it—don't just talk about it
+- If you can show it working, show it-don't just talk about it
 
 **Don't Try to "Impress"**
 - No "magic words" or fancy jargon
 - Investors get bored by founders trying to "sell" them
-- Use plain language—same way you'd talk to a friend
+- Use plain language-same way you'd talk to a friend
 - The best pitches don't feel like pitches
 
 **Rocket Ship, Not The Math**
 - Think NASA: "We're going to the moon!" (vision, impact) beats fuel ratios and engine specs (technical details)
-- Investors are busy—if you get into the weeds, their eyes glaze over
+- Investors are busy-if you get into the weeds, their eyes glaze over
 - Focus on: What's the need? How do you address it? Why are you better? How can they help?
 - Save technical deep-dives for the appendix or follow-up questions
 
@@ -367,7 +367,7 @@ When full automation isn't possible, Proto will use hybrid models:
 **Be Ready to Ditch the Deck**
 - Practice pitching without slides (3+ times minimum)
 - If tech fails or investor prefers conversation, deliver the story verbally
-- The deck supports your story—it's not a crutch
+- The deck supports your story-it's not a crutch
 - Many angel investors prefer just listening to the founder talk
 
 **During the Pitch:**

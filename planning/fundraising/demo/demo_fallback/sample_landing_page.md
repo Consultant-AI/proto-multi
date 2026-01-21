@@ -62,10 +62,10 @@ Trusted by 500+ Sales Teams
 ### Testimonials
 
 > "We increased our reply rate by 47% in the first month. FlowSell paid for itself in week one."
-> — Sarah Chen, VP Sales at DataSync
+> - Sarah Chen, VP Sales at DataSync
 
 > "Finally, a tool my team actually uses. Setup took 10 minutes."
-> — Marcus Johnson, Sales Director at CloudBase
+> - Marcus Johnson, Sales Director at CloudBase
 
 ### Logos
 [DataSync] [CloudBase] [Metric] [ScaleUp] [GrowthOS]

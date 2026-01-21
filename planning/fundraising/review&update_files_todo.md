@@ -6,7 +6,6 @@ using terminology from the file video that maps out ai businesses
 explain self improve that is not ready yet in 2 ways
 add more archtecture concepts
 learn more about all the concepts related to funding
-to all templates make hebrew version
 maybe changing the name to like seed or somehting more meaningful
 
 tasks for the future

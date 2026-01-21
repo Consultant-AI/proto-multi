@@ -122,7 +122,7 @@ After documentation review is complete, generate these files:
 ## INVESTOR PIPELINE
 
 ### Prep
-- [ ] Define your "Hook" — the single most impressive thing to lead with (growth, team, tech, market)
+- [ ] Define your "Hook" - the single most impressive thing to lead with (growth, team, tech, market)
 
 ### Build List
 - [ ] Fill investor target list (150 contacts) → `pipeline/investor_list.csv`
