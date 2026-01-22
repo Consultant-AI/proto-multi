@@ -621,5 +621,18 @@ Human must explicitly restart system after kill switch activation.
 
 ---
 
+## Additional Resources
+
+For deeper insights on fundraising tactics and investor psychology, see these sections in the [Fundraising Guide](../FUNDRAISING_GUIDE.md):
+
+- [Investor Psychology](../FUNDRAISING_GUIDE.md#investor-psychology-paul-graham) - How investors think and make decisions
+- [Fundraising Survival Tactics](../FUNDRAISING_GUIDE.md#fundraising-survival-tactics-paul-graham) - 9 rules for surviving the process
+- [Pitch Meeting Tactics](../FUNDRAISING_GUIDE.md#pitch-meeting-tactics-first-round-review) - How to prepare and deliver pitches
+- [VC Partner Meeting Guide](../FUNDRAISING_GUIDE.md#vc-partner-meeting-guide-first-round-review) - What to expect (25-60% conversion rate)
+- [The Equity Equation](../FUNDRAISING_GUIDE.md#the-equity-equation-paul-graham) - When to give up equity
+- [Series A Reality Check](../FUNDRAISING_GUIDE.md#series-a-reality-check-first-round-review) - Preparing for the next round
+
+---
+
 *Last updated: Jan 2026*
 *Contact: me@nirfeinste.in*

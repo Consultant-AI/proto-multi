@@ -33,7 +33,11 @@
 
 *For detailed slide-by-slide psychology and one-pager alignment guidance, see [Pitch Deck Architecture](../FUNDRAISING_GUIDE.md#pitch-deck-architecture) in the Fundraising Guide.*
 
+*For the Sequoia 10-slide template structure, see [Sequoia Pitch Deck Template](../FUNDRAISING_GUIDE.md#sequoia-pitch-deck-template) in the Fundraising Guide.*
+
 **Key principle:** At pre-seed, investors fund **insight** rather than traction. The deck must articulate a clear "secret" about the market that others have overlooked.
+
+**Sequoia's advice:** They value "the ideas, the clarity of their thinking, and the scope of their ambition" over polished presentations. Avoid "listing features instead of communicating your mission."
 
 **Proto's "Why Now?" (critical slide):**
 - All components exist (model capability, computer use, orchestration, tooling)
