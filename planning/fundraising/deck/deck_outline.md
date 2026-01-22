@@ -431,6 +431,36 @@ We've transitioned from generative models to autonomous Agentic AI. 40% of enter
 
 ---
 
+## Pitch Deck Story Arc (Carta)
+
+**A pitch deck is a story in three acts:**
+
+### Act 1: The Setup (Establish the Opportunity)
+1. **Problem** - Concise, data-backed. Show you've done the due diligence.
+2. **Solution** - What does your company do? How do you solve it better than anyone else?
+3. **Traction** - Visual proof of upward trajectory (customers, revenue, case studies)
+4. **Why Now** - Key inflection point. Why is this the perfect moment?
+
+### Act 2: The Product (Prove It's Real)
+5. **Product** - How it works in a few sentences. Visual if possible.
+6. **Differentiator** - Your "special sauce". Proprietary tech, partnerships, unique approach.
+7. **TAM/SAM/SOM** - Total addressable market. Show the opportunity is big.
+8. **Competition** - Who else is trying? Why will you win?
+9. **Revenue Model** - How do you make money? Pricing, subscriptions, contracts.
+
+### Act 3: The Close (Make the Ask)
+10. **Customer Testimonials** - 2-3 case studies with results and quotes
+11. **Go-to-Market** - How do you sell? Sales pipeline, customer acquisition
+12. **Financials** - 1 year historical + 2-3 year projections. Key KPIs.
+13. **Team** - Headshots + relevant experience bullets
+14. **The Ask** - Amount raising, use of funds. Clear and specific.
+
+### Critical Reminder
+
+> "Everything you put in your pitch deck needs to be TRUE. Don't fudge things or make stuff look better than it really is. If investors are interested, they're going to do research and due diligence on every claim. Nothing can hurt your reputation faster than exaggerated or fabricated claims."
+
+---
+
 ## Delivery Tips
 
 **Be Ready to Ditch the Deck**

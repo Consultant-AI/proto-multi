@@ -42,6 +42,15 @@ Complete knowledge base for fundraising. All tips, best practices, and processes
 34. [Updated Benchmarks](#updated-benchmarks-founder-institute-2025-2026)
 35. [Timing Dead Zones](#timing-dead-zones)
 36. [Series A Reality Check](#series-a-reality-check-first-round-review)
+37. [Startup Stage & Funding Roadmap](#startup-stage--funding-roadmap-carta)
+38. [When to Raise Money](#when-to-raise-money-carta)
+39. [How Much to Raise](#how-much-to-raise-carta)
+40. [SAFE Mechanics Deep Dive](#safe-mechanics-deep-dive-carta)
+41. [Convertible Notes vs SAFEs](#convertible-notes-vs-safes-carta)
+42. [The Fundraising Funnel](#the-fundraising-funnel-carta)
+43. [Term Sheet Essentials (Carta)](#term-sheet-essentials-carta)
+44. [Handling Rejection](#handling-rejection-carta)
+45. [Data Room Requirements](#data-room-requirements-carta)
 
 ---
 
@@ -2018,6 +2027,265 @@ Starting Series A processes before hitting critical milestones risks creating "s
 2. **"It's much easier to increase a round size than to decrease it"** - Start conservatively
 3. **Choose seed investors who actively support portfolio companies** - not just capital
 4. **Master your numbers and business model metrics** before pitching
+
+---
+
+## Startup Stage & Funding Roadmap (Carta)
+
+**Based on Carta's data from 38,000+ startups.**
+
+### The Progression
+
+| Stage | Funding Type | Typical Amount | Timeline | Goal |
+|-------|--------------|----------------|----------|------|
+| **Level 1** | Bootstrapping | ~$10K (personal) | Months 0-6 | Problem-solution fit |
+| **Level 1** | Friends & Family | $10K-$100K | Months 4-10 | Founder-problem fit |
+| **Level 2** | Angels/Accelerators | $25K-$250K | Months 10-16 | Product-market fit |
+| **Level 3** | Seed Round | $500K-$5M | Months 16-31 | Business model-market fit |
+| **Level 4** | Series A | ~$9.6M median | After Seed | Growth stage |
+
+### What Each Stage Means
+
+**Problem-Solution Fit:** You've identified a real problem that needs a practical solution. You've done research, talked to potential customers, validated the need exists.
+
+**Founder-Problem Fit:** You've proven you (or your team) are the right people to solve this problem. Relevant experience, ability to learn fast, or right team composition.
+
+**Product-Market Fit:** Hard data shows people use your product and continue using it. Signs the product is getting into actual customers' hands and they find it useful.
+
+**Business Model-Market Fit:** The economics make sense for scale. You understand CAC, revenue drivers, unit economics, and have a path to increase revenue significantly.
+
+---
+
+## When to Raise Money (Carta)
+
+### The Runway Rule
+
+**Formula:** Cash in bank ÷ Monthly burn rate = Months of runway
+
+**Example:** $500K ÷ $50K/month = 10 months runway
+
+### Critical Timing
+
+- **Start pitching 6-12 months before runway ends** (not when you're running low)
+- **It takes 3-6 months** from first pitch to money in bank (longer for VC rounds)
+- **Always be thinking about fundraising** - successful founders have ongoing investor conversations
+- **Don't wait until desperate** - "If you're raising because cash is tight, you're doing it wrong"
+
+### The Mindset Shift
+
+> "The successful founders we work with are always thinking about their next fundraise. They're constantly engaging with investors, keeping relationships warm, making it part of their regular jobs."
+
+---
+
+## How Much to Raise (Carta)
+
+### Framework 1: Market Benchmarks
+
+| Round | Median Raise | Typical Dilution |
+|-------|--------------|------------------|
+| Seed | ~$3M | ~20% |
+| Series A | ~$9.6M | ~19% |
+| Series B | ~$15.1M | Varies |
+| Series C | ~$23.2M | Varies |
+| Series D | ~$36M | Varies |
+
+### Framework 2: Milestone-Based
+
+1. **Define your next stage** - What concrete goals are you trying to hit in the next 2-3 years?
+2. **Calculate what it takes** - People, technology, equipment, office space, marketing
+3. **Add buffer** - Things always cost more than expected
+
+### The Valuation-Dilution Tradeoff
+
+**Quick math:** For a $1M seed round at 20% dilution = $5M valuation
+
+Investors automatically calculate this. Know your numbers before the conversation.
+
+> "Sometimes it's take what you can get. The valuation that comes forward is what valuation you wanted. It is." - Cody Barbo, Trust & Will ($50M+ raised)
+
+---
+
+## SAFE Mechanics Deep Dive (Carta)
+
+### Why SAFEs Exist
+
+At early stages, you don't know your company's true value yet. No revenue, few customers, no track record. So instead of pricing shares now, you defer the valuation to later when you have more information.
+
+**SAFE = Simple Agreement for Future Equity**
+
+"Here's money now, and at some point in the future, I'll convert it to shares once we know what the share price actually is."
+
+### Key SAFE Terms
+
+**1. Principal:** How much money the investor is giving you.
+
+**2. Discount:** Rewards early risk-taking.
+- Example: 20% discount means if Series A share price is $1, SAFE investor pays $0.80/share
+- $500K at $0.80/share = 625,000 shares (vs 500,000 at $1)
+
+**3. Valuation Cap:** Maximum company value used for conversion.
+- If cap is $5M but Series A values company at $10M, SAFE investor converts at $5M value
+- Lower cap = more shares for investor
+- Higher cap = better for founder
+
+**4. MFN (Most Favored Nation):** If future investors get better terms, this investor automatically gets those terms too.
+
+### Pre-Money vs Post-Money SAFEs
+
+**Pre-money SAFE:** Share price calculated BEFORE investor money is added
+- Investor gets fewer shares
+- Founder-friendly
+
+**Post-money SAFE:** Share price calculated AFTER investor money is added
+- Investor gets more shares
+- Investor-friendly, but clearer math
+- **This is now standard** (YC uses post-money SAFEs)
+
+### Conversion Example
+
+Your Series A sets share price at $1. Your early SAFE investor:
+- Invested $500K with 20% discount
+- Their share price = $0.80
+- They get 625,000 shares (not 500,000)
+
+---
+
+## Convertible Notes vs SAFEs (Carta)
+
+### Key Differences
+
+| Factor | SAFE | Convertible Note |
+|--------|------|------------------|
+| **Is it debt?** | No | Yes (it's a loan) |
+| **Interest?** | No | Yes (typically 5-8%) |
+| **Maturity date?** | No | Yes (usually 18-24 months) |
+| **If company fails?** | Investor loses money | Investor has debt claim (paid first) |
+| **Complexity** | Simple, standardized | More complex, negotiated |
+| **Legal costs** | Lower | Higher |
+
+### When Convertible Notes Convert
+
+If you raise a priced round before the maturity date, the loan converts to shares (with discount/cap applied). The interest also converts to shares.
+
+**Example:** $100K note at 8% interest for 1 year = $108K converts to shares
+
+---
+
+## The Fundraising Funnel (Carta)
+
+### Typical Funnel Numbers
+
+| Stage | Count |
+|-------|-------|
+| Target investors | 50 |
+| Scheduled meetings | ~20 |
+| Continued conversations | 5-7 |
+| Term sheets | 1-3 |
+
+### Running a Tight Process
+
+**From Trust & Will founder (raised $50M+):**
+
+1. Built list of 50 target funds
+2. Sent coordinated outreach: "We'll be in NYC these dates, actively raising Series A, meeting slots filling up fast"
+3. 45 of 50 said yes to meetings
+4. Put everyone on same timeline (creates urgency)
+5. After first meetings, half were out (that's okay - NOs get you closer to YES)
+6. By week 6, down to 6-7 serious funds
+7. Result: 3 term sheets within a week
+
+> "Running that type of process, I wish I did it the previous year with the seed round. But it worked. It really did work. It's a sales funnel."
+
+### Always Be Fundraising
+
+- Keep investors on monthly update emails (even those who passed)
+- Maintain relationships before you need them
+- The best time to build investor relationships is when you don't need money
+
+---
+
+## Term Sheet Essentials (Carta)
+
+### Pricing Terms
+
+- **Valuation** (pre-money or post-money)
+- **Investment amount**
+- **Option pool size** and how increase is calculated
+
+### Why Option Pool Matters
+
+Investors require option pool increases **on a pre-money basis** so their ownership isn't diluted by future employee equity grants.
+
+**Counter-tactic:** Have a detailed hiring plan. If you're only hiring 5 people for 6% equity, counter a 10% pool request with your actual plan.
+
+### Economic Rights
+
+| Right | What It Means |
+|-------|---------------|
+| **Liquidation preference** | Order of payout in exit (debt → preferred → common) |
+| **Pro-rata rights** | Right to invest in future rounds to maintain ownership % |
+| **Anti-dilution** | Protection if you raise at lower valuation later |
+
+### Control Rights
+
+| Right | What It Means |
+|-------|---------------|
+| **Board seat** | Lead investor typically gets one |
+| **Voting rights** | What decisions need investor approval |
+| **ROFR** | Right of first refusal if founder sells shares |
+| **Drag-along** | If majority agrees to sell, rest must agree |
+
+---
+
+## Handling Rejection (Carta)
+
+### Every NO Gets You Closer to YES
+
+- It's a numbers game - most investors say no
+- A "no" that explains why is **invaluable feedback**
+- Thank investors who give honest explanations
+
+### Stay Connected After Rejection
+
+1. Add them to monthly company update emails
+2. Keep them informed of progress
+3. VCs track ecosystem trends - they're watching
+4. Today's "no" can become tomorrow's "yes"
+
+> "If you made a good impression, even if you got a no, chances are the VC will pay attention to your email updates and it could lead to a yes down the road."
+
+### What Makes Some NOs Better Than Others
+
+- **Good NO:** Explains specific reasons (stage, thesis mismatch, timing)
+- **Bad NO:** Generic "not a fit" or ghosting
+- **Best response to good NO:** Thank them sincerely, stay in touch
+
+---
+
+## Data Room Requirements (Carta)
+
+### What Investors Will Request
+
+Before offering a term sheet, VCs will want to see:
+
+- Cap table
+- Financial metrics and statements
+- Employment records
+- Tax information
+- Company structure (Articles of Incorporation)
+- Board composition
+- Previous investors and their terms
+
+### Data Room Best Practices
+
+- Set up secure digital space (Carta, DocSend, etc.)
+- Organize documents in clear folders
+- Keep everything updated from the beginning
+- Have documents ready before you start pitching
+
+---
+
+*Source: Carta Fundraising 101 Course (2024)*
 
 ---
 

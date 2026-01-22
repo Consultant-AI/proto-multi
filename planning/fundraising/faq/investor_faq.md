@@ -621,16 +621,112 @@ Human must explicitly restart system after kill switch activation.
 
 ---
 
+## Fundraising Process FAQs
+
+### When should we start raising?
+
+**Start 6-12 months before you need the money.**
+
+- Calculate your runway: Cash ÷ Monthly burn = Months left
+- It takes 3-6 months from first pitch to money in bank
+- Don't wait until desperate - "If you're raising because cash is tight, you're doing it wrong"
+- Successful founders always have ongoing investor conversations (ABC = Always Be fundraising)
+
+### How much should we raise?
+
+**Two frameworks:**
+
+1. **Market benchmarks:** Pre-seed $500K-$1.5M, Seed ~$3M, Series A ~$9.6M
+2. **Milestone-based:** What do you need to reach the next stage? (people, tech, runway)
+
+**Quick math for valuation:**
+- $1M raise at 20% dilution = $5M valuation
+- Investors automatically calculate this - know your numbers
+
+### What's the typical fundraising funnel?
+
+Based on Carta data:
+
+| Stage | Count |
+|-------|-------|
+| Target investors | 50 |
+| Scheduled meetings | ~20 |
+| Continued conversations | 5-7 |
+| Term sheets | 1-3 |
+
+**Key insight:** Half will drop off after first meetings. That's normal - NOs get you closer to YES.
+
+### How does a SAFE actually work?
+
+A SAFE is an IOU for future shares:
+1. Investor gives you money now
+2. You don't set a share price yet (company value unknown)
+3. At next priced round (Series A), the SAFE converts to shares
+4. Discounts and valuation caps reward early risk-taking
+
+**Example:** $500K SAFE with 20% discount. Series A sets share price at $1.
+- SAFE investor pays $0.80/share instead
+- Gets 625,000 shares (not 500,000)
+
+### What's the difference between pre-money and post-money SAFEs?
+
+**Pre-money SAFE:** Share price calculated BEFORE investor money added
+- Investor gets fewer shares (founder-friendly)
+
+**Post-money SAFE:** Share price calculated AFTER investor money added
+- Investor gets more shares (clearer math, now standard)
+- YC uses post-money SAFEs
+
+### What's in a term sheet?
+
+**Pricing terms:**
+- Valuation (pre or post-money)
+- Investment amount
+- Option pool size and calculation
+
+**Economic rights:**
+- Liquidation preference (payout order in exit)
+- Pro-rata rights (maintain ownership in future rounds)
+- Anti-dilution protection (if future down round)
+
+**Control rights:**
+- Board seat (lead investor typically gets one)
+- Voting rights for certain decisions
+- ROFR (right of first refusal on founder share sales)
+- Drag-along (majority can force others to sell)
+
+### How do I handle rejection?
+
+**Every NO gets you closer to YES.**
+
+- Thank investors who explain why they passed - that's invaluable feedback
+- Add them to monthly company update emails
+- VCs track trends - today's "no" can become tomorrow's "yes"
+- A "no" that explains reasons is "almost as good as a yes"
+
+---
+
 ## Additional Resources
 
 For deeper insights on fundraising tactics and investor psychology, see these sections in the [Fundraising Guide](../FUNDRAISING_GUIDE.md):
 
+**Paul Graham Essays:**
 - [Investor Psychology](../FUNDRAISING_GUIDE.md#investor-psychology-paul-graham) - How investors think and make decisions
 - [Fundraising Survival Tactics](../FUNDRAISING_GUIDE.md#fundraising-survival-tactics-paul-graham) - 9 rules for surviving the process
+- [The Equity Equation](../FUNDRAISING_GUIDE.md#the-equity-equation-paul-graham) - When to give up equity
+
+**First Round Review:**
 - [Pitch Meeting Tactics](../FUNDRAISING_GUIDE.md#pitch-meeting-tactics-first-round-review) - How to prepare and deliver pitches
 - [VC Partner Meeting Guide](../FUNDRAISING_GUIDE.md#vc-partner-meeting-guide-first-round-review) - What to expect (25-60% conversion rate)
-- [The Equity Equation](../FUNDRAISING_GUIDE.md#the-equity-equation-paul-graham) - When to give up equity
 - [Series A Reality Check](../FUNDRAISING_GUIDE.md#series-a-reality-check-first-round-review) - Preparing for the next round
+
+**Carta Fundraising 101:**
+- [Startup Stage & Funding Roadmap](../FUNDRAISING_GUIDE.md#startup-stage--funding-roadmap-carta) - Progression from bootstrapping to Series A
+- [When to Raise Money](../FUNDRAISING_GUIDE.md#when-to-raise-money-carta) - Timing and runway calculations
+- [How Much to Raise](../FUNDRAISING_GUIDE.md#how-much-to-raise-carta) - Market benchmarks and milestone-based frameworks
+- [SAFE Mechanics Deep Dive](../FUNDRAISING_GUIDE.md#safe-mechanics-deep-dive-carta) - Discounts, caps, pre/post-money
+- [The Fundraising Funnel](../FUNDRAISING_GUIDE.md#the-fundraising-funnel-carta) - Running a tight process
+- [Term Sheet Essentials](../FUNDRAISING_GUIDE.md#term-sheet-essentials-carta) - Pricing, economic, and control rights
 
 ---
 

@@ -12,6 +12,7 @@
 
 | Resource | Description | Link |
 |----------|-------------|------|
+| **Carta Fundraising 101** | ✅ Complete 20-video course - SAFEs, dilution, pitch decks, term sheets, process | [YouTube Playlist](https://www.youtube.com/playlist?list=PLQkiYvUCwsTFzZ6JTaqbCKyxyEkrNjgYQ) |
 | **YC Guide to Seed Fundraising** | Comprehensive guide - the gold standard | [ycombinator.com/library/4A](https://www.ycombinator.com/library/4A-a-guide-to-seed-fundraising) |
 | **Coursera: New Venture Finance** | University of Maryland - valuations, term sheets, capital structure | [coursera.org](https://www.coursera.org/learn/startup-funding) |
 | **Elad Gil: High Growth Handbook** | Free online - fundraising chapters, board management | [growth.eladgil.com](https://growth.eladgil.com/) |
@@ -91,14 +92,14 @@
 
 ### 🎯 Key Topics to Master
 
-- [ ] SAFE vs. priced rounds (mechanics, pros/cons)
+- [x] SAFE vs. priced rounds (mechanics, pros/cons) → See [SAFE Mechanics Deep Dive](FUNDRAISING_GUIDE.md#safe-mechanics-deep-dive-carta)
 - [ ] Valuation negotiation tactics
-- [ ] How to create FOMO and urgency
-- [ ] Term sheet red flags (liquidation pref, anti-dilution)
-- [ ] Cap table management and dilution math
-- [ ] Investor psychology and decision-making
+- [x] How to create FOMO and urgency → See [Fundraising Funnel](FUNDRAISING_GUIDE.md#the-fundraising-funnel-carta)
+- [x] Term sheet red flags (liquidation pref, anti-dilution) → See [Term Sheet Essentials](FUNDRAISING_GUIDE.md#term-sheet-essentials-carta)
+- [x] Cap table management and dilution math → See [How Dilution Works](FUNDRAISING_GUIDE.md#safe-mechanics-deep-dive-carta)
+- [x] Investor psychology and decision-making → See [Investor Psychology](FUNDRAISING_GUIDE.md#investor-psychology-paul-graham)
 - [ ] Building social proof with early commits
-- [ ] Follow-on funding considerations
+- [x] Follow-on funding considerations → See [Series A Reality Check](FUNDRAISING_GUIDE.md#series-a-reality-check-first-round-review)
 
 ---
 
