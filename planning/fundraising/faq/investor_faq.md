@@ -440,12 +440,99 @@ If Proto can reliably run one business, it can run ten. Or a hundred. Or thousan
 - Working prototype (not just an idea)-the architecture is built and functional
 - Solo technical founder who built the entire stack-backend, frontend, agent orchestration, cross-platform infrastructure
 - Pre-seed with clear path to revenue through autonomous business operations
-- Market standard for pre-seed with working software: $4M-$6M caps
+- Market standard for pre-seed with working software: $5M-$7.5M caps (AI/Deep Tech often on the higher end)
+
+**Pre-Seed Benchmarks (2025-2026):**
+| Metric | Typical Range | Proto |
+|--------|---------------|-------|
+| Round Size | $500K-$1M (median $700K) | $500K-$1.5M |
+| Valuation Cap | $5M-$7.5M | $5M |
+| Dilution | 10-20% | 10-30% |
+| Target Runway | 12-18 months | 12 months |
+
+*Note: AI/Deep Tech "mega-pre-seeds" often exceed $1M with higher caps due to compute/talent needs.*
 
 **Post-Money vs. Pre-Money:**
 - **Pre-money**: Company value before the investment
 - **Post-money**: Company value after the investment (pre-money + investment amount)
 - SAFEs are typically post-money (simpler math)
+
+### Why a Post-Money SAFE instead of convertible notes?
+
+**Post-Money SAFEs (what we're using):**
+- Simpler math-dilution is clear upfront (invest $500K at $5M cap = exactly 10%)
+- No maturity date, no interest, no conversion triggers to negotiate
+- YC standard-investors are familiar with terms
+- Founder-friendly: no debt overhang
+
+**Convertible Notes:**
+- Have maturity dates (typically 18-24 months)-if you don't raise, you may owe the money
+- Accrue interest (usually 5-8%)-investors get extra shares from interest
+- More complex conversion math
+- Can create pressure to raise a priced round
+
+**Why we chose SAFE:**
+- Cleaner cap table management
+- Industry standard for pre-seed
+- Aligned incentives-investors succeed when the company succeeds, not through interest accrual
+
+### What do you look for in pre-seed founders?
+
+This is what we believe investors should look for-and what we try to demonstrate:
+
+**1. Founder-Market Fit**
+- Why THIS founder for THIS problem?
+- For Proto: I've been obsessed with AI agents and autonomous systems-built the entire architecture solo because I believe this is inevitable
+
+**2. Technical Autonomy**
+- Can the founder build without external dependencies?
+- For Proto: Built entire stack solo-backend, frontend, agent orchestration, cross-platform infrastructure. No waiting on contractors or co-founders.
+
+**3. Proof of Hustle (Escape Velocity)**
+- Has the founder demonstrated they can make things happen?
+- For Proto: Working prototype, multiple independent apps built and shipped, full-time commitment to this vision
+
+**4. Coachability**
+- Can the founder absorb feedback and iterate?
+- For Proto: First-principles approach means constantly learning and adjusting based on what works
+
+**5. Capital Efficiency**
+- Can they do a lot with a little?
+- For Proto: Built the entire platform on minimal resources. The raise is to accelerate, not to start.
+
+### What validation should a pre-seed company have?
+
+Pre-seed sits early on the "validation spectrum." We're not expected to have Series A metrics, but we should have:
+
+**Qualitative Validation (what we have):**
+- Working prototype demonstrating core capability
+- Clear problem-solution articulation
+- Evidence of founder-market fit
+- Demonstrated technical competence (built it solo)
+
+**Quantitative Signals (emerging):**
+- Pilot interest / early conversations
+- Time spent on problem (months of development)
+- Working demo with measurable capabilities
+
+**What we're NOT expected to have yet:**
+- Revenue (that's post-seed)
+- Large user base
+- Product-market fit metrics
+
+Pre-seed is about betting on the team and vision. The prototype de-risks the "can they build it?" question.
+
+### What about term sheet terms like liquidation preference, pro-rata, anti-dilution?
+
+**Quick answers:**
+
+- **Liquidation preference:** We use 1× non-participating (standard). Investor gets their money back OR their % of proceeds, whichever is higher. Avoid >1× or participating preferred.
+
+- **Pro-rata rights:** Usually grant them - it's standard. Lets investors maintain their % in future rounds.
+
+- **Anti-dilution:** Standard is broad-based weighted average. Avoid full-ratchet (extremely harsh on founders).
+
+*For detailed explanations with examples, see [Term Sheet Essentials](../FUNDRAISING_GUIDE.md#term-sheet-essentials) in the Fundraising Guide.*
 
 ### What about dilution?
 When you raise, investors get newly issued shares. Your number of shares stays the same, but your percentage decreases.

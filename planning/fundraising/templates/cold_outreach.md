@@ -67,10 +67,75 @@ Would love 20 minutes to talk through the thesis if it resonates.
 
 ---
 
-## Notes:
+## Best Practices (from Pre-Seed Research)
+
+### Email Structure
+
+**1. Subject Line** - Concise, informative, creates curiosity
+- ✅ Include company name or key achievement
+- ✅ Reference something relevant to investor (their focus, recent post)
+- ❌ Generic subjects like "Investment opportunity"
+- ❌ Clickbait like "Quick question"
+
+**2. Personal Greeting** - Always use their name, establish common ground if possible
+
+**3. 1-2 Sentence Company Overview** - What you do, simply. Assume they know nothing.
+
+**4. Key Traction (2-3 bullets)** - Give them a reason to care:
+- Impressive metrics or progress
+- Notable backers or accolades
+- Relevant team credentials
+
+**5. Clear Ask** - State the raise amount and ask for a specific next step
+
+**6. Signature** - Full name, title, company, contact info, demo link
+
+### Length Guidelines
+
+- **Target:** Under 150 words
+- **Use bullet points** for traction (easier to skim)
+- **Bold or italics** sparingly to highlight one killer metric
+- Large blocks of text will not be read
+
+### What Makes It Work
+
+| Factor | Impact |
+|--------|--------|
+| **Personalization** | 2× higher response rate |
+| **Demo link included** | Shows substance, not just talk |
+| **Specific ask** | Easier to respond to |
+| **Short length** | Gets read |
+| **Relevant reference** | Shows you did research |
+
+### Notes
 
 - Personalize the opening when possible (reference their portfolio, thesis, tweets)
 - Keep it short-busy people skim
 - Demo link is required-don't send without it
 - Don't follow up more than twice (2-3 days, then 7 days)
-- Track opens/clicks if possible
+- Track opens/clicks if possible (DocSend, Streak, etc.)
+- Quality over quantity: 20 well-researched emails > 200 generic ones
+
+### Follow-Up Sequence
+
+| Day | Action |
+|-----|--------|
+| 0 | Send initial email |
+| 3-4 | First follow-up (add brief new update if possible) |
+| 10-14 | Second follow-up (last attempt) |
+| 21+ | Move to "No Response" in tracker |
+
+### Follow-Up Template
+
+```
+Subject: Re: [Original Subject]
+
+Hi [Name],
+
+Floating this back up - since my last email, we [brief update: signed a pilot / hit milestone / etc.].
+
+Still raising our pre-seed and would love to chat if this is a fit.
+
+Best,
+Nir
+```

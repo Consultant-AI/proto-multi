@@ -130,6 +130,24 @@ Use during calls. Keep responses under 30 seconds.
 
 ---
 
+## "The $5M cap is too high for pre-seed"
+
+**Response:** "Pre-seed caps for AI/Deep Tech are $5M-$7.5M in 2025-2026-we're at the low end. The standard is higher for AI because of compute and talent costs. And this isn't an idea-it's a working prototype I built solo. The architecture is functional. That de-risks the 'can they build it?' question that justifies pre-seed valuations."
+
+---
+
+## "Why should I pay this valuation with no revenue?"
+
+**Response:** "Pre-seed is about betting on team and vision, not revenue-that's the whole point of the stage. The valuation reflects: working prototype (not just a deck), solo technical founder who built the entire stack, clear path to revenue through autonomous businesses, and a massive market opportunity. Revenue comes post-seed. Right now, you're buying the capability and the vision early."
+
+---
+
+## "I need to see more traction"
+
+**Response:** "At pre-seed, traction means: can the founder build it? The answer is yes-look at the demo. I built this entire system solo. Quantitative traction-revenue, users-is what Seed and Series A are for. Pre-seed is qualitative: founder-market fit, technical capability, working prototype. We have all three."
+
+---
+
 ## "What if autonomous AI gets regulated?"
 
 **Response:** "Possible, even likely. We're trying to build responsibly—not claiming we've solved safety, but trying to be as careful as possible. Our controls are what regulators want. And if evidence shows we should stop or change course, we will. We'd rather be the responsible players than watch reckless ones define this space."

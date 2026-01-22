@@ -14,6 +14,34 @@
 
 **Proto is Pre-Seed → Focus on team capability + working prototype**
 
+**Pre-Seed Validation Expectations:**
+- Qualitative validation (founder-market fit, working prototype, clear articulation)
+- Evidence of technical competence (built it solo)
+- NOT expected: revenue, large user base, PMF metrics
+- Key question you must answer: "Can this founder build it?" → Demo answers YES
+
+**What Investors Look For in Pre-Seed Founders:**
+1. **Founder-Market Fit** - Why THIS founder for THIS problem?
+2. **Technical Autonomy** - Can build without external dependencies
+3. **Proof of Hustle** - Evidence of "escape velocity" and making things happen
+4. **Coachability** - Can absorb feedback and iterate
+5. **Capital Efficiency** - Can do a lot with a little
+
+---
+
+## Strategic Framework
+
+*For detailed slide-by-slide psychology and one-pager alignment guidance, see [Pitch Deck Architecture](../FUNDRAISING_GUIDE.md#pitch-deck-architecture) in the Fundraising Guide.*
+
+**Key principle:** At pre-seed, investors fund **insight** rather than traction. The deck must articulate a clear "secret" about the market that others have overlooked.
+
+**Proto's "Why Now?" (critical slide):**
+- All components exist (model capability, computer use, orchestration, tooling)
+- AI capabilities improving every month - infrastructure that scales with improvement
+- 40% of enterprise apps have task agents - but all domain silos
+- First system with cross-domain + self-improvement compounds
+- The reliability problem WILL be solved - massive resources flowing in
+
 ---
 
 ## SLIDE 1: Title
@@ -240,6 +268,12 @@ We've transitioned from generative models to autonomous Agentic AI. 40% of enter
 - "Four things converged: model capability, computer use, massive attention and resources, gap in market."
 - "The first system with real self-improvement compounds-every business makes it better. That's the moat."
 - "Post-raise, I'll bring on senior engineers who complement my strengths-people who can execute while I focus on vision and architecture."
+
+**Demonstrate These Founder Qualities:**
+- **Technical autonomy**: "Built this without waiting for co-founders or contractors"
+- **Proof of hustle**: "Working prototype on minimal resources-the raise accelerates, it doesn't start"
+- **Coachability**: "First-principles approach means constantly learning what works"
+- **Capital efficiency**: "Built the entire platform solo-we do a lot with a little"
 
 ---
 

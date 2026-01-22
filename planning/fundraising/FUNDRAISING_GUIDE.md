@@ -11,14 +11,28 @@ Complete knowledge base for fundraising. All tips, best practices, and processes
 3. [Pipeline Management](#pipeline-management)
 4. [Storytelling & Pitch Delivery](#storytelling--pitch-delivery)
 5. [Software is Eating Labor](#software-is-eating-labor)
-6. [AI Startup Strategy](#ai-startup-strategy)
-7. [The Ask](#the-ask)
-8. [Common Mistakes](#common-mistakes)
-9. [Handling Rejection](#handling-rejection)
-10. [Legal & Documents](#legal--documents)
-11. [Investor Stewardship](#investor-stewardship)
-12. [Mindset](#mindset)
-13. [Confidence Reminders](#confidence-reminders)
+6. [The AI Agent Landscape](#the-ai-agent-landscape-january-2026)
+7. [AI Startup Strategy](#ai-startup-strategy)
+8. [Founder Evaluation Criteria](#founder-evaluation-criteria)
+9. [Pre-Seed Benchmarks 2025-2026](#pre-seed-benchmarks-2025-2026)
+10. [The 30-Day Fundraising Sprint](#the-30-day-fundraising-sprint)
+11. [Pitch Deck Architecture](#pitch-deck-architecture)
+12. [Validation Spectrum](#validation-spectrum)
+13. [SAFEs vs Convertible Notes](#safes-vs-convertible-notes)
+14. [Investor Red Flags](#investor-red-flags)
+15. [Tel Aviv Ecosystem](#tel-aviv-ecosystem)
+16. [Financial Model Deep Dive](#financial-model-deep-dive)
+17. [Cap Table Management](#cap-table-management)
+18. [Term Sheet Essentials](#term-sheet-essentials)
+19. [Data Room Checklist](#data-room-checklist)
+20. [Investor Outreach Emails](#investor-outreach-emails)
+21. [The Ask](#the-ask)
+22. [Common Mistakes](#common-mistakes)
+23. [Handling Rejection](#handling-rejection)
+24. [Legal & Documents](#legal--documents)
+25. [Investor Stewardship](#investor-stewardship)
+26. [Mindset](#mindset)
+27. [Confidence Reminders](#confidence-reminders)
 
 ---
 
@@ -500,6 +514,775 @@ Use these when discussing AI strategy:
 
 ---
 
+## Founder Evaluation Criteria
+
+**At pre-seed, the investment thesis is essentially a bet on human capital.** Without longitudinal data, investors evaluate whether the founding team can identify a non-obvious problem AND build the solution.
+
+### Founder-Market Fit
+
+The primary filter. Investors ask:
+- Does this founder have domain expertise to see what others miss?
+- Do they have technical autonomy to build without external agencies?
+- Have they demonstrated "grit" and "proof of hustle"?
+
+### Proof of Hustle (Before Raising)
+
+Progress made BEFORE raising capital serves as proxy for execution ability:
+
+| Signal | What It Proves |
+|--------|----------------|
+| **Waitlist of thousands** | Marketing/product instinct |
+| **Non-binding LOIs from enterprises** | Sales ability, customer insight |
+| **100+ customer discovery interviews** | Deep problem understanding |
+| **Working prototype (no funding)** | Technical autonomy, resourcefulness |
+| **Industry connections/advisors** | Domain credibility |
+
+**Proto's proof of hustle:**
+- Built entire stack solo (backend, frontend, agent orchestration, cross-platform)
+- Working prototype before raising
+- First-principles approach: started with end goal, broke into components, built each one
+
+### Technical Autonomy ("Builder" Mindset)
+
+**Critical red flag:** Founding team of all business operators who plan to outsource MVP.
+
+**Why it matters:**
+- Pre-seed startups pivot multiple times before finding fit
+- Team that pays agency for every change is structurally incapable of required agility
+- Investors expect at least one founder with deep technical/scientific expertise
+
+**Proto's advantage:** Solo technical founder = maximum iteration speed.
+
+### Advisory Boards as "Pedigree Proxy"
+
+For first-time founders without exits or high-profile backgrounds, credibility must be engineered through affiliations.
+
+**How to use advisors:**
+- Recruit high-level advisors (former execs, researchers) from relevant industries
+- Compensate with small equity (0.25% - 1%)
+- Ensure active engagement (investors check this)
+- Their involvement should be substantive, not just a logo
+
+**Example:** Fintech startup with former Chief Risk Officer from major bank significantly de-risks profile.
+
+---
+
+## Pre-Seed Benchmarks 2025-2026
+
+**The pre-seed stage has professionalized.** What was once "friends and family" capital is now a distinct funding tier with institutional micro-VCs, specialized funds, and sophisticated angel syndicates operating with seed-round rigor.
+
+### Financial Benchmarks
+
+| Metric | 2025-2026 Benchmark | Strategic Implication |
+|--------|---------------------|----------------------|
+| **Median Round Size** | $700,000 | Focus on runway, not aggressive hiring |
+| **Average Valuation Cap** | $5M - $7.5M | Balancing founder equity with early investor risk |
+| **Post-Money Cap (High-Growth AI)** | Up to $17M | Premium for technical moats and elite pedigree |
+| **Standard Equity Dilution** | 10% - 20% | Protecting cap table for future rounds |
+| **Typical Operational Runway** | 12 - 18 Months | Sufficient time to reach $300k-$500k ARR |
+
+### Market Bifurcation
+
+- **Traditional B2B SaaS/Consumer**: $150K - $500K rounds
+- **AI/Deep Tech/Biotech ("Mega-Pre-Seed")**: Often exceeds $1M due to R&D and infrastructure costs
+
+### What This Means for Proto
+
+Proto falls into the "mega-pre-seed" AI category:
+- $500K Close A is appropriate for 12-month runway
+- $5M post-money cap is market-standard for working prototype
+- 10% dilution at Close A protects cap table for seed
+
+### Valuation Expectations
+
+Premium valuations ($15M+ caps) come with elevated expectations:
+- A startup raising at $15M cap must show significantly more traction at seed than one raising at $5M
+- Proto's $5M cap is appropriate for pre-seed with working software but pre-revenue
+
+---
+
+## The 30-Day Fundraising Sprint
+
+**Effective fundraising is compressed into a short, high-intensity window to create momentum and FOMO.**
+
+### Phase 1: Research and Segmentation (Days 1-10)
+
+**Build Your Target List:**
+- Identify 100-150 potential investors using Crunchbase, AngelList (Wellfound), LinkedIn
+- Segment into tiers:
+  - **Tier 1**: Perfect fit (thesis, stage, geography align)
+  - **Tier 2**: Possible fit (some alignment)
+  - **Tier 3**: Lower priority (practice rounds)
+
+**Due Diligence on Investors:**
+- Research their recent investments
+- Check they aren't "AFK" (Away From Keyboard) or backing competitors
+- Find their investment thesis and validate fit
+
+### Phase 2: Network Mapping and Warm Intros (Days 11-15)
+
+**Map Mutual Connections:**
+- For every investor on the list, identify warm intro paths
+- Prioritize introductions from founders they've already backed (highest-signal referrals)
+- Other strong paths: portfolio company employees, accelerator connections, advisors
+
+**The "Forwardable Email" Format:**
+
+Remove all friction for the person making the referral. Send them:
+
+```
+Subject: Intro Request: [Your Name] <> [Investor Name]
+
+[Connector Name],
+
+Would you be open to introducing me to [Investor]?
+
+Proto is building the infrastructure for autonomous companies - AI agents that run entire businesses, not just tasks. We're raising $500K pre-seed.
+
+• Built working prototype (cross-platform agent orchestration)
+• Solo technical founder, full-stack built from scratch
+• $5M post-money SAFE, 10% dilution
+
+Here's a 90-second demo: [link]
+
+If you're comfortable, feel free to forward this email directly.
+
+Thanks,
+[Your Name]
+```
+
+This allows the connector to just hit "forward" with a one-line endorsement.
+
+### Phase 3: Active Outreach and Batching (Days 16-30)
+
+**Start with Tier 2/3:**
+- "Warm up" the pitch and address common objections
+- Refine messaging based on feedback
+- Build confidence before Tier 1 meetings
+
+**Batch Meetings:**
+- Schedule Tier 1 targets in the same 2-week window
+- Creates sense of momentum and FOMO
+- "We're closing in two weeks" is more compelling than open-ended
+
+**Daily Cadence:**
+- Ask 10 people for 2 intros each
+- 10-20 new cold contacts + 10 follow-ups
+- Update tracker religiously
+
+---
+
+## Pitch Deck Architecture
+
+**The pre-seed deck is not a document of record - it's a tool for narrative engineering designed to spark curiosity and secure a follow-up meeting.**
+
+At pre-seed, investors fund **insight** rather than traction. The deck must articulate a clear "secret" or idiosyncratic observation about the market that others have overlooked.
+
+### Slide-by-Slide Framework
+
+| Slide | Strategic Content | Psychological Objective |
+|-------|-------------------|------------------------|
+| **Problem** | Quantify the pain; emphasize frequency and cost | Create urgency; prove "hair-on-fire" problem |
+| **Solution** | Show the "Magic Moment"; use mockups or demos | Prove 10x better, not 10% better |
+| **Why Now?** | Cite regulatory, social, or technical shifts | Explain why this failed before and succeeds now |
+| **Market** | Bottom-up sizing; define ICP (Ideal Customer Profile) | Demonstrate path to $1B+ outcome |
+| **Competition** | Positioning matrix; focus on differentiation | Prove deep market awareness and "moat" strategy |
+| **Traction** | Validation signals: LOIs, waitlists, pilot data | De-risk execution; show market wants the product |
+| **Team** | Experience-market fit; complementary skills | Convince this is the only team to build this |
+| **The Ask** | Specific amount and milestone-based allocation | Show capital discipline and path to Seed |
+
+### The Critical "Why Now?" Slide
+
+**This is the most important slide in 2025-2026.**
+
+With AI proliferation, you must explain why your specific application provides sustainable competitive advantage rather than being a temporary "wrapper."
+
+Highlight convergence of factors:
+- New data availability
+- Shift in consumer/enterprise behavior
+- Specific technological breakthrough
+- Regulatory change
+- Market timing
+
+**Proto's "Why Now?":**
+- All components exist (model capability, computer use, orchestration, tooling)
+- AI capabilities improving every month - building infrastructure that scales with improvement
+- 40% of enterprise apps now have task agents - but all domain silos
+- First system with cross-domain + self-improvement compounds
+- Massive resources flowing into AI agents - the reliability problem WILL be solved
+
+### One-Pager / Executive Summary Alignment
+
+Your deck and one-pager should tell the same story. Keep them consistent:
+
+| Element | Deck (Visual) | One-Pager (Text) |
+|---------|---------------|------------------|
+| Value prop | Title slide + opportunity | Opening paragraph |
+| Problem | Dedicated slide | 1-2 sentences |
+| Solution | Product slide + demo | Brief description |
+| Market | Market slide | TAM estimate |
+| Traction | Validation slide | Bullet points |
+| Team | Team slide | One-liners on founders |
+| Ask | Ask slide | Raise amount + use of funds |
+
+**One-pager best practices:**
+- Fit on a single page (or one PDF slide)
+- Use short paragraphs or bullets with headings
+- Easily skimmed in under a minute
+- Include contact info prominently
+- Keep updated in PDF format, ready to send
+
+---
+
+## Validation Spectrum
+
+**"Traction" at pre-seed doesn't only mean revenue or user growth. It means "validation of the core hypothesis."**
+
+### Qualitative Validation
+
+- **100+ deep-dive customer interviews**: Map the "workflow of the problem"
+- **Document research**: Present as proof of intimate customer understanding
+- **Industry expert conversations**: Validate market assumptions
+
+### Quantitative Validation
+
+| Validation Type | What It Proves | Proto's Status |
+|-----------------|----------------|----------------|
+| **Concierge MVP** | Value prop strong enough users don't care about polish | Working prototype |
+| **Waitlist with intent-to-pay** | Pre-orders or survey-verified interest | TBD |
+| **Pilot partnerships** | Credible companies willing to test | TBD |
+| **High weekly retention/engagement** | Closed beta shows stickiness | TBD |
+| **LOIs (Letters of Intent)** | Non-binding commitment from customers | TBD |
+
+### Validation > Projections
+
+These metrics are far more persuasive to pre-seed investors than:
+- Broad market sizing reports
+- "Hockey stick" projections unsupported by data
+- TAM/SAM/SOM calculations
+
+**Show proof of direction, not just vision.**
+
+---
+
+## SAFEs vs Convertible Notes
+
+**The legal instrument choice has long-term cap table implications.**
+
+### Comparative Analysis
+
+| Feature | SAFE (Post-Money) | Convertible Note |
+|---------|-------------------|------------------|
+| **Legal Status** | Contractual right to equity | Debt instrument (Loan) |
+| **Maturity Date** | None | Fixed (usually 18-24 months) |
+| **Interest Rate** | None | Accrues (4-8% typical) |
+| **Conversion Trigger** | Next priced round | Next priced round or maturity |
+| **Repayment Risk** | None if startup fails | High; can force bankruptcy |
+| **Complexity** | Low; standardized | Moderate; requires debt negotiation |
+
+### Post-Money SAFE Warning
+
+**Hidden dilution risk:** Unlike pre-money SAFEs, post-money SAFEs give investors a "locked-in" percentage regardless of other SAFEs issued.
+
+**Example:**
+- Raise $1M on $10M post-money cap = investor owns 10%
+- If you issue multiple SAFEs, dilution stacks on the founder, not investors
+
+**Proto's approach:**
+- Using post-money SAFE (YC standard) at $5M cap
+- Close A ($500K) = 10% dilution
+- Close B ($1.5M total) = 30% total dilution
+- Must use pro forma cap table modeling to avoid accidentally giving away 30-40% before seed
+
+### When Notes Make Sense
+
+Convertible notes still used by:
+- Traditional angel groups
+- Certain international markets
+- Investors wanting "downside protection"
+
+**Downside:** If you fail to raise before maturity, noteholders can demand repayment → forced restructuring or closure.
+
+---
+
+## Investor Red Flags
+
+**Investors look for reasons to say "no" as much as reasons to say "yes."** Avoid these silent deal-killers:
+
+### Cap Table "Messiness"
+
+**Red Flag:** Giving up >20% to non-founding entities (advisors, small F&F checks) before pre-seed.
+
+**Why it matters:**
+- Signals lack of strategic foresight
+- Creates "incentive risk" for founders in later rounds
+- Institutional investors avoid messy cap tables
+
+### Lack of Transparency
+
+**Red Flag:** Avoiding direct questions about burn rate, technical debt, or competitive threats.
+
+**Why it matters:**
+- Erodes trust immediately
+- Pre-seed is a long-term relationship
+- Investors want founders who'll be honest when things go wrong
+
+### The "Feature Factory" Trap
+
+**Red Flag:** Presenting 50 features with no evidence any single feature solves a core pain point.
+
+**Why it matters:**
+- Indicates lack of focus
+- Investors prefer "laser-focused" approach
+- Validate one core use case before expanding roadmap
+
+### Regulatory Blind Spots
+
+**Red Flag:** (Especially in fintech/healthtech) Not understanding compliance or licensing requirements.
+
+**Why it matters:**
+- GDPR, HIPAA, banking regulations can shut you down
+- Investors won't fund a startup that regulators could kill in 6 months
+
+### Technical Gap
+
+**Red Flag:** Founding team is all business operators intending to outsource MVP.
+
+**Why it matters:**
+- Pre-seed requires rapid iteration
+- Team that pays an agency for every change can't pivot fast enough
+- Investors expect at least one co-founder with deep technical expertise
+
+**Proto's advantage:** Solo technical founder built entire stack - maximum iteration speed.
+
+---
+
+## Tel Aviv Ecosystem
+
+**Tel Aviv has solidified its position as a premier pre-seed hub, especially for cybersecurity, fintech, and enterprise software.**
+
+### Key Strategic Players
+
+| Entity | Investment Thesis | Platform Value |
+|--------|-------------------|----------------|
+| **F2 Capital** | B2B, AI, Deep Tech | Operates "The Junction" accelerator |
+| **Pitango First** | Early-stage HealthTech, AI | Specialized fund within broader Pitango |
+| **TLV Partners** | Cybersecurity, SaaS, Cloud | High-conviction lead investor |
+| **StageOne Ventures** | B2B Deep Tech, Enterprise | Focus on US market scaling |
+| **Team8** | Cybersecurity, Fintech Foundry | Built-in Fortune 500 exec network |
+
+### Top Accelerators
+
+- **SigmaLabs**: Pre-seed focused, strong Demo Day
+- **The Junction**: F2's accelerator program
+- **Techstars Tel Aviv**: Global brand, strong network
+
+### Why This Matters for Proto
+
+- Strong local network to leverage
+- Israeli angels understand AI/deep tech risk
+- Path to US investors through Israeli ecosystem connections
+- Accelerator participation can reduce time-to-close by months
+
+---
+
+## Financial Model Deep Dive
+
+**Your financial model is a spreadsheet projecting your startup's finances.** At pre-seed, the model need not be overly complex - it should be simple, clear, and focused on fundamentals. The goal is to demonstrate you understand your business economics and funding needs, not to forecast exact numbers five years out.
+
+### Key Components
+
+| Component | What to Include | Proto's Approach |
+|-----------|-----------------|------------------|
+| **Revenue Forecast** | Bottom-up assumptions (# customers × price) for 18-24 months | TBD - exploring multiple business models |
+| **Operating Expenses** | Personnel, R&D, Sales/Marketing, G&A (4-6 categories) | Founder + 2 engineers + compute + overhead |
+| **COGS** | Cloud hosting, support, APIs (if applicable) | API tokens, cloud VMs |
+| **Cash Flow & Burn** | Monthly burn rate, runway calculation | ~$42K/month, 12-month runway |
+| **Use of Funds** | Breakdown of how raise will be spent | 50% team, 30% compute, 20% overhead |
+| **Key Metrics** | CAC, LTV, gross margin, MRR (projections) | TBD |
+
+### Best Practices
+
+**Do:**
+- Use bottom-up assumptions (not arbitrary big numbers)
+- Show assumptions clearly (price point, growth rate, etc.)
+- Focus on the next 18-24 months, not 5-year projections
+- Know your numbers inside and out
+- Tie the model to milestones
+
+**Don't:**
+- Use overly optimistic numbers ("$100M revenue in Year 3" with no basis)
+- Build unnecessary complexity (5-year DCF, detailed balance sheets)
+- Use an overbuilt template meant for later stages
+- Claim precision you can't have
+
+### The Simple Formula
+
+```
+Monthly Burn = (Headcount × Avg Salary) + Infrastructure + Overhead
+Raise Amount = Monthly Burn × Target Runway (12-18 months)
+```
+
+**Proto's math:**
+- Founder: $11,000/month
+- 2 Engineers: $22,000/month
+- Compute: $5,000/month
+- Overhead: $4,000/month
+- **Monthly burn: ~$42,000**
+- **12 months runway: ~$500,000**
+
+### Investor Questions to Expect
+
+Be ready to answer:
+- "What's your monthly burn?"
+- "How did you arrive at your pricing?"
+- "What's your CAC assumption?"
+- "How long until revenue?"
+- "What happens if you don't hit milestones?"
+
+---
+
+## Cap Table Management
+
+**The cap table documents your company's ownership: who holds equity and how much.** At pre-seed, this is usually simple - founders and maybe a few early team members - but setting it up correctly and planning for the future is crucial.
+
+### Key Components
+
+| Element | What It Is | Proto's Status |
+|---------|------------|----------------|
+| **Shareholder List** | All owners (founders, employees, advisors) | Founders only currently |
+| **Ownership Percentages** | % on fully diluted basis | 100% founder pre-raise |
+| **Option Pool** | Reserved equity for future hires (10-15% typical) | TBD - plan for 10-15% |
+| **Convertible Instruments** | SAFEs, notes (track separately until conversion) | Using SAFEs |
+| **Vesting Schedules** | When equity becomes owned | Standard 4-year with 1-year cliff |
+
+### Option Pool Planning
+
+**Rule of thumb:** 10-15% at pre-seed/seed, sized to your hiring plan until next round.
+
+| Planned Hire | Typical Equity | Proto's Plan |
+|--------------|----------------|--------------|
+| Senior Engineer #1 | 1-2% | 1.5% |
+| Senior Engineer #2 | 1-2% | 1.5% |
+| Future key hires | 1-2% each | TBD |
+| Advisors | 0.25-1% | TBD |
+| **Total Pool** | 10-15% | ~12% |
+
+**Negotiation tip:** Having a clear hiring plan helps justify your option pool size to investors ("We need 3 engineers and 1 biz dev before Series A, hence 12% pool").
+
+### Post-Money SAFE Dilution Warning
+
+**Critical:** Post-money SAFEs give investors a "locked-in" percentage regardless of other SAFEs issued. Dilution stacks on the founder.
+
+**Example:**
+- Close A: $500K at $5M cap = 10% dilution (investor owns 10%)
+- Close B: $1M more at $5M cap = 20% more dilution
+- **Founder dilution: 30%** (not 20%)
+
+**Always model scenarios** before issuing multiple SAFEs to avoid accidentally giving away 30-40% before seed.
+
+### Typical Founder Ownership Trajectory
+
+| Stage | Founder Ownership | Notes |
+|-------|-------------------|-------|
+| Pre-raise | 100% | Before any investment |
+| Post Pre-Seed | 70-90% | After pre-seed + option pool |
+| Post Seed | 55-75% | After seed round |
+| Post Series A | 40-60% | After A round |
+| Post Series B | 30-45% | After B round |
+
+**Remember:** A smaller percentage of a larger company is worth more than 100% of nothing.
+
+### Tools & Templates
+
+- **Carta**: Industry-standard cap table management
+- **Capshare**: Alternative digital platform
+- **Speedinvest template**: Free cap table modeling spreadsheet
+- **DoWhatMatters template**: Includes SAFE conversion math
+
+---
+
+## Term Sheet Essentials
+
+**A term sheet is a non-binding agreement outlining the key terms of an investment deal.** For pre-seed SAFEs, you won't have a traditional term sheet, but understanding these terms prepares you for seed and beyond.
+
+### Key Economic Terms
+
+| Term | What It Means | Standard at Pre-Seed |
+|------|---------------|---------------------|
+| **Pre-Money Valuation** | Company value before investment | N/A for SAFEs (use cap) |
+| **Post-Money Valuation** | Value after investment (pre + investment) | $5M for Proto |
+| **Valuation Cap** | Maximum valuation for SAFE conversion | $5M |
+| **Discount** | % discount to next round price | 0-20% (often none with cap) |
+| **Liquidation Preference** | What investors get in exit | 1× non-participating (standard) |
+| **Option Pool** | Reserved equity for hires | 10-15% pre-money |
+
+### Liquidation Preference Explained
+
+**Liquidation preference** determines what investors get if the company sells or liquidates.
+
+**Standard (1× non-participating):**
+- Investor gets either their money back OR their ownership % of proceeds, whichever is higher
+- Ensures investors get at least their investment back before common shareholders
+
+**Example:**
+- Investor puts in $500K for 10%
+- Company sells for $10M
+- Investor can take either $500K (1×) or $1M (10% of $10M)
+- They choose $1M
+
+**Red flags to avoid:**
+- **>1× preference**: 2× means investor gets 2× their money before founders see anything
+- **Participating preferred**: Investor gets BOTH the preference AND their pro-rata share (double-dipping)
+
+At pre-seed, always insist on 1× non-participating. It's the industry standard.
+
+### Pro-Rata Rights Explained
+
+**Pro-rata rights** give an investor the right to maintain their ownership percentage in future rounds by investing more.
+
+**Example:**
+- Angel invests $100K for 5% at pre-seed
+- At seed, company raises $2M
+- With pro-rata, angel can invest another ~$100K to keep their 5%
+- Without pro-rata, they get diluted to ~4%
+
+**Should you grant them?** Usually yes. It's standard and reasonable. Good investors will expect it. Just be aware that if many investors have large pro-rata rights, it can complicate future rounds (less room for new investors).
+
+### Anti-Dilution Explained
+
+**Anti-dilution** protects investors if you raise a future round at a lower valuation (a "down round").
+
+**Standard (Broad-based weighted average):**
+- Adjusts the investor's conversion rate to partially compensate
+- Fair middle ground between protecting investors and not destroying founders
+
+**Avoid (Full-ratchet):**
+- Converts investor's shares as if they invested at the lower price
+- Extremely harsh on founders
+- Rarely justified at any stage
+
+For SAFEs, anti-dilution isn't a negotiation point (no conversion until priced round). But understand this for future equity rounds.
+
+### Key Control Terms
+
+| Term | What It Means | Standard at Pre-Seed |
+|------|---------------|---------------------|
+| **Board Seats** | Investor representation on board | Usually none at pre-seed |
+| **Pro-Rata Rights** | Right to maintain % in future rounds | Common, reasonable to grant |
+| **Protective Provisions** | Decisions requiring investor consent | Minimal at pre-seed |
+| **Anti-Dilution** | Protection if future rounds are at lower valuation | Broad-based weighted average |
+
+### Red Flags in Term Sheets
+
+**Watch out for:**
+- Liquidation preference >1× (e.g., 2× means investor gets 2× their money before founders see anything)
+- Participating preferred (investor gets both preference AND pro-rata share)
+- Full-ratchet anti-dilution (extremely harsh, rarely justified)
+- Board control at pre-seed (founder should control board)
+- Super-voting rights
+- Unusual valuation caps or discounts
+
+### SAFE vs. Term Sheet
+
+| Feature | SAFE | Priced Round Term Sheet |
+|---------|------|------------------------|
+| **Complexity** | Low (5 pages) | Higher (15+ pages) |
+| **Legal Cost** | Minimal | $5-15K+ |
+| **Negotiation** | Just cap + amount | Many terms to negotiate |
+| **Board Rights** | None | Often included |
+| **Use Case** | Pre-seed, small angels | Larger institutional rounds |
+
+**Proto's approach:** Using YC Post-Money SAFE at $5M cap. Simple, standard, fast.
+
+### Resources
+
+- **YC SAFE documents**: https://www.ycombinator.com/documents
+- **Series Seed documents**: Standard equity docs for small rounds
+- **NVCA Model Term Sheet**: Reference for later rounds
+- **Cooley GO**: Free document generators
+
+---
+
+## Data Room Checklist
+
+**A data room is an organized collection of documents for investor due diligence.** At pre-seed, it won't be heavy, but preparing it thoroughly demonstrates professionalism and speeds up the process.
+
+### Best Practices
+
+- Use secure sharing (Google Drive, Dropbox, DocSend)
+- Organize files in clear subfolders
+- Give read-only access (watermark if sensitive)
+- Keep it updated throughout fundraising
+- Track who accesses what (DocSend has analytics)
+
+### Folder Structure & Contents
+
+**📁 1. Pitch & Overview**
+- [ ] Pitch deck (latest version, PDF)
+- [ ] One-pager / executive summary
+- [ ] 90-second demo video (optional but powerful)
+- [ ] FAQ document (optional)
+- [ ] Press/awards/social proof (if any)
+
+**📁 2. Corporate & Legal**
+- [ ] Certificate of Incorporation
+- [ ] Company bylaws / operating agreement
+- [ ] Cap table (fully diluted)
+- [ ] Shareholder agreements
+- [ ] Founder vesting agreements
+- [ ] Previous SAFE/note agreements (if any)
+- [ ] IP assignment agreements
+- [ ] Material contracts (partnerships, major customers)
+
+**📁 3. Financial & Metrics**
+- [ ] Financial model (spreadsheet)
+- [ ] Historical financials (P&L, balance sheet if exists)
+- [ ] Key metrics dashboard / KPIs
+- [ ] Budget / burn rate breakdown
+- [ ] Bank statements (sometimes requested)
+
+**📁 4. Product & Tech**
+- [ ] Product roadmap
+- [ ] Architecture diagrams (high-level, not proprietary)
+- [ ] Demo credentials / sandbox access (optional)
+- [ ] IP documentation (patents filed/granted)
+- [ ] Technical whitepaper (if relevant)
+
+**📁 5. Traction & Market**
+- [ ] User/revenue metrics over time
+- [ ] Sales pipeline (redacted if needed)
+- [ ] LOIs / pilot agreements
+- [ ] Customer testimonials / case studies
+- [ ] Market research / competitive analysis
+
+**📁 6. Team**
+- [ ] Team bios document
+- [ ] Org chart
+- [ ] Hiring plan
+- [ ] Key advisor list (with equity details)
+- [ ] LinkedIn profiles for founders
+
+### Proto's Data Room Status
+
+| Section | Status | Notes |
+|---------|--------|-------|
+| Pitch deck | ✅ | Ready |
+| One-pager | ✅ | Ready |
+| Demo video | 🔄 | 90-sec version needed |
+| Incorporation docs | TBD | |
+| Cap table | TBD | Simple - founders only |
+| Financial model | 🔄 | Basic version ready |
+| Product roadmap | ✅ | In planning docs |
+| Team bios | TBD | Need to write |
+
+### Key Principle
+
+**Transparency impresses investors more than perfection.** Don't hide issues - if there are known risks, include a brief "Risks & Mitigation" write-up. It shows self-awareness and honesty.
+
+---
+
+## Investor Outreach Emails
+
+**Crafting effective outreach is half the battle.** Whether cold-emailing or getting an intro, your initial message should be short, personalized, and compelling.
+
+### Cold Email Structure
+
+**Subject Line:** Concise, informative, hook them.
+- ✅ "Proto: AI agents that run businesses – seeking pre-seed"
+- ✅ "<Company> – $X traction in Y months (YC W26)"
+- ❌ "Investment opportunity" (too generic)
+- ❌ "Quick question" (clickbait)
+
+**Body Structure (under 150 words):**
+1. **Personal greeting** - Their name, common ground if any
+2. **1-2 sentence company overview** - What you do, simply
+3. **2-3 bullet points of traction/why exciting** - The hook
+4. **Clear ask** - Raise amount, meeting request
+5. **Signature** - Name, title, links
+
+### Cold Email Template
+
+```
+Subject: Proto – AI agents that run autonomous businesses (pre-seed)
+
+Hi [Name],
+
+I noticed you invest in AI infrastructure – wanted to share what I'm building.
+
+Proto is a multi-agent system that runs entire businesses autonomously. Not a copilot – a system that operates companies, hiring humans only when needed.
+
+• Built working prototype solo (backend, frontend, agent orchestration, cross-platform)
+• AI agent boom is here – 40% of enterprise apps have agents, but ALL domain silos
+• First system with cross-domain + self-improvement gets compounding advantage
+
+Raising $500K pre-seed on a $5M post-money SAFE.
+
+Would you be open to a 20-minute call? Happy to share our 90-sec demo.
+
+Best,
+Nir Feinstein
+me@nirfeinste.in | Demo: [link]
+```
+
+### Warm Intro Template
+
+See the [30-Day Sprint section](#the-30-day-fundraising-sprint) for the forwardable email format.
+
+### Follow-Up Sequence
+
+| Day | Action | Notes |
+|-----|--------|-------|
+| 0 | Send initial email | |
+| 7 | First follow-up | Add new update if possible |
+| 14 | Second follow-up | Last attempt |
+| 21+ | Move to "No Response" | Don't spam |
+
+**Follow-up template:**
+```
+Subject: Re: Proto – AI agents that run autonomous businesses
+
+Hi [Name],
+
+Floating this back up – since my last email, we [brief update: signed a pilot / hit milestone / etc.].
+
+Still raising our pre-seed and would love to chat if this is a fit.
+
+Best,
+Nir
+```
+
+### What Makes Outreach Work
+
+| Factor | Impact |
+|--------|--------|
+| **Warm intro** | 3-5× higher response rate |
+| **Personalization** | 2× higher response rate |
+| **Demo link included** | Shows substance |
+| **Specific ask** | Easier to respond to |
+| **Short length** | Gets read |
+
+### What NOT to Do
+
+- ❌ Send 5-paragraph essays
+- ❌ Be vague ("raising some money for my startup")
+- ❌ Skip the demo link
+- ❌ Pressure ("I really need this intro")
+- ❌ Mass email without personalization
+- ❌ Lie or exaggerate traction
+- ❌ Forget to follow up
+
+### Pipeline Management
+
+Treat outreach like sales:
+- Use a CRM or spreadsheet to track all contacts
+- Log every touch (email, call, meeting)
+- Set follow-up reminders
+- Track conversion rates by source (warm vs. cold, which connector)
+- Refine messaging based on what gets responses
+
+---
+
 ## The Ask
 
 ### Use "Would You Consider..."
@@ -668,13 +1451,46 @@ For Israeli raises: Discuss with your lawyer about Israeli Ltd vs. Delaware flip
 
 ## Investor Stewardship
 
-**The relationship doesn't end when the wire hits.**
+**The relationship doesn't end when the wire hits.** Fundraising is a momentum game - how you communicate during AND after the process defines your reputation.
 
-Even investors who've committed want to feel "seen"-recognized for their belief in you.
+### Value-Added Follow-Up Strategy
+
+**Never send "just checking in" emails.** Every follow-up should provide value and reinforce the investment thesis.
+
+**After First Meeting (24-48 hours):**
+- Recap key discussion points
+- Deliver any promised data room materials
+- Share a "mini-update" that reinforces the thesis
+
+**Ongoing (Until Close):**
+Each follow-up should include one of:
+- New customer win
+- Significant hire
+- Notable press mention
+- Fresh insight on competitor moves
+- Technical milestone achieved
+
+**Example value-added follow-up:**
+```
+Subject: Proto Update - First Pilot Customer Signed
+
+[Investor Name],
+
+Quick update since our call:
+
+• Signed first pilot customer - [Company Name], 500-person agency
+• Completed multi-computer orchestration milestone (was on roadmap)
+• Published case study on agentic workflow performance
+
+Still targeting close by [date]. Happy to schedule a follow-up if helpful.
+
+Best,
+[Your Name]
+```
 
 ### The Rule of Seven
 
-Plan to thank each investor through multiple channels:
+Once an investor commits, plan to thank them through multiple channels:
 
 1. **Immediate thank-you email** - Personal, not templated
 2. **Formal acknowledgment letter** - For their records
@@ -684,11 +1500,42 @@ Plan to thank each investor through multiple channels:
 6. **Quarterly check-ins** - Quick call or coffee
 7. **Annual summary** - Where we started, where we are, where we're going
 
+### Monthly Investor Updates (Gold Standard)
+
+**Format: "Highlights, Lowlights, and Asks"**
+
+```
+HIGHLIGHTS
+• [Biggest win of the month]
+• [Second win]
+• [Metric improvement]
+
+LOWLIGHTS
+• [Challenge 1 - what you're doing about it]
+• [Challenge 2 - what you're doing about it]
+
+KEY METRICS
+• ARR: $X (up from $Y)
+• Customers: X
+• Runway: X months
+
+ASKS (Be Specific)
+• Intro to VP of Engineering at [Company X]
+• Advice on [specific decision]
+• Referral for [specific role] hire
+```
+
+**Why transparency on lowlights matters:**
+- Builds trust for when you really need help
+- Investors can't help if they don't know the problems
+- Shows maturity and self-awareness
+
 ### Why This Matters
 
 - Investors talk to other investors. Happy investors refer you.
 - Future rounds are easier with existing investors who feel valued.
 - If things get hard, investors who feel connected will help more.
+- Your investor update list often becomes your seed round pipeline.
 
 ---
 
