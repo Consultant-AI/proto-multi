@@ -39,7 +39,7 @@ Proto is a multi-agent orchestration platform that coordinates specialist AI age
 
 - **Real Tools**-file operations, terminal commands, GUI control (screenshots, mouse, keyboard) giving agents access to any tool a human can use, and browser control. Not simulated-actual computer use.
 
-- **Enterprise Controls (Optional)**-Proto can run fully autonomously. Optional approval gates for sensitive actions, audit logs for everything, kill switch for emergencies.
+- **Controls (Optional)**-Proto can run fully autonomously. Optional approval gates, audit logs, kill switch. We don't claim these make it safe—we're trying to limit damage.
 
 **On Roadmap:**
 - **Multi-computer orchestration**-multiple machines working together simultaneously

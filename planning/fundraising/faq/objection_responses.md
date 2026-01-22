@@ -30,13 +30,13 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "What if the AI makes mistakes?"
 
-**Response:** "It will-Proto can run fully autonomously, but for users who want oversight, we have optional approval gates for anything that spends money, publishes, or trades. Plus audit logs and a kill switch. The controls are there for those who want them."
+**Response:** "It will. We don't claim this is safe—we're trying to be as careful as possible. We have approval gates, audit logs, and kill switches. But the honest answer is: mistakes will happen. We're building controls to limit damage, not claiming we've prevented all problems."
 
 ---
 
 ## "This is too risky"
 
-**Response:** "The downside is limited. Even if full autonomy takes longer, we can do hybrid human+AI operations, automate subsets of business processes, or spin off domain-specific agents as products. The downside isn't zero-it's a different kind of success. And agents aren't maximized yet-there's so much untapped potential. Self-improvement is the key."
+**Response:** "It IS risky. We don't pretend otherwise. But autonomous AI companies are coming—if not us, someone else. We'd rather have safety-focused teams leading this space. The downside isn't zero—even if full autonomy takes longer, there's hybrid human+AI operations, automating subsets, or spinning off agents as products. And we use our resources to help with AI consequences broadly—not just our own."
 
 ---
 
@@ -132,7 +132,7 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "What if autonomous AI gets regulated?"
 
-**Response:** "Possible. But our controls-approval gates, audit logs, kill switches-are exactly what regulators want. We're building responsibly, not recklessly. And if regulation comes, we're better positioned than cowboys."
+**Response:** "Possible, even likely. We're trying to build responsibly—not claiming we've solved safety, but trying to be as careful as possible. Our controls are what regulators want. And if evidence shows we should stop or change course, we will. We'd rather be the responsible players than watch reckless ones define this space."
 
 ---
 

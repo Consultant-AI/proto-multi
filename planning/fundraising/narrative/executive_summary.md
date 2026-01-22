@@ -41,12 +41,14 @@ The system is a **peer-to-peer collaborative network**-any agent can delegate to
 - SSH and VNC integration for remote access
 - **Roadmap:** Multi-computer orchestration (multiple machines working together simultaneously) coming next
 
-**Enterprise Controls (Optional):**
+**Controls (Optional):**
 Proto can run fully autonomously. These controls are available for users who want oversight:
 - Approval gates for spending, publishing, trading, production changes
 - Comprehensive audit logs for every action
 - Kill switch for immediate halt
 - Circuit breakers and retry mechanisms
+
+*We don't claim these make it safe—we're trying to limit damage. Autonomous AI is risky. We'd rather have safety-focused teams leading this space than cede it to reckless players.*
 
 ### Core Capabilities
 

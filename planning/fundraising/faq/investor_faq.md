@@ -224,19 +224,25 @@ Proto is cross-platform and cloud-ready:
 
 ## Risk & Control
 
+### Our Honest Position on Safety
+
+**We don't claim to have solved AI safety.** This is risky. Autonomous AI companies are coming—if not us, someone else. We'd rather have safety-focused teams leading this space, trying to do it as responsibly as possible.
+
+We have controls (below), but we're not claiming they make this safe. We're trying to minimize harm while acknowledging the risks are real.
+
 ### Can Proto run fully autonomously?
 
 **Yes.** Proto can operate fully autonomously without human oversight. The enterprise controls below are **optional**-available for users who want oversight on sensitive actions, but not required.
 
-### How do you prevent runaway AI / catastrophic mistakes?
+### How do you try to limit damage?
+
+We're not claiming we prevent all problems—we're trying to limit damage when things go wrong.
 
 **Approval Gates (Optional)**: Users can configure Proto to pause before actions that:
 - Spend money (API calls, purchases, trades)
 - Publish externally (social media, websites, emails)
 - Modify production systems
 - Create accounts or change permissions
-
-These gates are configurable-users can enable full autonomy or add approval points as needed.
 
 **Audit Log**: Every action is logged with:
 - What was done
@@ -250,12 +256,12 @@ These gates are configurable-users can enable full autonomy or add approval poin
 
 ### What if the AI hallucinates or makes errors?
 
-Proto uses verification loops:
+**It will.** We don't claim perfection. Proto uses verification loops to catch and correct errors:
 1. Execute action (e.g., write code, send email)
 2. Verify result (e.g., run tests, check delivery)
 3. If failure, iterate or escalate to human
 
-For content, it's approval gates. For code, it's automated testing. For operations, it's audit logs and rollback capabilities.
+But the honest answer: mistakes will happen. We're building systems to limit damage, not prevent all problems.
 
 ### Who has access to the systems Proto controls?
 Only the human operator. Proto operates within the permissions granted-same as giving a contractor access. You define the boundaries.

@@ -289,6 +289,7 @@ When full automation isn't possible, Proto will use hybrid models:
 - Tool ecosystem
 
 ### A3: Risk Controls
+*We don't claim these make it safe—we're trying to limit damage when things go wrong.*
 - Approval gate system
 - Audit log schema
 - Kill switch implementation
