@@ -2,6 +2,44 @@
 
 ---
 
+## 📚 LEARN: Fundraising Education
+
+**Status:** Ongoing - research and learn from best practices
+
+### Resources to Study:
+- [ ] Y Combinator fundraising guides and videos
+- [ ] a16z content on AI investing thesis
+- [ ] Sequoia pitch deck templates and advice
+- [ ] Paul Graham essays on fundraising
+- [ ] Jason Lemkin (SaaStr) on pre-seed/seed
+- [ ] Naval Ravikant on angel investing
+- [ ] First Round Review articles on fundraising
+- [ ] Elad Gil's High Growth Handbook (fundraising chapters)
+
+### Key Topics to Master:
+- [ ] SAFE vs. priced rounds (mechanics, pros/cons)
+- [ ] Valuation negotiation tactics
+- [ ] How to create FOMO and urgency
+- [ ] Term sheet red flags
+- [ ] Cap table management basics
+- [ ] Investor psychology and decision-making
+- [ ] Building social proof with early commits
+- [ ] Follow-on funding considerations
+
+### Watch/Listen:
+- [ ] YC "How to Raise Money" lecture
+- [ ] a16z AI podcast episodes on AI company building
+- [ ] This Week in Startups episodes on fundraising
+- [ ] 20VC podcast episodes with relevant investors
+
+### Practice:
+- [ ] Record yourself pitching and review
+- [ ] Do mock pitches with friends/advisors
+- [ ] Practice handling objections out loud
+- [ ] Rehearse demo 5+ times
+
+---
+
 ## ⏳ CURRENT: Review & Improve Documentation
 
 **Status:** All documentation files are drafted. Next step is review and improvement.
