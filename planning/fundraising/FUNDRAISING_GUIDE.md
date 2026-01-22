@@ -11,13 +11,14 @@ Complete knowledge base for fundraising. All tips, best practices, and processes
 3. [Pipeline Management](#pipeline-management)
 4. [Storytelling & Pitch Delivery](#storytelling--pitch-delivery)
 5. [Software is Eating Labor](#software-is-eating-labor)
-6. [The Ask](#the-ask)
-7. [Common Mistakes](#common-mistakes)
-8. [Handling Rejection](#handling-rejection)
-9. [Legal & Documents](#legal--documents)
-10. [Investor Stewardship](#investor-stewardship)
-11. [Mindset](#mindset)
-12. [Confidence Reminders](#confidence-reminders)
+6. [AI Startup Strategy](#ai-startup-strategy)
+7. [The Ask](#the-ask)
+8. [Common Mistakes](#common-mistakes)
+9. [Handling Rejection](#handling-rejection)
+10. [Legal & Documents](#legal--documents)
+11. [Investor Stewardship](#investor-stewardship)
+12. [Mindset](#mindset)
+13. [Confidence Reminders](#confidence-reminders)
 
 ---
 
@@ -312,6 +313,122 @@ Use these in pitches:
 - "We're not competing with the software market - we're eating the labor market."
 - "Traditional software: Pay $500/year for a tool. Labor replacement: Pay $20K/year for AI that does a $47K job. That's 40x the revenue per customer."
 - "0 to $100M revenue in 1-2 years is happening in AI labor replacement. Eve went from $2M to $30M ARR in ~2 years."
+
+---
+
+## AI Startup Strategy
+
+**Key insights from OpenAI, a16z, Sequoia, YC, and Andrew Ng on how to build a defensible AI company.**
+
+### The Steamroll Test
+
+Sam Altman (OpenAI CEO) on which companies will be "steamrolled":
+
+**The test:** "What does my product provide if the underlying model becomes 100x better tomorrow?"
+
+If the answer is "nothing," the product is a feature, not a company.
+
+**Two strategies:**
+1. Assume models are at a plateau (risky - 95% of startups should NOT do this)
+2. Assume rapid improvement continues (build for this)
+
+**How to survive:**
+- Build workflows that SCALE with intelligence, not wrappers that fix model bugs
+- Companies that "constantly ask for the latest model and want to try it first are probably on the right track"
+- Better models should feel like an unlock, not a threat
+
+**Proto passes this test:** Proto's value isn't fixing model limitations - it's the orchestration layer, cross-domain coordination, proprietary playbooks, and business operation data. Better models make Proto MORE powerful, not obsolete.
+
+### The Agentic Advantage
+
+Andrew Ng's key insight: **Agentic workflows are more important than raw model power.**
+
+**The proof:** GPT-3.5 in zero-shot mode scores ~48% on HumanEval coding benchmark. The same model in an agentic loop (reflection, iteration, self-correction) exceeds 95%.
+
+**Four agentic patterns:**
+1. **Reflection**: Agent checks its own work - "Is this good enough?"
+2. **Tool Use**: Agent accesses web search, code execution, APIs
+3. **Planning**: Agent decomposes goals into sub-tasks
+4. **Multi-agent Collaboration**: Specialized agents debate and collaborate
+
+**Why this matters for Proto:** Proto is built on all four patterns. The orchestration layer IS the product. This is where application-layer value lives.
+
+**Ng's advice:** "Don't worry about the price of LLMs to get started. Use the best available model to build something functional first." LLM costs dropping ~80% year-over-year.
+
+### Building Defensible Moats
+
+**The paradox:** AI makes building software trivially easy ("vibe coding"). Anyone can copy a widget overnight.
+
+**Where moats come from:**
+
+| Weak Moat | Strong Moat |
+|-----------|-------------|
+| Technical workarounds for model bugs | Proprietary data flywheels |
+| Feature layer on top of API | Deep workflow integration |
+| Static prompts and templates | Self-improving systems |
+| General-purpose tools | Vertical domain expertise |
+
+**The flywheel (Sequoia):** Exceptional user engagement → generates data → fine-tunes model → better performance → more engagement → compounds.
+
+**Proto's moat strategy:**
+- Every business run generates proprietary outcome data
+- Playbooks compound with each operation
+- Cross-domain coordination no one else has
+- System of record for business operations
+
+### The New AI Stack (a16z)
+
+**The architecture:** Treat the LLM as CPU, vector database as RAM.
+
+| Stack Layer | What It Does | Proto's Implementation |
+|-------------|--------------|------------------------|
+| Data/ETL | Clean and chunk input data | Project planning system |
+| Vector DB | Fast context retrieval | Knowledge base per project |
+| Orchestration | Connect LLM to tools | Multi-agent coordination |
+| Evaluation | Ensure reliable outputs | Verification loops |
+
+**Key insight:** As inference costs drop, the relative importance of high-quality data preprocessing and orchestration increases. This is where Proto invests.
+
+### The Economics of Zero Marginal Cost
+
+**Sequoia thesis:** Generative AI brings marginal cost of creation toward zero.
+
+**The opportunity:** Make billions of knowledge workers 10% more efficient = trillions in value.
+
+**The catch:** When content is free, value shifts to verification and trust.
+
+**Proto's position:** We're not just generating - we're verifying, orchestrating, and running complete business operations. The "finished meal," not raw AI.
+
+### PMF Above All Else
+
+**Elad Gil (investor in Airbnb, Stripe, Coinbase):**
+
+"As long as you hit product-market fit and you don't blow up in terms of a founding team, you tend to make it to the next level."
+
+**For AI companies:**
+- The "product" is a moving target (models change every 6 months)
+- Requires "high-agency" teams that pivot implementation without losing sight of customer problems
+- The "wedge product" strategy: sell on budget or convenience to establish relationship, then expand
+
+### Talking Points for Investors
+
+Use these when discussing AI strategy:
+
+**On surviving OpenAI:**
+- "Better models make us more powerful, not obsolete. Our moat is the orchestration layer, not model limitations."
+- "We're building on the assumption that models will keep improving rapidly - that's our unlock, not our threat."
+
+**On agentic workflows:**
+- "An agentic system with reflection and planning outperforms a better model used naively. GPT-3.5 in an agentic loop beats GPT-4 zero-shot on coding benchmarks."
+- "The orchestration layer is where application value lives. That's what we're building."
+
+**On moats:**
+- "AI makes building software trivially easy. Our moat isn't features - it's proprietary data, workflow integration, and compounding playbooks."
+- "Every business we run generates data labs don't have. That's our walled garden."
+
+**On timing:**
+- "2025 was when AI stopped feeling chaotic and started feeling buildable. The infrastructure is finally robust enough for real products."
+- "We're in the 'deployment phase' now - the opportunity is in applications, not infrastructure."
 
 ---
 

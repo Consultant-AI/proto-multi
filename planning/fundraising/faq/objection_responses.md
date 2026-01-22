@@ -82,6 +82,18 @@ Use during calls. Keep responses under 30 seconds.
 
 ---
 
+## "Won't GPT-5 make this obsolete?"
+
+**Response:** "Sam Altman calls this the steamroll test: what does your product provide if the model gets 100x better? Proto passes. We're not fixing model bugs-we're building orchestration and proprietary data. Better models make Proto MORE powerful, not obsolete. We're built on the assumption that models keep improving rapidly. That's our unlock, not our threat."
+
+---
+
+## "Why not just use ChatGPT/Claude with better prompts?"
+
+**Response:** "Andrew Ng's research shows GPT-3.5 with an agentic loop-reflection, planning, tool use-outperforms GPT-4 in zero-shot mode on coding benchmarks. 48% versus 95%. The orchestration layer is where the value lives. A chat interface can't run multi-day autonomous operations or self-correct across complex business processes. That's what Proto does."
+
+---
+
 ## "What about existing companies adding AI?"
 
 **Response:** "It's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies face legacy systems, organizational resistance, technical debt, and cultural friction. Proto is built from the ground up for autonomous operation-no constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes."

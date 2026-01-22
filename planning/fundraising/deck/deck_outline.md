@@ -202,6 +202,8 @@ When full automation isn't possible, Proto will use hybrid models:
 - "Look at current AI agents-they're all domain-specific silos. Devin writes code. Lindy does sales. Zendesk answers tickets."
 - "No one combines everything. Almost no one self-improves."
 - "Agents aren't maximized yet-there's so much untapped potential."
+- "Andrew Ng's research: GPT-3.5 with agentic workflows outperforms GPT-4 zero-shot. The orchestration layer is where value lives."
+- "Better models make Proto MORE powerful. We're not fixing model bugs-we're building the orchestration layer. That's the moat."
 - "Self-improvement is the unlock. Each task makes Proto better at all tasks. That's compounding."
 - "There's another advantage: it's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies have legacy systems, organizational resistance, technical debt. Proto is built from the ground up-no constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes."
 

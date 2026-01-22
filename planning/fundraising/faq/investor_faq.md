@@ -138,6 +138,36 @@ When AI can do a $47K job for $20K/year, that's not a software sale-that's labor
 
 Labs deliver raw AI (vegetables). Proto delivers the finished meal.
 
+### Won't OpenAI just steamroll you when GPT-5 comes out?
+
+**The "steamroll test" (Sam Altman's framing):** "What does my product provide if the underlying model becomes 100x better tomorrow?"
+
+Proto passes this test. Here's why better models help us:
+
+1. **Our moat isn't fixing model bugs** - We're not building workarounds for GPT-4 limitations. We're building orchestration, workflows, and proprietary business operation data.
+
+2. **Better models = better Proto** - We're built on the assumption that models keep improving rapidly. That's our unlock, not our threat. Companies that "constantly ask for the latest model and want to try it first are probably on the right track" (Altman).
+
+3. **The orchestration layer matters more than raw model power** - Andrew Ng's research shows GPT-3.5 in an agentic loop (reflection, planning, tool use) outperforms GPT-4 in zero-shot mode on coding benchmarks. The agentic architecture IS the product.
+
+4. **Labs don't have our data** - Every business we run generates proprietary outcome data: what works, industry playbooks, performance data across operations. Labs are building models, not running businesses.
+
+**Bottom line:** OpenAI wants to sell picks and shovels. We want to own the gold mines.
+
+### Why agentic workflows instead of just using ChatGPT/Claude directly?
+
+**The proof is in the benchmarks:**
+- GPT-3.5 zero-shot: ~48% on HumanEval (coding)
+- GPT-3.5 with agentic loop: 95%+ on the same benchmark
+
+**Four patterns that make the difference:**
+1. **Reflection** - Agent checks its own work
+2. **Tool Use** - Agent accesses external systems
+3. **Planning** - Agent decomposes goals into steps
+4. **Multi-agent Collaboration** - Specialists work together
+
+Proto implements all four. A simple chat interface can't do multi-day autonomous operations, cross-platform coordination, or self-correcting business processes.
+
 ---
 
 ## The Product
