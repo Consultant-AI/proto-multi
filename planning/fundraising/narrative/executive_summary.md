@@ -181,6 +181,8 @@ Once we cross the threshold: We own the infrastructure for autonomous companies.
 
 ## Why Now
 
+**All the components for autonomous AI systems already exist.** Model capability, computer use, orchestration frameworks, tooling-the pieces are all there. The challenge is connecting them into a reliable system. And AI capabilities will only keep improving-this is not a bet on current limitations, it's building infrastructure for capabilities that get better every month.
+
 Four things have converged:
 
 ### 1. Model Capability

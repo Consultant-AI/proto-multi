@@ -17,7 +17,7 @@ Proto isn't competing with other software companies. We're replacing labor. Any 
 
 **Everybody wants two things: to be richer and to save time, resources and energy.** That's what Proto delivers. Not just automation-value creation. The successful AI companies aren't pitching "save money"-they're pitching "make more money."
 
-**Why now:** Four things have converged-model capability, computer use, tooling maturity, and massive attention and resources. AI agents are where the industry is focused: billions in investment, top talent, breakthroughs every month. The reliability problem will be solved. The question is who's positioned first.
+**Why now:** All the components for autonomous AI systems already exist-model capability, computer use, tooling, orchestration frameworks. The pieces just need to be connected into a reliable system. And AI capabilities will only keep improving-this is not a bet on current limitations, it's building infrastructure for capabilities that get better every month. The question is who's positioned first.
 
 Once that threshold is crossed, the first system that can reliably run businesses becomes a **compounding money machine**-capable of spawning and operating thousands of products and services simultaneously, self-improving with each iteration.
 

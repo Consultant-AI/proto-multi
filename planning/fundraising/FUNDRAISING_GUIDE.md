@@ -427,6 +427,8 @@ Use these when discussing AI strategy:
 - "Every business we run generates data labs don't have. That's our walled garden."
 
 **On timing:**
+- "All the components for autonomous AI systems already exist - model capability, computer use, orchestration, tooling. The pieces just need to be connected into a reliable system."
+- "This is not a bet on current limitations. AI capabilities will only keep improving. We're building infrastructure for capabilities that get better every month."
 - "2025 was when AI stopped feeling chaotic and started feeling buildable. The infrastructure is finally robust enough for real products."
 - "We're in the 'deployment phase' now - the opportunity is in applications, not infrastructure."
 

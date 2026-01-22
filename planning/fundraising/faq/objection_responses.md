@@ -160,4 +160,10 @@ Use during calls. Keep responses under 30 seconds.
 
 ---
 
+## "The technology isn't ready yet"
+
+**Response:** "All the components already exist-model capability, computer use, orchestration frameworks, tooling. The pieces just need to be connected into a reliable system. And AI capabilities will only keep improving. We're not betting on current limitations-we're building infrastructure for capabilities that get better every month. It's an engineering problem, not a research breakthrough."
+
+---
+
 *Keep it short. Don't over-explain. If they want more detail, they'll ask.*

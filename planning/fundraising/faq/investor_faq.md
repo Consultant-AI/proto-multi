@@ -50,6 +50,9 @@ The scope expands as AI capabilities improve. Today's impossible becomes tomorro
 The first business is proof of concept. The goal is a portfolio.
 
 ### Why do you think we're close to that threshold?
+
+**All the components for autonomous AI systems already exist.** The pieces just need to be connected into a reliable system.
+
 Four things have converged:
 
 1. **Model capability**: Frontier models can reason through complex, multi-step problems
@@ -59,7 +62,7 @@ Four things have converged:
 
 Agentic systems are getting better every day-and this will continue throughout 2026 and beyond. The reliability gap is closing fast.
 
-What's missing is reliability at scale. That's an engineering problem, not a research breakthrough. And with this much attention and resources flowing into the space, the reliability problem will be solved soon.
+**This is not a bet on current limitations.** AI capabilities will only keep improving. We're building infrastructure for capabilities that get better every month. What's missing is reliability at scale-that's an engineering problem, not a research breakthrough.
 
 ### Aren't there already many AI agents? What's the gap?
 
