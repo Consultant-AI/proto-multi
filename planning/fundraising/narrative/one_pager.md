@@ -99,18 +99,26 @@ Proto will adapt to whatever works. The goal is to minimize human involvement-au
 
 ## The Market Gap
 
-**Current AI agents are domain-specific silos:**
-- Coding agents (Devin, Cursor, Claude Code) - only write code
-- Sales agents (Lindy, 11x) - only handle sales
-- Support agents (Zendesk AI) - only answer tickets
-- Open source (AutoGPT, CrewAI) - frameworks, not businesses
+**We're in the "AI Agent Boom"-40% of enterprise apps now feature task agents. But every player is a domain-specific silo:**
+
+- **Enterprise**: Agentforce ($540M ARR +330% YoY), Microsoft Copilot Studio (now with "Computer Use"), Google Vertex AI - platform-locked
+- **Coding**: Devin AI (first true AI engineer), Copilot (20M+ users), Cursor ($500M ARR), Claude Code ($500M ARR in 3 months) - only code
+- **Sales/Marketing**: Robylon (40+ languages), Apollo.io (300M+ contacts), Clay - only outreach
+- **HR**: Metaview, Sloneek, IBM AskHR - only recruiting
+- **Security**: Torq Socrates (90% Tier-1 automation) - "Agentic SOC" is production reality
+- **Healthcare**: Nuance DAX, Abridge (saves 1-2 hrs/day) - only documentation
+- **Legal**: Harvey (unicorn), CoCounsel - only legal
+- **Finance**: Virtuals Protocol, Coinbase Payments MCP - agents now control capital directly
+- **Physical AI**: Humanoid robots from Hyundai/LG - "ChatGPT moment for physical AI"
+- **Open source**: LangChain (122k stars), n8n (160k stars), MetaGPT - frameworks, not businesses
+- **Infrastructure**: MCP (97M+ monthly downloads), Agent Skills - tools for building agents
 
 **What's missing:**
-- Cross-domain coordination (coding + marketing + sales + operations)
+- Cross-domain coordination (coding + marketing + sales + HR + security + operations)
 - Self-improvement (agents don't learn from failures and get better)
-- Full autonomy goal (everyone builds copilots, not autonomous operations)
+- Full autonomy goal (everyone builds domain copilots, not autonomous business operations)
 
-**The opportunity:** Agents aren't maximized yet. Self-improvement is the key-each task makes Proto better at all tasks. That's compounding.
+**The opportunity:** The industry moved beyond "flashy demos" into production-but every player owns ONE vertical. Self-improvement is the key-each task makes Proto better at all tasks. That's compounding.
 
 **AI-native advantage:** It's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies face legacy systems, organizational resistance, and technical debt. Proto is built from the ground up-no constraints, no retrofitting. We move faster.
 

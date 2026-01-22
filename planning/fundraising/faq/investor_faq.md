@@ -66,20 +66,107 @@ Agentic systems are getting better every day-and this will continue throughout 2
 
 ### Aren't there already many AI agents? What's the gap?
 
-Current AI agents are **domain-specific silos**:
-- Coding agents (Devin, Cursor, Replit, Claude Code, OpenAI Codex) - only write code
-- Agent-first IDEs (Google Antigravity) - focused on developer workflows
-- Sales agents (Lindy, 11x, Salesforce Agentforce) - only handle sales workflows
-- Support agents (Zendesk AI, Intercom, Ada) - only answer tickets
-- Marketing agents - only create content
-- Open source (AutoGPT, SuperAGI, AgentGPT, CrewAI, LangGraph, Agent-S) - frameworks, not businesses
+The AI agent market exploded in 2025-2026. We're now in the "AI agent boom"-the definitive transition from generative models to autonomous, goal-oriented Agentic AI. But **every major player is a domain-specific silo**:
 
-**What's missing:**
-- **Cross-domain coordination**: No one combines coding + marketing + sales + operations into one system
+**Enterprise & Workflow Orchestration:**
+| Platform | Strength | Limitation |
+|----------|----------|------------|
+| Salesforce Agentforce ($540M ARR, +330% YoY) | CRM automation via Atlas Reasoning Engine | Only Salesforce ecosystem |
+| Microsoft Copilot Studio | M365/Azure integration, new "Computer Use" | Only Microsoft ecosystem |
+| Google Vertex AI Agent Builder | Multimodal reasoning, BigQuery native | Only Google Cloud |
+| Amazon Bedrock Agents | AWS service orchestration | Only AWS ecosystem |
+
+**Software Engineering:**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Devin AI (Cognition Labs) | First true AI software engineer, complete projects | Only coding |
+| GitHub Copilot (20M+ users, 42% market) | Massive adoption | Only code suggestions |
+| Cursor ($500M ARR, $10B valuation) | IDE integration | Only coding |
+| Claude Code ($500M ARR in 3 months) | Agentic coding | Only coding |
+| RooCode | Reliability-first, massive monorepos | Only coding |
+| Windsurf (formerly Codeium) | 70+ language support | Only coding |
+
+**Sales & Marketing:**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Robylon | Omnichannel (voice, chat, WhatsApp, email), 40+ languages | Only outreach |
+| Apollo.io | 300M+ contact database | Only B2B prospecting |
+| Clay ("Claygent") | 100+ data sources for lead enrichment | Only data enrichment |
+| Regie.ai | Multi-channel outbound | Only prospecting |
+
+**HR & Talent:**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Metaview | Interview notes, candidate shortlists | Only recruiting |
+| Sloneek Intelligence | Unified HR conversations | Only HR ops |
+| IBM AskHR (watsonx) | Enterprise intent routing | Only employee queries |
+
+**Cybersecurity (The "Agentic SOC"):**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Torq Socrates | 90% Tier-1 automation, 10x faster response | Only security ops |
+| Check Point Infinity AI | Real-time threat detection | Only security |
+| Palo Alto Prisma AIRS | AI lifecycle security, prompt injection monitoring | Only AI security |
+
+**Healthcare & Legal:**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Nuance DAX / Abridge | Ambient AI scribes, saves 1-2 hours/day | Only clinical documentation |
+| Harvey (unicorn) | Legal research and drafting | Only legal |
+| Spellbook | Word-native legal drafting | Only legal documents |
+| Kira Systems (Litera) | M&A document review at scale | Only contract analysis |
+
+**Real Estate:**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Rentberry | Full rental lifecycle automation | Only real estate |
+| Ylopo | Property search, voice leads, retargeting | Only real estate |
+
+**Education:**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Khanmigo (Khan Academy) | Safe AI tutoring without answer dumping | Only education |
+| TeachBetter.ai | K-12 lesson planning and coaching | Only education |
+
+**Autonomous Finance (NEW - "Agentic Commerce"):**
+| Agent | Strength | Limitation |
+|-------|----------|------------|
+| Virtuals Protocol (Luna) | Agents with smart wallets, on-chain actions | Only crypto/DeFi |
+| Fetch.ai (FET) | Autonomous economic agents across chains | Only blockchain |
+| Coinbase Payments MCP | AI agents controlling capital directly | Only payments |
+
+**Physical AI & Robotics (NEW):**
+- Nvidia's "ChatGPT moment for physical AI" - mass production of robots from Hyundai, LG
+- AIoT: AI + IoT convergence enabling millisecond-level edge responses
+- Humanoid robots and autonomous freight vehicles now in commercialization
+
+**Open-source frameworks** are booming:
+- LangChain/LangGraph: 122k+ GitHub stars (core RAG and multi-agent tooling)
+- n8n: 160k+ stars (visual no-code automation with AI nodes)
+- MetaGPT: Multi-agent software company simulation
+- AutoGen (Microsoft): Event-driven multi-agent systems
+- CrewAI: Role-playing agent orchestration
+- Mastra: TypeScript-native agent framework
+
+**The Claude SDK ecosystem** is particularly relevant:
+- **Model Context Protocol (MCP)**: 97M+ monthly SDK downloads, 2000+ servers in registry, adopted by OpenAI/Google/Microsoft, donated to Linux Foundation (Dec 2025)
+- **Agent Skills**: Open standard launched Dec 2025, 20k+ GitHub stars, marketplace with Canva/Notion/Figma/Atlassian partners
+- This ecosystem shows massive demand for agent infrastructure-but it's all frameworks, not operating businesses
+
+**Current Model Leaders (January 2026):**
+| Model | Strength |
+|-------|----------|
+| Gemini 3 Pro | #1 user preference, 1M token context |
+| GPT-5.2 | 100% on AIME 2025, 187 tokens/sec |
+| Claude Opus 4.5 | #1 for complex autonomous project structuring |
+| DeepSeek V3.2 | Frontier performance at 94% lower cost |
+
+**What's missing across ALL of these:**
+- **Cross-domain coordination**: No one combines coding + marketing + sales + HR + security + operations into one system
 - **Self-improvement**: Almost no agents learn from their failures and get better over time
-- **Full autonomy goal**: Everyone else builds copilots (human augmentation), not autonomous operations
+- **Full autonomy goal**: Everyone else builds domain-specific copilots, not autonomous business operations
 
-Proto is designed from the ground up to do all domains, self-improve, and work toward full autonomy.
+**40% of enterprise apps now feature autonomous task agents.** But they're all silos. The industry has moved beyond "flashy demos" into production-but every player owns one vertical. Proto is designed from the ground up to do all domains, self-improve, and work toward full autonomy.
 
 ### What about OpenAI/Anthropic/Google-won't they just build this?
 

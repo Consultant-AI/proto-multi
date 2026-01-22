@@ -316,6 +316,72 @@ Use these in pitches:
 
 ---
 
+## The AI Agent Landscape (January 2026)
+
+**We're in the "AI Agent Boom"** - the definitive transition from generative models to autonomous Agentic AI. 40% of enterprise apps now feature task agents. But EVERY player is a domain-specific silo.
+
+### Key Market Data
+
+| Domain | Top Players | Traction | Proto's Angle |
+|--------|-------------|----------|---------------|
+| **Enterprise Orchestration** | Salesforce Agentforce, Microsoft Copilot Studio, Google Vertex AI, Amazon Bedrock | Agentforce: $540M ARR (+330% YoY); Copilot now has "Computer Use" | Platform-locked; we're platform-agnostic |
+| **Coding** | Devin AI (first true AI engineer), Copilot, Cursor, Claude Code, RooCode, Windsurf | Copilot: 20M+ users, 42% market; Cursor: $500M ARR, $10B val; Claude Code: $500M ARR in 3 months | We do coding + everything else |
+| **Sales/Marketing** | Robylon, Apollo.io, Clay, Regie.ai, Common Room | Apollo: 300M+ contacts; Robylon: 40+ languages | We do sales + product + ops |
+| **HR/Talent** | Metaview, Sloneek Intelligence, IBM AskHR, Maki People | Enterprise-scale HR automation | We do hiring + the work itself |
+| **Cybersecurity** | Torq Socrates, Check Point Infinity, Palo Alto AIRS | 90% Tier-1 automation; "Agentic SOC" is production reality | Security is one function, not the whole business |
+| **Healthcare** | Nuance DAX, Abridge, Epic Factory Toolkit | Saves 1-2 hours/day per doctor; VA standard | Only documentation, not practice management |
+| **Legal** | Harvey, CoCounsel, Spellbook, Kira Systems | Harvey: unicorn; 500+ legal AI tools | We can run a legal practice, not just draft docs |
+| **Real Estate** | Rentberry, Ylopo, SmartZip | Full lifecycle automation | One vertical; we do any business |
+| **Education** | Khanmigo, TeachBetter.ai, Curipod, NotebookLM | K-12 and tutoring scale | One vertical; we do any business |
+| **Autonomous Finance** | Virtuals Protocol, Fetch.ai, Coinbase Payments MCP | Agents now control capital directly | Crypto-specific; we're business-general |
+| **Physical AI** | Nvidia-powered humanoids (Hyundai, LG), AIoT | "ChatGPT moment for physical AI" | We orchestrate digital + physical via hybrid model |
+
+### Open Source Ecosystem
+
+- **LangChain/LangGraph**: 122k+ stars - core RAG and multi-agent tooling
+- **n8n**: 160k+ stars - visual no-code automation with AI nodes
+- **MetaGPT**: Multi-agent software company simulation
+- **AutoGen** (Microsoft): Event-driven multi-agent systems
+- **CrewAI**: Role-playing agent orchestration
+- **Mastra**: TypeScript-native agent framework
+
+These are all frameworks for BUILDING agents, not systems that RUN businesses.
+
+### Claude SDK Ecosystem
+
+- **MCP**: 97M+ monthly SDK downloads, 2000+ servers in registry, donated to Linux Foundation (Dec 2025), adopted by OpenAI/Google/Microsoft
+- **Agent Skills**: Open standard launched Dec 2025, 20k+ GitHub stars, marketplace partners include Canva, Notion, Figma, Atlassian
+
+This ecosystem shows massive demand for agent infrastructure - but it's all picks and shovels. Proto is the mine.
+
+### Current Model Leaders
+
+| Model | Strength | Relevance |
+|-------|----------|-----------|
+| **Gemini 3 Pro** | #1 user preference, 1M token context | Long context for complex projects |
+| **GPT-5.2** | 100% on AIME 2025, 187 tokens/sec | Reasoning + speed |
+| **Claude Opus 4.5** | #1 for complex autonomous project structuring | Best for agentic workflows |
+| **DeepSeek V3.2** | Frontier performance at 94% lower cost | Cost efficiency for scale |
+
+### Key Trends to Watch
+
+1. **Agentic Commerce**: Agents controlling capital directly (Coinbase Payments MCP, Virtuals Protocol)
+2. **Physical AI**: "ChatGPT moment for robotics" - humanoid robots entering mass production
+3. **AIoT**: AI + IoT convergence enabling millisecond-level edge responses
+4. **Universal Commerce Protocol (UCP)**: Future where e-commerce is entirely agentic
+5. **Sovereign AI**: Nation-specific or brand-specific control over models and data residency
+
+### The Gap Proto Fills
+
+**What's missing across ALL agents:**
+- **Cross-domain coordination**: No one combines coding + marketing + sales + HR + security + operations
+- **Self-improvement**: Almost no agents learn from failures and get better over time
+- **Full autonomy goal**: Everyone builds domain-specific copilots, not autonomous business operations
+
+**The industry moved beyond "flashy demos" into production - but every player owns ONE vertical.**
+
+---
+
 ## AI Startup Strategy
 
 **Key insights from OpenAI, a16z, Sequoia, YC, and Andrew Ng on how to build a defensible AI company.**

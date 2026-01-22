@@ -226,18 +226,28 @@ Proto is designed from the ground up to do all domains, self-improve, and work t
 
 ## Competitive Landscape
 
-| Category | Examples | What They Do | Why Proto Is Different |
-|----------|----------|--------------|------------------------|
-| **Coding Agents** | Devin, Cursor, Replit Agent, Claude Code, OpenAI Codex | Write and debug code | Only coding-can't do marketing, sales, operations |
-| **Agent-First IDEs** | Google Antigravity | IDE with agent orchestration, multi-agent manager view | Focused on developer workflows, not running businesses |
-| **Sales/CRM Agents** | Lindy, 11x, Salesforce Agentforce | Automate sales workflows | Only sales-can't build products or run campaigns |
-| **Support Agents** | Zendesk AI, Intercom, Ada | Answer customer tickets | Only support-single domain |
-| **No-Code Builders** | Relevance AI, Gumloop, Dify | Build simple workflow agents | Limited to predefined workflows, no self-improvement |
-| **Open Source Frameworks** | AutoGPT, SuperAGI, AgentGPT, CrewAI, LangGraph, Agent-S | Build custom agents | Frameworks, not businesses-require development |
-| **Computer Use** | Adept, Anthropic Computer Use | Control GUIs | Single-task focused, no multi-agent orchestration |
-| **Labs** | OpenAI, Anthropic, Google | Build foundation models | Building models, not operating businesses |
+The AI agent market exploded in 2025-2026. We're now in the "AI agent boom"-the definitive transition from generative models to autonomous Agentic AI. Here's the landscape (January 2026):
 
-**Note:** The open source space is exploding-GitHub now has 4.3M+ AI repositories. But these are frameworks for developers to build agents, not systems that run businesses autonomously. Proto is the mine, not the pickaxe.
+| Category | Key Players | Scale/Traction | Why Proto Is Different |
+|----------|-------------|----------------|------------------------|
+| **Enterprise Orchestration** | Salesforce Agentforce, Microsoft Copilot Studio, Google Vertex AI, Amazon Bedrock | Agentforce: $540M ARR (+330% YoY); Copilot now has "Computer Use" | Platform-locked silos |
+| **Coding Agents** | Devin AI, GitHub Copilot, Cursor, Claude Code, RooCode, Windsurf | Copilot: 20M+ users; Cursor: $500M ARR, $10B val; Claude Code: $500M ARR in 3 months | Only coding |
+| **Sales/Marketing** | Robylon (40+ languages), Apollo.io (300M+ contacts), Clay, Regie.ai | Massive adoption | Only outreach/prospecting |
+| **HR/Talent** | Metaview, Sloneek Intelligence, IBM AskHR | Enterprise scale | Only recruiting/HR ops |
+| **Cybersecurity** | Torq Socrates (90% Tier-1 automation), Check Point Infinity, Palo Alto AIRS | "Agentic SOC" is production reality | Only security ops |
+| **Healthcare** | Nuance DAX, Abridge (VA standard), Epic Factory Toolkit | Saves 1-2 hours/day per doctor | Only clinical documentation |
+| **Legal** | Harvey (unicorn), CoCounsel, Spellbook, Kira Systems | 500+ legal AI tools | Only legal tasks |
+| **Real Estate** | Rentberry, Ylopo, SmartZip | Full lifecycle automation | Only real estate |
+| **Education** | Khanmigo, TeachBetter.ai, Curipod, NotebookLM | K-12 and tutoring | Only education |
+| **Autonomous Finance** | Virtuals Protocol, Fetch.ai, Coinbase Payments MCP | Agents controlling capital directly | Only crypto/DeFi |
+| **Physical AI** | Nvidia-powered humanoids (Hyundai, LG), autonomous freight | "ChatGPT moment for physical AI" | Only robotics |
+| **Open Source** | LangChain (122k stars), n8n (160k stars), MetaGPT, AutoGen, CrewAI, Mastra | Massive adoption | Frameworks, not businesses |
+| **Agent Infrastructure** | MCP (97M+ monthly downloads), Agent Skills (20k+ stars) | Industry standard | Infrastructure, not operations |
+| **Labs** | OpenAI (GPT-5.2), Anthropic (Claude Opus 4.5), Google (Gemini 3 Pro) | Frontier models | Building models, not businesses |
+
+**Key insight:** 40% of enterprise apps now feature autonomous task agents. But every player owns ONE vertical. The industry has moved beyond "flashy demos" into production-but all domain-specific silos.
+
+**The Claude SDK ecosystem** shows massive infrastructure demand (MCP: 97M+ monthly downloads, donated to Linux Foundation with OpenAI/Google as co-founders), but it's all picks and shovels. Proto is the mine, not the pickaxe.
 
 ### Why Not Wait for OpenAI/Anthropic/Google?
 

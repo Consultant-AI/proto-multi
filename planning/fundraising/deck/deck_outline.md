@@ -184,29 +184,37 @@ When full automation isn't possible, Proto will use hybrid models:
 **Visual:** Two columns: Current Agents | What's Missing
 
 **Content:**
-**Current AI Agents:**
-- Coding agents (Devin, Cursor, Claude Code) - only write code
-- Sales agents (Lindy, 11x) - only handle sales
-- Support agents (Zendesk AI) - only answer tickets
-- Open source (AutoGPT, CrewAI) - frameworks, not businesses
+**The "AI Agent Boom" is Here (January 2026):**
+We've transitioned from generative models to autonomous Agentic AI. 40% of enterprise apps now feature task agents. But EVERY player is a domain-specific silo:
+
+- **Enterprise**: Agentforce ($540M ARR), Microsoft Copilot Studio, Google Vertex AI - platform-locked
+- **Coding**: Devin AI, Copilot (20M users), Cursor ($500M ARR), Claude Code ($500M ARR in 3 months) - only code
+- **Sales/Marketing**: Robylon, Apollo.io (300M+ contacts), Clay - only outreach
+- **HR**: Metaview, Sloneek, IBM AskHR - only recruiting
+- **Security**: Torq Socrates (90% Tier-1 automation), Check Point - only SOC ops
+- **Healthcare**: Nuance DAX, Abridge (saves 1-2 hrs/day) - only documentation
+- **Legal**: Harvey (unicorn), CoCounsel, Spellbook - only legal
+- **Finance**: Virtuals Protocol, Fetch.ai - agents now control capital directly
+- **Physical AI**: Humanoid robots from Hyundai/LG - "ChatGPT moment for physical AI"
+- **Open source**: LangChain (122k stars), n8n (160k stars) - frameworks, not businesses
 
 **What's Missing:**
-- Cross-domain coordination (coding + marketing + sales + operations)
+- Cross-domain coordination (coding + marketing + sales + HR + security + operations)
 - Self-improvement (agents don't learn from failures and get better)
-- Full autonomy goal (everyone builds copilots, not autonomous operations)
+- Full autonomy goal (everyone builds domain copilots, not autonomous business operations)
 
-**The opportunity:** Agents aren't maximized yet. Self-improvement is the key-each task makes Proto better.
-
-**AI-native advantage:** It's easier to build an AI-first company from scratch than retrofit AI into existing operations.
+**The opportunity:** The industry moved beyond "flashy demos" into production-but every player owns ONE vertical. No one runs businesses.
 
 **Talking points:**
-- "Look at current AI agents-they're all domain-specific silos. Devin writes code. Lindy does sales. Zendesk answers tickets."
+- "We're in the AI agent boom. 40% of enterprise apps have task agents. But they're ALL domain silos."
+- "Devin writes code. Agentforce does sales. Harvey does legal. Torq Socrates handles security. Nuance does medical notes. They don't talk to each other."
+- "The Claude SDK ecosystem-MCP has 97 million monthly downloads-it's infrastructure for building agents, not running businesses."
+- "Even Physical AI is arriving-Nvidia calls it the 'ChatGPT moment for robotics.' But it's still single-domain."
+- "Agents now control capital directly-Coinbase Payments MCP enables agentic commerce. But still domain-specific."
 - "No one combines everything. Almost no one self-improves."
-- "Agents aren't maximized yet-there's so much untapped potential."
 - "Andrew Ng's research: GPT-3.5 with agentic workflows outperforms GPT-4 zero-shot. The orchestration layer is where value lives."
 - "Better models make Proto MORE powerful. We're not fixing model bugs-we're building the orchestration layer. That's the moat."
 - "Self-improvement is the unlock. Each task makes Proto better at all tasks. That's compounding."
-- "There's another advantage: it's easier to build an AI-first company from scratch than to retrofit AI into existing operations. Established companies have legacy systems, organizational resistance, technical debt. Proto is built from the ground up-no constraints, no retrofitting. We can move faster than existing companies trying to bolt AI onto their processes."
 
 ---
 
@@ -300,22 +308,33 @@ When full automation isn't possible, Proto will use hybrid models:
 - Scenario analysis
 - Cap table scenarios
 
-### A5: Competitive Landscape
+### A5: Competitive Landscape (January 2026)
 
-| Category | Examples | What They Do | Why Proto Is Different |
-|----------|----------|--------------|------------------------|
-| Coding Agents | Devin, Cursor, Replit, Claude Code, OpenAI Codex | Write and debug code | Only coding-can't do marketing, sales, operations |
-| Agent-First IDEs | Google Antigravity | IDE with agent orchestration | Focused on developer workflows, not running businesses |
-| Sales/CRM Agents | Lindy, 11x, Salesforce Agentforce | Automate sales workflows | Only sales-can't build products or run campaigns |
-| Support Agents | Zendesk AI, Intercom, Ada | Answer customer tickets | Only support-single domain |
-| No-Code Builders | Relevance AI, Gumloop, Dify | Build simple workflow agents | Limited to predefined workflows, no self-improvement |
-| Open Source | AutoGPT, SuperAGI, CrewAI, LangGraph, Agent-S | Build custom agents | Frameworks, not businesses-require development |
-| Computer Use | Adept, Anthropic Computer Use | Control GUIs | Single-task focused, no multi-agent orchestration |
-| Labs | OpenAI, Anthropic, Google | Build foundation models | Building models, not operating businesses |
+**The "AI Agent Boom"** - we've transitioned from generative models to autonomous Agentic AI. 40% of enterprise apps now feature task agents.
+
+| Category | Key Players | Scale/Traction | Limitation |
+|----------|-------------|----------------|------------|
+| **Enterprise Orchestration** | Salesforce Agentforce, Microsoft Copilot Studio, Google Vertex AI, Amazon Bedrock | Agentforce: $540M ARR (+330% YoY); Copilot has "Computer Use" now | Platform-locked silos |
+| **Coding Agents** | Devin AI (first true AI engineer), GitHub Copilot, Cursor, Claude Code, RooCode, Windsurf | Copilot: 20M+ users (42% market); Cursor: $500M ARR, $10B val; Claude Code: $500M ARR in 3 months | Only coding |
+| **Sales/Marketing** | Robylon (40+ languages), Apollo.io (300M+ contacts), Clay, Regie.ai, Common Room | Massive enterprise adoption | Only outreach |
+| **HR/Talent** | Metaview, Sloneek Intelligence, Maki People, IBM AskHR (watsonx) | Enterprise scale | Only recruiting |
+| **Cybersecurity** | Torq Socrates, Check Point Infinity AI, Palo Alto Prisma AIRS, Lasso Security | 90% Tier-1 automation; "Agentic SOC" is production reality | Only security |
+| **Healthcare** | Nuance DAX, Abridge, Epic Factory Toolkit | Saves 1-2 hours/day; VA standard | Only documentation |
+| **Legal** | Harvey (unicorn), CoCounsel, Spellbook, Kira Systems, LexisNexis Protégé | 500+ legal AI tools | Only legal |
+| **Real Estate** | Rentberry, Ylopo, SmartZip, Convin Voice Bot | Full lifecycle automation | Only real estate |
+| **Education** | Khanmigo, TeachBetter.ai, Curipod, NotebookLM | K-12 and tutoring | Only education |
+| **Autonomous Finance** | Virtuals Protocol, Fetch.ai, Coinbase Payments MCP, ASCN.AI, Bluwhale | Agents controlling capital directly; "agentic commerce" | Only crypto/DeFi |
+| **Physical AI** | Nvidia-powered humanoids (Hyundai, LG), AIoT edge devices | "ChatGPT moment for physical AI"; mass production starting | Only robotics |
+| **Open Source** | LangChain (122k stars), n8n (160k stars), MetaGPT, AutoGen, CrewAI, Mastra | Industry-standard frameworks | Frameworks, not businesses |
+| **Agent Infrastructure** | MCP (97M+ monthly downloads), Agent Skills (20k+ stars) | Linux Foundation stewardship; OpenAI/Google adopted | Infrastructure, not operations |
+| **Labs/Models** | GPT-5.2 (100% AIME), Claude Opus 4.5 (#1 agentic), Gemini 3 Pro (#1 preference), DeepSeek V3.2 (94% cheaper) | Frontier performance | Models, not businesses |
+
+**Key insight:** Every player is a domain-specific silo. The industry moved beyond "flashy demos" into production-but all specialized tools, not systems that run businesses.
 
 **Why not OpenAI/Anthropic/Google?**
 - They could build this-but they haven't
 - Their business: sell API to millions of developers, not run businesses
+- The Claude SDK ecosystem (MCP, Agent Skills) shows they're building infrastructure for others
 - First-mover with self-improvement has edge
 - Different game: they want to be the platform, we want to own the gold mines
 

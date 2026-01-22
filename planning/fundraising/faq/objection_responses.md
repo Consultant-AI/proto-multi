@@ -100,9 +100,9 @@ Use during calls. Keep responses under 30 seconds.
 
 ---
 
-## "There are already tons of AI agents-Devin, Cursor, Lindy..."
+## "There are already tons of AI agents-Cursor, Claude Code, Salesforce Agentforce..."
 
-**Response:** "All domain-specific silos. Devin only writes code. Lindy only does sales. Zendesk AI only answers tickets. Proto does coding AND marketing AND sales AND operations-all coordinated. Self-improvement is on the roadmap. No one else combines everything into a system that runs businesses."
+**Response:** "We're in the AI agent boom-40% of enterprise apps now have task agents. Copilot has 20 million users. Cursor hit $500M ARR. Agentforce grew 330% to $540M ARR. Devin is the first true AI software engineer. Torq Socrates automates 90% of Tier-1 security work. Nuance DAX saves doctors 1-2 hours daily. Agents even control capital directly now-Coinbase Payments MCP enables agentic commerce. But they're ALL domain-specific silos. Cursor only writes code. Agentforce only does sales. Harvey only does legal. Torq only does security. Even Physical AI is arriving-'ChatGPT moment for robotics'-but still single-domain. Proto does coding AND marketing AND sales AND HR AND security AND operations-all coordinated. Self-improvement is on the roadmap. No one else combines everything into a system that runs businesses."
 
 ---
 
