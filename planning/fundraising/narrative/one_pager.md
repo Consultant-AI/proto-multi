@@ -6,7 +6,16 @@
 
 AI systems will run entire businesses-automating almost all labor, spawning unlimited products and services. When absolutely necessary, AI can hire humans for tasks that require it, but the goal is full automation at scale.
 
-We believe there's a high chance we're 12–24 months from a capability threshold where AI agents can reliably execute complex, multi-step business processes autonomously. Agentic systems are getting better every day-and this will continue throughout 2026 and beyond.
+We believe there's a high chance we're 12-24 months from a capability threshold where AI agents can reliably execute complex, multi-step business processes autonomously. Agentic systems are getting better every day-and this will continue throughout 2026 and beyond.
+
+**Software is eating labor-and that market is 100x bigger than software.**
+
+- Traditional software market: ~$600B
+- Global labor market: ~$90 TRILLION
+
+Proto isn't competing with other software companies. We're replacing labor. Any business that would hire people-Proto hires AI instead.
+
+**Everybody wants two things: to be richer and to save time, resources and energy.** That's what Proto delivers. Not just automation-value creation. The successful AI companies aren't pitching "save money"-they're pitching "make more money."
 
 **Why now:** Four things have converged-model capability, computer use, tooling maturity, and massive attention and resources. AI agents are where the industry is focused: billions in investment, top talent, breakthroughs every month. The reliability problem will be solved. The question is who's positioned first.
 

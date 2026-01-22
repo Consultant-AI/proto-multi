@@ -101,6 +101,43 @@ Existing companies face:
 
 Proto is built from the ground up for autonomous operation-no legacy constraints, no retrofitting. We can move faster than established companies trying to bolt AI onto existing processes.
 
+### How is Proto different from other AI tools and startups?
+
+**We're not competing with the software market-we're eating the labor market.**
+
+Most AI tools are software that helps people do their jobs better. Proto replaces the jobs entirely. This is a fundamentally different market:
+- Traditional software market: ~$600B
+- Global labor market: ~$90 TRILLION
+
+When AI can do a $47K job for $20K/year, that's not a software sale-that's labor replacement. Any business that would hire people-Proto hires AI instead. That's 100x the market opportunity.
+
+**Value creation, not cost savings:** The successful AI labor-replacement companies (like Salient in collections) grew explosively by pitching "we collect 50% MORE revenue," not "we're cheaper than humans." Proto generates value-it doesn't just cut costs.
+
+### What's Proto's moat? Can't anyone build this?
+
+**Moats matter MORE than ever because AI makes building software trivially easy.**
+
+"Vibe coding" means anyone can build a widget overnight. That's why Proto's moats are structural, not feature-based:
+
+1. **Self-improvement (proprietary data on what works)**
+   - Every business Proto runs generates outcome data that labs (OpenAI, Anthropic) don't have
+   - What approaches work for which tasks, industry-specific playbooks, performance data across thousands of processes
+   - This is Proto's walled garden-data labs can't access
+
+2. **Cross-domain coordination**
+   - No one else combines coding + marketing + sales + operations into one system
+   - Domain silos can't replicate end-to-end business operations
+
+3. **End-to-end workflow ownership**
+   - Like Eve owns legal workflow, Proto owns business operations
+   - "The best companies have hostages, not customers"-we become the system of record
+
+4. **Compounding playbooks**
+   - Each business teaches Proto how to run businesses better
+   - These learnings compound with every operation
+
+Labs deliver raw AI (vegetables). Proto delivers the finished meal.
+
 ---
 
 ## The Product

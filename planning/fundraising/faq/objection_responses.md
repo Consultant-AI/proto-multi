@@ -16,6 +16,18 @@ Use during calls. Keep responses under 30 seconds.
 
 ---
 
+## "Isn't this just another AI tool?"
+
+**Response:** "We're not competing with the software market-we're eating the labor market. Traditional software market is $600B. Labor market is $90 trillion. When AI does a $47K job for $20K/year, that's not a software sale-that's labor replacement. Any business that would hire people-Proto hires AI instead. That's 100x the market opportunity."
+
+---
+
+## "What's Proto's moat?"
+
+**Response:** "Moats matter more than ever because vibe coding means anyone can copy a widget overnight. Proto's moats are structural: First, self-improvement-every business generates outcome data that labs don't have. What works, industry playbooks, performance data-that's our walled garden. Second, cross-domain coordination-no one combines coding plus marketing plus sales plus operations. Third, compounding playbooks-each business teaches Proto how to run businesses better. Labs deliver raw AI. We deliver the finished meal."
+
+---
+
 ## "What if the AI makes mistakes?"
 
 **Response:** "It will-Proto can run fully autonomously, but for users who want oversight, we have optional approval gates for anything that spends money, publishes, or trades. Plus audit logs and a kill switch. The controls are there for those who want them."
@@ -66,7 +78,7 @@ Use during calls. Keep responses under 30 seconds.
 
 ## "What if OpenAI/Anthropic/Google just does this?"
 
-**Response:** "They could-but they haven't. They're building models, not operating businesses. They want to sell picks and shovels to millions of developers. I want to own the gold mines. And once Proto starts self-improving, there's a first-mover advantage-by the time they pivot, if they do, we'll have playbooks, data, and running businesses."
+**Response:** "They could-but they haven't. They're building models, not operating businesses. They want to sell picks and shovels to millions of developers. I want to own the gold mines. And here's the moat: they don't have business operation outcome data. What works for which tasks, industry playbooks, performance data-that's our walled garden. Labs deliver raw AI. Proto delivers the finished meal. By the time they pivot, if they do, we'll have data, playbooks, and running businesses they can't replicate."
 
 ---
 

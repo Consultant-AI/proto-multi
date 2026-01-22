@@ -10,13 +10,14 @@ Complete knowledge base for fundraising. All tips, best practices, and processes
 2. [Research Before Outreach](#research-before-outreach)
 3. [Pipeline Management](#pipeline-management)
 4. [Storytelling & Pitch Delivery](#storytelling--pitch-delivery)
-5. [The Ask](#the-ask)
-6. [Common Mistakes](#common-mistakes)
-7. [Handling Rejection](#handling-rejection)
-8. [Legal & Documents](#legal--documents)
-9. [Investor Stewardship](#investor-stewardship)
-10. [Mindset](#mindset)
-11. [Confidence Reminders](#confidence-reminders)
+5. [Software is Eating Labor](#software-is-eating-labor)
+6. [The Ask](#the-ask)
+7. [Common Mistakes](#common-mistakes)
+8. [Handling Rejection](#handling-rejection)
+9. [Legal & Documents](#legal--documents)
+10. [Investor Stewardship](#investor-stewardship)
+11. [Mindset](#mindset)
+12. [Confidence Reminders](#confidence-reminders)
 
 ---
 
@@ -244,6 +245,73 @@ Monthly Burn × 12-18 months = Amount to Raise
 - Tell the story conversationally
 - "Let me walk you through what you would have seen..."
 - Offer to send the demo video after
+
+---
+
+## Software is Eating Labor
+
+**This is the a16z thesis - and it's Proto's thesis.**
+
+Proto isn't competing with other software companies. We're replacing labor. The labor market is astronomically bigger than the software market.
+
+### The Market Size Reality
+
+- Traditional software market: ~$600B
+- Global labor market: ~$90 TRILLION
+- Even replacing 1% of labor spend = massive opportunity
+- We don't compete with Salesforce or NetSuite. We compete with hiring.
+
+### Key Framing
+
+**"Everybody wants two things: to be richer and to save time, resources and energy."**
+
+That's what Proto delivers:
+- **Richer**: Generate revenue, not just save costs
+- **Save time, resources and energy**: Automate entire business operations, not just tasks
+
+### Value Creation > Cost Savings
+
+**Critical lesson from Salient (AI collections company - 0 to $30M in ~2 years):**
+- Pitching "save money on collections staff" didn't work
+- Pitching "we collect 50% MORE revenue" = explosive growth
+
+**Proto should emphasize:**
+- Not just "automate work" but "generate revenue"
+- Not just "save money on labor" but "do things you couldn't afford to do before"
+- AI expands markets - opens work that was never economically viable
+
+**Example:** Eve (AI legal) can now take $5K cases that would never justify attorney time at $50K minimum. The market EXPANDS.
+
+### Why Moats Matter MORE Than Ever
+
+Because AI makes building software trivially easy ("vibe coding"):
+- "Your margin is my opportunity" - anyone can copy a widget overnight
+- Must become a system of record, not just a feature
+- "The best companies have hostages, not customers"
+
+**Proto's moats:**
+- Self-improvement (proprietary data on what works)
+- Cross-domain coordination (no one else combines coding + marketing + sales + operations)
+- End-to-end workflow ownership
+- Playbooks and learnings that compound with every business we run
+
+### The Walled Garden Advantage
+
+Labs (OpenAI, Anthropic) don't have:
+- Business operation outcome data
+- What approaches work for which tasks
+- Industry-specific playbooks
+- Performance data across thousands of business processes
+
+This is Proto's emerging moat. Every business Proto runs generates data labs can't access. Proto delivers the "finished meal" not just raw AI ingredients.
+
+### Key Talking Points
+
+Use these in pitches:
+- "Any business that would hire people - Proto hires AI instead."
+- "We're not competing with the software market - we're eating the labor market."
+- "Traditional software: Pay $500/year for a tool. Labor replacement: Pay $20K/year for AI that does a $47K job. That's 40x the revenue per customer."
+- "0 to $100M revenue in 1-2 years is happening in AI labor replacement. Eve went from $2M to $30M ARR in ~2 years."
 
 ---
 

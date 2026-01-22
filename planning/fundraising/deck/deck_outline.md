@@ -37,11 +37,17 @@
 
 **Content:**
 - Software automated tasks → workflows → departments → **companies**
+- Software market: ~$600B | Labor market: ~$90 TRILLION
+- We're not competing with software-we're replacing labor
 - The question: WHEN and WHO builds it first
 - We believe there's a high chance: 12-24 months to the threshold
 
 **Talking points:**
 - "AI will run entire businesses-not just tasks, entire companies."
+- "Software is eating labor. The labor market is 100x bigger than the software market."
+- "Proto isn't competing with software companies-we're replacing labor. Any business that would hire people, Proto hires AI instead."
+- "When AI does a $47K job for $20K/year, that's not a software sale-that's labor replacement."
+- "Everybody wants two things: to be richer and to save time, resources and energy. That's what Proto delivers."
 - "The capabilities exist. What's missing is reliability."
 - "Four things have converged: model capability, computer use, tooling maturity, and massive attention and resources-billions in investment, top talent, breakthroughs every month."
 - "Agentic systems are getting better every day-this will continue throughout 2026 and beyond. The reliability gap is closing fast."
@@ -164,6 +170,8 @@ When full automation isn't possible, Proto will use hybrid models:
 **Talking points:**
 - "The key insight: any business that would hire people, Proto hires AI instead. Even non-computer-based businesses can be automated-for physical tasks, Proto hires and manages humans while AI handles everything else."
 - "We're not selling Proto. We're using it to run businesses."
+- "Value creation, not just cost savings: Salient (AI collections) grew 0 to $30M by pitching 'we collect 50% MORE revenue,' not 'we're cheaper than humans.' That's the model."
+- "AI expands markets-opens work that was never economically viable. Eve can now take $5K cases that would never justify attorney time."
 - "We'll explore different business types: SaaS products, marketing agencies, content at scale, e-commerce, freelance operations."
 - "We can also sell specialized agents as products-a content agent, a customer support agent, a development agent."
 - "The scope expands as AI improves. The first business proves the capability. Then we scale to many."

@@ -132,6 +132,19 @@ Proto adapts to whatever works. But the goal is to minimize human involvement-au
 
 ## The Opportunity
 
+### The Market: Software is Eating Labor
+
+**Proto isn't competing with software companies. We're replacing labor.**
+
+The labor market is astronomically bigger than the software market:
+- Traditional software market: ~$600B
+- Global labor market: ~$90 TRILLION
+- Even replacing 1% of labor spend = massive opportunity
+
+**What this means:** We don't compete with Salesforce or NetSuite. We compete with hiring. Any business that would hire people-Proto hires AI instead.
+
+**Value creation, not cost savings:** The successful AI companies aren't pitching "save money"-they're pitching "make more money." Salient (AI collections) grew explosively by pitching "we collect 50% MORE revenue," not "we're cheaper than humans." Proto generates value, it doesn't just cut costs.
+
 ### Why Now
 
 **Compounding advantage:** The first system that starts reliably running businesses compounds with every iteration. Early movers build playbooks, data, and running revenue while others are still building.
