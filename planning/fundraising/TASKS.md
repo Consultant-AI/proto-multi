@@ -114,30 +114,27 @@
 
 ---
 
-## ⏳ CURRENT: Review & Improve Documentation
+## ✅ COMPLETE: Documentation Review
 
-**Status:** All documentation files are drafted. Next step is review and improvement.
+**Status:** All documentation reviewed and improved.
 
-### Files to Review (in order):
-1. [x] `narrative/executive_summary.md` ✓
-2. [ ] `narrative/one_pager.md`
-3. [ ] `narrative/pitch_best_practices.md`
-4. [ ] `deck/deck_outline.md`
-5. [ ] `demo/demo_script.md`
-6. [ ] `faq/investor_faq.md`
-7. [ ] `faq/objection_responses.md`
-8. [ ] `legal/fundraising_legal_guide.md`
-9. [ ] `pipeline/README.md`
-10. [ ] `templates/intro_request.md`
-11. [ ] `templates/cold_outreach.md`
-12. [ ] `templates/follow_up.md`
-13. [ ] `templates/linkedin.md`
-14. [ ] `templates/soft_commit.md`
-15. [ ] `data_room/technical_architecture.md`
-16. [ ] `demo/demo_fallback/README.md`
-17. [ ] `demo/demo_fallback/sample_landing_page.md`
-18. [ ] `demo/demo_fallback/sample_ad_variations.md`
-19. [ ] `demo/demo_fallback/sample_campaign_report.md`
+### Files Reviewed:
+1. [x] `narrative/executive_summary.md` ✓ (tightened: 345→155 lines)
+2. [x] `narrative/one_pager.md` ✓ (tightened: 160→56 lines)
+3. [x] `deck/deck_outline.md` ✓ (tightened: 478→237 lines)
+4. [x] `demo/demo_script.md` ✓
+5. [x] `faq/investor_faq.md` ✓
+6. [x] `faq/objection_responses.md` ✓
+7. [x] `templates/intro_request.md` ✓
+8. [x] `templates/cold_outreach.md` ✓
+9. [x] `templates/follow_up.md` ✓
+10. [x] `templates/linkedin.md` ✓
+11. [x] `templates/soft_commit.md` ✓
+12. [x] `data_room/technical_architecture.md` ✓
+13. [x] `demo/demo_fallback/README.md` ✓
+14. [x] `demo/demo_fallback/sample_landing_page.md` ✓
+15. [x] `demo/demo_fallback/sample_ad_variations.md` ✓
+16. [x] `demo/demo_fallback/sample_campaign_report.md` ✓
 
 ---
 
@@ -324,17 +321,3 @@ After documentation review is complete, generate these files:
 - [ ] Iterate deck/demo/FAQ every Friday based on feedback
 
 ---
-
-## SUMMARY
-
-| Category | Status |
-|----------|--------|
-| Documentation | ✓ Complete (21 files) - needs review |
-| Non-doc files | ⏳ Pending (videos, deck, graphics, team bios, investor list) |
-| Fundability Controls | ⏳ Optional (approval gates, kill switch) |
-| Investor Pipeline | ⏳ Pending (150 contacts, advisors) |
-| Outreach | ⏳ Pending |
-| Investor Calls | ⏳ Pending |
-| Data Room | ✓ Mostly complete (team bios pending) |
-| Close | ⏳ Pending |
-| Foundation | ⏳ After investor commitment (Ltd, IP, SAFE) |
