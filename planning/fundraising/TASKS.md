@@ -146,7 +146,7 @@ After documentation review is complete, generate these files:
 - [ ] Buy domain (proto.works or chosen alternative)
 - [ ] Configure email forwarding (nir@proto.works)
 - [ ] Set up professional email signature
-- [ ] Create/export logo files → `assets/logo/`
+- [x] Create/export logo files → `assets/logo/` ✓
 - [ ] Create brand assets (color palette, fonts) → `assets/brand/`
 
 ### Videos

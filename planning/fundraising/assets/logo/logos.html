@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proto Logos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { background: #f5f5f5; padding: 40px; }
+
+        .logo-container {
+            background: white;
+            margin: 20px auto;
+            display: inline-block;
+        }
+
+        /* Wordmark - Blue */
+        #wordmark-blue {
+            width: 600px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent;
+        }
+        #wordmark-blue .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 96px; font-weight: 700;
+            color: #4a9eff; letter-spacing: -4px;
+        }
+
+        /* Wordmark - White on Dark */
+        #wordmark-white {
+            width: 600px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            background: #0a0a0a;
+        }
+        #wordmark-white .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 96px; font-weight: 700;
+            color: #f5f5f5; letter-spacing: -4px;
+        }
+
+        /* Wordmark - Blue on White */
+        #wordmark-blue-white {
+            width: 600px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            background: #ffffff;
+        }
+        #wordmark-blue-white .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 96px; font-weight: 700;
+            color: #4a9eff; letter-spacing: -4px;
+        }
+
+        /* P-shape common */
+        .p-shape { position: relative; }
+        .p-shape .bar { position: absolute; }
+
+        /* Icon - Blue */
+        #icon-blue {
+            width: 200px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent;
+        }
+        #icon-blue .p-shape { width: 100px; height: 120px; }
+        #icon-blue .bar { background: #4a9eff; }
+        #icon-blue .vertical { left: 15px; top: 0; width: 20px; height: 120px; }
+        #icon-blue .top { left: 15px; top: 0; width: 70px; height: 20px; }
+        #icon-blue .middle { left: 15px; top: 50px; width: 70px; height: 20px; }
+        #icon-blue .right { left: 65px; top: 0; width: 20px; height: 70px; }
+
+        /* Icon - White */
+        #icon-white {
+            width: 200px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            background: #0a0a0a;
+        }
+        #icon-white .p-shape { width: 100px; height: 120px; }
+        #icon-white .bar { background: #f5f5f5; }
+        #icon-white .vertical { left: 15px; top: 0; width: 20px; height: 120px; }
+        #icon-white .top { left: 15px; top: 0; width: 70px; height: 20px; }
+        #icon-white .middle { left: 15px; top: 50px; width: 70px; height: 20px; }
+        #icon-white .right { left: 65px; top: 0; width: 20px; height: 70px; }
+
+        /* Icon - Blue on White */
+        #icon-blue-white {
+            width: 200px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            background: #ffffff;
+        }
+        #icon-blue-white .p-shape { width: 100px; height: 120px; }
+        #icon-blue-white .bar { background: #4a9eff; }
+        #icon-blue-white .vertical { left: 15px; top: 0; width: 20px; height: 120px; }
+        #icon-blue-white .top { left: 15px; top: 0; width: 70px; height: 20px; }
+        #icon-blue-white .middle { left: 15px; top: 50px; width: 70px; height: 20px; }
+        #icon-blue-white .right { left: 65px; top: 0; width: 20px; height: 70px; }
+
+        /* Lockup - Blue */
+        #lockup-blue {
+            width: 700px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 40px; background: transparent;
+        }
+        #lockup-blue .p-shape { width: 80px; height: 100px; }
+        #lockup-blue .bar { background: #4a9eff; }
+        #lockup-blue .vertical { left: 12px; top: 0; width: 16px; height: 100px; }
+        #lockup-blue .top { left: 12px; top: 0; width: 56px; height: 16px; }
+        #lockup-blue .middle { left: 12px; top: 42px; width: 56px; height: 16px; }
+        #lockup-blue .right { left: 52px; top: 0; width: 16px; height: 58px; }
+        #lockup-blue .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 72px; font-weight: 700;
+            color: #4a9eff; letter-spacing: -3px;
+        }
+
+        /* Lockup - White */
+        #lockup-white {
+            width: 700px; height: 200px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 40px; background: #0a0a0a;
+        }
+        #lockup-white .p-shape { width: 80px; height: 100px; }
+        #lockup-white .bar { background: #f5f5f5; }
+        #lockup-white .vertical { left: 12px; top: 0; width: 16px; height: 100px; }
+        #lockup-white .top { left: 12px; top: 0; width: 56px; height: 16px; }
+        #lockup-white .middle { left: 12px; top: 42px; width: 56px; height: 16px; }
+        #lockup-white .right { left: 52px; top: 0; width: 16px; height: 58px; }
+        #lockup-white .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 72px; font-weight: 700;
+            color: #f5f5f5; letter-spacing: -3px;
+        }
+
+        /* Favicon */
+        #favicon {
+            width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+            background: #0a0a0a;
+        }
+        #favicon .p-shape { width: 36px; height: 44px; }
+        #favicon .bar { background: #4a9eff; }
+        #favicon .vertical { left: 6px; top: 0; width: 6px; height: 44px; }
+        #favicon .top { left: 6px; top: 0; width: 24px; height: 6px; }
+        #favicon .middle { left: 6px; top: 19px; width: 24px; height: 6px; }
+        #favicon .right { left: 24px; top: 0; width: 6px; height: 25px; }
+
+        /* Email Signature */
+        #email-signature {
+            width: 300px; height: 80px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 20px; background: transparent;
+        }
+        #email-signature .p-shape { width: 40px; height: 50px; }
+        #email-signature .bar { background: #4a9eff; }
+        #email-signature .vertical { left: 6px; top: 0; width: 8px; height: 50px; }
+        #email-signature .top { left: 6px; top: 0; width: 28px; height: 8px; }
+        #email-signature .middle { left: 6px; top: 21px; width: 28px; height: 8px; }
+        #email-signature .right { left: 26px; top: 0; width: 8px; height: 29px; }
+        #email-signature .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 36px; font-weight: 700;
+            color: #4a9eff; letter-spacing: -2px;
+        }
+
+        /* Social Card */
+        #social-card {
+            width: 1200px; height: 630px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: #0a0a0a; position: relative; overflow: hidden;
+        }
+        #social-card::before {
+            content: ''; position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(74,158,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74,158,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        #social-card .text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 140px; font-weight: 700;
+            color: #4a9eff; letter-spacing: -6px;
+            position: relative; z-index: 1;
+        }
+        #social-card .tagline {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px; font-weight: 400;
+            color: #888888; letter-spacing: 3px;
+            margin-top: 20px; text-transform: uppercase;
+            position: relative; z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container" id="wordmark-blue"><div class="text">PROTO</div></div>
+    <div class="logo-container" id="wordmark-white"><div class="text">PROTO</div></div>
+    <div class="logo-container" id="wordmark-blue-white"><div class="text">PROTO</div></div>
+
+    <div class="logo-container" id="icon-blue">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+    </div>
+
+    <div class="logo-container" id="icon-white">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+    </div>
+
+    <div class="logo-container" id="icon-blue-white">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+    </div>
+
+    <div class="logo-container" id="lockup-blue">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+        <div class="text">PROTO</div>
+    </div>
+
+    <div class="logo-container" id="lockup-white">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+        <div class="text">PROTO</div>
+    </div>
+
+    <div class="logo-container" id="favicon">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+    </div>
+
+    <div class="logo-container" id="email-signature">
+        <div class="p-shape">
+            <div class="bar vertical"></div><div class="bar top"></div>
+            <div class="bar middle"></div><div class="bar right"></div>
+        </div>
+        <div class="text">PROTO</div>
+    </div>
+
+    <div class="logo-container" id="social-card">
+        <div class="text">PROTO</div>
+        <div class="tagline">The Autonomous Company Factory</div>
+    </div>
+</body>
+</html>
