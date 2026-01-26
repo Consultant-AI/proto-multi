@@ -143,7 +143,7 @@
 After documentation review is complete, generate these files:
 
 ### Business Infrastructure (Do First)
-- [ ] Buy domain (proto.works or chosen alternative)
+- [x] Buy domain (proto.works or chosen alternative) ✓ **proto.works**
 - [ ] Configure email forwarding (nir@proto.works)
 - [ ] Set up professional email signature
 - [x] Create/export logo files → `assets/logo/` ✓
