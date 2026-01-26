@@ -6,19 +6,35 @@
 
 ## Executive Summary
 
-Proto is a multi-agent orchestration platform built on a modern stack: Python/FastAPI backend, React/Electron frontend, with deep integration into Anthropic's Claude API. The system coordinates specialist AI agents to execute complex business operations. Cross-platform (Mac + cloud Linux), with multi-computer orchestration on the roadmap.
+Proto is an autonomous multi-agent system designed to run complete software businesses without constant human supervision. The architecture coordinates 159 specialized AI agents across multiple computers, with a Global CEO (Opus 4.5) making company-wide strategic decisions while Local CEOs manage individual product teams.
 
-**Key technical differentiators:**
-- Cross-platform: runs on Mac + cloud Linux (Ubuntu instances with software installed)
-- Hierarchical agent system with CEO-led delegation
-- Multi-computer orchestration on roadmap (SSH tunneling and VNC infrastructure ready)
-- GUI control via screenshot → analyze → mouse/keyboard actions-giving agents access to any tool a human can use on a computer (real computer use, not browser automation)
-- Enterprise controls (optional)-Proto can run fully autonomously; optional approval gates, audit logs, kill switch
+**Key Technical Differentiators:**
+- **Multi-Computer Orchestration**: Distribute work across Mac, cloud VMs, and remote servers
+- **Peer-to-Peer Agent Network**: 159 specialists can delegate to each other without hierarchy constraints
+- **Smart Model Selection**: Haiku classifier routes tasks to optimal model, reducing costs 70-90%
+- **Self-Improvement Loop**: System automatically captures knowledge and improves over time
+- **Production-Grade Reliability**: Circuit breakers, retry with backoff, checkpointing
+- **GUI Control**: Screenshot → analyze → mouse/keyboard actions (real computer use, not browser automation)
+- **Enterprise Controls**: Optional approval gates, audit logs, kill switch
 
-**On roadmap:**
-- Self-improvement: evaluation per task, automatic code/playbook updates, continuous improvement
-- Hybrid human delegation: AI hiring and managing humans for tasks that require it
-- Multi-computer orchestration: multiple machines working together simultaneously
+---
+
+## Core System Concepts
+
+Each concept has a distinct role. Understanding these is key to how Proto works:
+
+| Concept | Role | Responsibility | Analogy |
+|---------|------|----------------|---------|
+| **Subagents** | Workers | Execute specialized tasks delegated by lead agent | Employees on a team |
+| **Tools** | Hands | Perform atomic actions (read file, run command, edit) | Hammers, screwdrivers |
+| **MCP** | Universal Adapter | Connect to ANY external system (DB, browser, API) | USB ports |
+| **Context** | Short-term Memory | Current conversation, what agent is working on NOW | Working memory |
+| **Memory (CLAUDE.md)** | Long-term Memory | Persistent rules, conventions, patterns across sessions | Institutional knowledge |
+| **Skills** | Expertise | Auto-activated specialized knowledge for specific tasks | Training/certifications |
+| **Rules** | Guardrails | Enforce constraints and policies that ALL agents must follow | Safety protocols |
+| **Hooks** | Automation Triggers | Execute shell commands on events (pre/post tool calls) | Circuit breakers |
+| **Plugins** | Extensions | Packaged bundles of skills+tools+hooks for distribution | App store packages |
+| **Thinking** | Deep Reasoning | Extended thinking for complex decisions (auto-detected) | "Sleep on it" |
 
 **Core Capabilities (Built Today):**
 - **Project planning system**: For each project, creates planning files and task lists that agents follow and update-enables complex, multi-step projects to be broken down and executed systematically
@@ -75,7 +91,199 @@ Improvement Tasks Queued → System improves continuously
 
 ---
 
-## System Architecture
+## 7-Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1: PRESENTATION                                                                       │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  │ Web UI (FastAPI)     │ CLI Interface      │ REST API Endpoints                           │
+│  │ • Dark theme         │ • Direct agent     │ • JSON responses                             │
+│  │ • Real-time stream   │   invocation       │ • Webhook support                            │
+│  │ • File management    │ • Script-friendly  │ • Status endpoints                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 2: ORCHESTRATION                                                                      │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────────────────────┐ │
+│  │    GLOBAL CEO       │  │  COMPUTER POOL      │  │     WORK QUEUE SYSTEM               │ │
+│  │    (Opus 4.5)       │  │  ORCHESTRATOR       │  │                                     │ │
+│  │  + UltraThink       │  │                     │  │  Priority: CRITICAL > HIGH >        │ │
+│  │                     │  │  • Task routing     │  │            MEDIUM > LOW             │ │
+│  │  • Company-wide     │  │  • Load balancing   │  │  • Retry mechanism                  │ │
+│  │    decisions        │  │  • Health checks    │  │  • State persistence                │ │
+│  │  • Product          │  │  • Failover         │  │  • Scheduled execution              │ │
+│  │    portfolio        │  │                     │  │                                     │ │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 3: AGENT LAYER (159 Agents: C-Suite → Directors → Specialists)                        │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                           PEER-TO-PEER MIXTURE OF EXPERTS                             │  │
+│  │       ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐               │  │
+│  │       │ Backend  │◄───►│ Frontend │◄───►│   QA     │◄───►│ Security │               │  │
+│  │       │   Dev    │     │   Dev    │     │ Engineer │     │ Engineer │               │  │
+│  │       └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘               │  │
+│  │  KEY: Any agent can call ANY other agent! Not limited by hierarchy.                  │  │
+│  └──────────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 4: CONTEXT & MEMORY                                                                   │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  MEMORY HIERARCHY:                                                                          │
+│  1. Enterprise: ~/.claude/CLAUDE.md          (Global conventions, team standards)          │
+│  2. Project: .claude/CLAUDE.md               (Project-specific patterns, tech stack)       │
+│  3. Directory: subdirs/.claude/CLAUDE.md     (Module-specific context)                     │
+│  4. Session: in-memory + transcript.jsonl    (Current conversation)                        │
+│  5. Knowledge Store: .proto/planning/        (Persistent learnings, patterns)              │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 5: SKILLS, RULES & HOOKS                                                              │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────────────┐ │
+│  │   SKILLS (Expertise) │  │   RULES (Guardrails) │  │      HOOKS (Automation)          │ │
+│  │  Auto-activated      │  │  Enforced policies   │  │  Deterministic triggers          │ │
+│  │  • code-review       │  │  • No secrets        │  │  • PreToolCall: validate/block   │ │
+│  │  • security-audit    │  │  • Always test       │  │  • PostToolCall: verify/notify   │ │
+│  │  • test-writing      │  │  • OWASP compliance  │  │  • OnError: recover/alert        │ │
+│  └──────────────────────┘  └──────────────────────┘  └──────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 6: TOOLS & MCP                                                                        │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  BUILT-IN TOOLS (16+): Bash, Edit, Read, Write, Glob, Grep, Git, Computer, Screenshot      │
+│  MCP SERVERS: Database (sqlite), Browser (playwright), Git (github), Email (sendgrid)      │
+│  LSP INTEGRATION: Go-to-definition, Find references, Hover docs, Real-time type errors     │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 7: INFRASTRUCTURE                                                                     │
+│  ─────────────────────────────────────────────────────────────────────────────────────────  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
+│  │   RELIABILITY     │  │    LOGGING       │  │   PERSISTENCE    │  │    MESSAGE BUS   │   │
+│  │  • Circuit        │  │  4 Streams:      │  │  • .proto/       │  │  • Redis Pub/Sub │   │
+│  │    breakers       │  │  - sessions      │  │    planning/     │  │  • Task assign   │   │
+│  │  • Retry w/       │  │  - errors        │  │  • Knowledge     │  │  • Heartbeat     │   │
+│  │    backoff        │  │  - tools         │  │    Store         │  │  • Knowledge     │   │
+│  │  • Checkpoints    │  │  - system        │  │  • Git commits   │  │    sync          │   │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Multi-Computer Architecture
+
+The "company factory" vision - Global CEO coordinates multiple computers:
+
+```
+                              ┌──────────────────┐
+                              │   GLOBAL CEO     │ ◄─── Opus 4.5 + UltraThink
+                              │   (Coordinator)  │      Sees ALL products
+                              └────────┬─────────┘      Makes company-wide decisions
+                                       │
+     ┌─────────────────────────────────┼─────────────────────────────────┐
+     ▼                                 ▼                                 ▼
+ ┌──────────┐                    ┌──────────┐                    ┌──────────┐
+ │ COMPUTER │                    │ COMPUTER │                    │ COMPUTER │
+ │    1     │                    │    2     │                    │    N     │
+ │  (Mac)   │                    │(Hetzner) │                    │ (Cloud)  │
+ │          │                    │          │                    │          │
+ │Product A │                    │Product B │                    │ Shared   │
+ │  Team    │                    │  Team    │                    │  Infra   │
+ └────┬─────┘                    └────┬─────┘                    └────┬─────┘
+      │                               │                               │
+      └───────────────────────────────┼───────────────────────────────┘
+                                      │
+                                      ▼
+                        ┌────────────────────────┐
+                        │     MESSAGE BUS        │
+                        │     (Redis/NATS)       │
+                        │                        │
+                        │ • task_assign          │
+                        │ • task_complete        │
+                        │ • knowledge_sync       │
+                        │ • heartbeat            │
+                        └───────────┬────────────┘
+                                    │
+                     ┌──────────────┴──────────────┐
+                     ▼                             ▼
+               ┌───────────┐                ┌───────────┐
+               │  SHARED   │                │  REVENUE  │
+               │ KNOWLEDGE │                │  ENGINE   │
+               │   HUB     │                │           │
+               │           │                │ - Stripe  │
+               │- Patterns │                │ - Metrics │
+               │- Rules    │                │           │
+               └───────────┘                └───────────┘
+```
+
+---
+
+## Complete Request Flow
+
+How a request moves through the entire system (9 steps):
+
+```
+USER REQUEST: "Build authentication system with tests"
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 1. SMART SELECTION (Haiku classifier ~$0.001)                          │
+│    "Build auth system" → Strategic task → Opus 4.5 + 10K thinking     │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 2. CONTEXT - Load CLAUDE.md → "We use FastAPI + React + pytest"       │
+│            - Knowledge Store → "JWT worked well in last project"      │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 3. SKILLS - "authentication" detected → loads auth-patterns SKILL.md  │
+│           - "tests" detected → loads test-generation SKILL.md         │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 4. RULES - ✓ "no-secrets" rule loaded                                  │
+│          - ✓ "always-test" rule loaded                                 │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 5. SUBAGENTS (Peer-to-peer delegation)                                 │
+│    Backend Dev ──► Security Engineer ──► Frontend Dev ──► QA Engineer │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 6. TOOLS - PRE-HOOK (lint) → TOOL (Edit) → POST-HOOK (typecheck)      │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 7. MCP - playwright → Browser testing | github → Create PR            │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 8. KNOWLEDGE CAPTURE - Success patterns, decisions, failure lessons   │
+└───────────────────────────────────┼───────────────────────────────────┘
+                                    │
+┌───────────────────────────────────┼───────────────────────────────────┐
+│ 9. RESULT - ✅ Auth built ✅ Tests passing ✅ Knowledge captured       │
+└───────────────────────────────────┴───────────────────────────────────┘
+```
+
+---
+
+## System Architecture (Detailed)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -292,7 +500,7 @@ def execute_action(action):
 **Gated by default:**
 - Publishing to social media, websites
 - Spending money (API calls above threshold)
-- Creating/modifying accounts
+- Creating/modify=ing accounts
 - Deploying to production
 
 ### Audit Log
@@ -489,6 +697,107 @@ How Proto runs a business end-to-end:
 ```
 
 This is the end state: Proto runs complete business operations with minimal human involvement.
+
+---
+
+## Key Design Principles
+
+1. **Intelligent Delegation**
+   - CEO orchestrates, specialists execute
+   - Any agent can call any specialist when needed (peer-to-peer)
+   - Always delegate to the domain expert
+
+2. **Dual-Structure Organization**
+   - Planning/meta in `.proto/planning/`
+   - Actual code in project root
+   - Clear separation of concerns
+
+3. **Hybrid Context Model**
+   - Shared knowledge layer (CLAUDE.md, Knowledge Store, Rules)
+   - Isolated execution contexts for subagents
+   - Lead agent synthesizes summaries
+
+4. **Deterministic + Intelligent**
+   - Hooks for guaranteed automation
+   - Skills for intelligent adaptation
+   - Rules for policy enforcement
+
+5. **Self-Improvement**
+   - Automatic knowledge capture
+   - Background pattern mining
+   - Improvement task generation
+
+6. **Fault Tolerance**
+   - Circuit breakers on API calls
+   - Retry with exponential backoff
+   - Checkpointing for recovery
+
+7. **Human as Last Resort**
+   - System does everything it can autonomously
+   - Humans only for legal/physical/regulatory blocks
+
+---
+
+## Reliability Patterns
+
+Production-grade reliability built into the system:
+
+**Circuit Breaker:**
+```
+CLOSED ────────► OPEN ────────► HALF_OPEN
+  │                │                │
+(normal)      (blocking)       (testing)
+  │                │                │
+5 failures      60s wait       1 success
+in 1 min       cooldown        → CLOSED
+```
+
+**Retry with Exponential Backoff:**
+```
+Attempt 1 → Fail → Wait 1s
+Attempt 2 → Fail → Wait 2s
+Attempt 3 → Fail → Wait 4s (+ jitter)
+Attempt 4 → Success!
+```
+
+| Pattern | Purpose |
+|---------|---------|
+| **Circuit Breaker** | Prevent cascade failures |
+| **Retry with Backoff** | Handle transient errors |
+| **Checkpointing** | State recovery after crashes |
+| **Health Monitoring** | Service status tracking |
+| **Dead Letter Queue** | Failed task handling |
+
+---
+
+## Directory Structure
+
+```
+projects/{project-name}/
+├── .proto/planning/                 # Planning & Meta
+│   ├── tasks.json                  # Task state & dependencies
+│   ├── project_overview.md         # High-level description
+│   ├── requirements.md             # Detailed requirements
+│   ├── technical_spec.md           # Technical specifications
+│   ├── agents/                     # Specialist-specific plans
+│   └── knowledge/                  # KnowledgeStore
+│       ├── technical_decision/
+│       ├── learning/
+│       ├── pattern/
+│       └── best_practice/
+└── [Actual Project Files]          # src/, docs/, tests/
+
+~/.proto/                            # Global system state
+├── daemon/work_queue.json          # Pending/active work
+├── company/portfolio.json          # Products and assignments
+└── computers/registry.json         # Known computers
+
+.claude/                             # Project configuration
+├── CLAUDE.md                       # Project conventions
+├── hooks.json                      # Automation hooks
+├── rules/                          # Policy guardrails
+└── skills/                         # Auto-activated expertise
+```
 
 ---
 

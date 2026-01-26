@@ -142,6 +142,13 @@
 
 After documentation review is complete, generate these files:
 
+### Business Infrastructure (Do First)
+- [ ] Buy domain (proto.works or chosen alternative)
+- [ ] Configure email forwarding (nir@proto.works)
+- [ ] Set up professional email signature
+- [ ] Create/export logo files → `assets/logo/`
+- [ ] Create brand assets (color palette, fonts) → `assets/brand/`
+
 ### Videos
 - [ ] Record 90-sec highlight video → `demo/demo_90s_highlight.mp4`
 - [ ] Record 5-min walkthrough → `demo/demo_5min_walkthrough.mp4`
@@ -152,7 +159,6 @@ After documentation review is complete, generate these files:
 - [ ] Capture high-quality screenshots → `demo/screenshots/`
 
 ### Graphics
-- [ ] Create/export logo files → `assets/logo/`
 - [ ] Create hybrid model diagram → `assets/graphics/hybrid_model.png`
 - [ ] Create architecture diagram → `assets/graphics/architecture_diagram.png`
 - [ ] Create compounding diagram → `assets/graphics/compounding_diagram.png`

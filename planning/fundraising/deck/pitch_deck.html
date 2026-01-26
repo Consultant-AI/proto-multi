@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proto - The Autonomous Company Factory</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #161616;
+            --border: #222222;
+            --text-primary: #f5f5f5;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+            --accent: #4a9eff;
+            --accent-dim: rgba(74, 158, 255, 0.08);
+            --accent-glow: rgba(74, 158, 255, 0.2);
+            --cyan: #6cb6ff;
+            --yellow: #e5a635;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Grid background */
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background:
+                linear-gradient(90deg, var(--border) 1px, transparent 1px),
+                linear-gradient(var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-position: -1px -1px;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 80px 120px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .slide-content {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 96px;
+            font-weight: 700;
+            letter-spacing: -4px;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: 64px;
+            font-weight: 600;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 48px;
+        }
+
+        h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+
+        p {
+            font-size: 24px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 800px;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Accent text */
+        .accent {
+            color: var(--accent);
+        }
+
+        .cyan {
+            color: var(--cyan);
+        }
+
+        .dim {
+            color: var(--text-muted);
+        }
+
+        /* Title slide */
+        .tagline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+        }
+
+        .meta {
+            position: absolute;
+            bottom: 80px;
+            left: 120px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Big numbers */
+        .stat {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 120px;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-primary);
+        }
+
+        .stat-number.accent {
+            color: var(--accent);
+            text-shadow: 0 0 60px var(--accent-glow);
+        }
+
+        .stat-label {
+            font-size: 24px;
+            color: var(--text-secondary);
+        }
+
+        /* Comparison */
+        .vs-container {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+            margin: 48px 0;
+        }
+
+        .vs-item {
+            text-align: left;
+        }
+
+        .vs-divider {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            color: var(--text-muted);
+            padding: 0 24px;
+        }
+
+        /* Boxes */
+        .box {
+            border: 1px solid var(--border);
+            padding: 32px;
+            margin: 24px 0;
+            background: var(--bg-secondary);
+        }
+
+        .box.accent-border {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .box p {
+            color: var(--text-primary);
+            font-size: 28px;
+            margin: 0;
+        }
+
+        /* Grid layouts */
+        .grid {
+            display: grid;
+            gap: 2px;
+            margin: 32px 0;
+        }
+
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .grid-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 32px;
+        }
+
+        .grid-item h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .grid-item p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .grid-item.highlight {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        /* Lists */
+        .list {
+            margin: 32px 0;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-marker {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--accent);
+            min-width: 24px;
+        }
+
+        .list-content {
+            font-size: 22px;
+            color: var(--text-secondary);
+        }
+
+        .list-content strong {
+            color: var(--text-primary);
+        }
+
+        /* Two columns */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+        }
+
+        .col-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .col-header.green { color: var(--accent); border-color: var(--accent); }
+        .col-header.yellow { color: var(--yellow); border-color: var(--yellow); }
+
+        /* Architecture */
+        .arch {
+            margin: 32px 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .arch-level {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 8px 0;
+        }
+
+        .arch-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 16px 32px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .arch-box.primary {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .arch-connector {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 20px;
+            margin: 4px 0;
+        }
+
+        /* Flow */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flow-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 20px 28px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .flow-item.accent {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .flow-arrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            color: var(--text-muted);
+        }
+
+        /* Demo */
+        .demo-frame {
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            padding: 80px;
+            text-align: center;
+            margin: 32px 0;
+        }
+
+        .demo-frame .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+        }
+
+        .demo-frame .main {
+            font-size: 32px;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .demo-frame .sub {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        /* Ask grid */
+        .ask-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2px;
+            margin: 40px 0;
+        }
+
+        .ask-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 40px;
+        }
+
+        .ask-item .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .ask-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 48px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .ask-item .detail {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 32px 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .data-table th {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 1px;
+        }
+
+        .data-table td {
+            font-size: 18px;
+            color: var(--text-secondary);
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td:first-child {
+            color: var(--text-primary);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .nav-dot:hover {
+            background: var(--text-secondary);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 40px;
+            right: 120px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .controls-hint {
+            position: fixed;
+            bottom: 40px;
+            left: 120px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Terminal style quote */
+        .terminal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 32px;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 32px 0;
+        }
+
+        .terminal-line {
+            display: flex;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .terminal-prompt {
+            color: var(--accent);
+        }
+
+        .terminal-text {
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .slide { padding: 60px 80px; }
+            h1 { font-size: 72px; }
+            h2 { font-size: 48px; }
+            .stat-number { font-size: 80px; }
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+
+        <!-- SLIDE 1: Title -->
+        <div class="slide active" data-slide="1">
+            <div class="slide-content">
+                <h3>PRE-SEED</h3>
+                <h1>PROTO</h1>
+                <p class="tagline">THE AUTONOMOUS COMPANY FACTORY</p>
+                <div class="meta">Nir Feinstein / January 2026</div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: The Opportunity -->
+        <div class="slide" data-slide="2">
+            <div class="slide-content">
+                <h3>THE OPPORTUNITY</h3>
+                <h2>Software is eating labor.</h2>
+
+                <div style="display: flex; align-items: baseline; gap: 48px; margin: 48px 0;">
+                    <div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 80px; font-weight: 700; color: var(--text-primary);">$600B</div>
+                        <div style="font-size: 18px; color: var(--text-secondary);">Software market</div>
+                    </div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; color: var(--text-muted);">vs</div>
+                    <div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 80px; font-weight: 700; color: var(--accent);">$90T</div>
+                        <div style="font-size: 18px; color: var(--text-secondary);">Labor market</div>
+                    </div>
+                </div>
+
+                <div class="box accent-border">
+                    <p>We're not competing with software. We're replacing labor.</p>
+                </div>
+
+                <p style="margin-top: 32px;">12-24 months to capability threshold. All components exist.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: The Prize -->
+        <div class="slide" data-slide="3">
+            <div class="slide-content">
+                <h3>THE PRIZE</h3>
+                <h2>The compounding machine.</h2>
+
+                <svg viewBox="0 0 800 220" style="width: 100%; max-width: 800px; margin: 24px auto;">
+                    <defs>
+                        <marker id="arrow" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                            <polygon points="0 0, 6 2.5, 0 5" fill="#444"/>
+                        </marker>
+                        <marker id="arrowB" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+                            <polygon points="0 0, 6 2.5, 0 5" fill="#4a9eff"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Flow boxes -->
+                    <rect x="10" y="70" width="110" height="48" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
+                    <text x="65" y="99" fill="#888" font-family="JetBrains Mono" font-size="11" text-anchor="middle">Business</text>
+
+                    <rect x="160" y="70" width="110" height="48" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
+                    <text x="215" y="99" fill="#888" font-family="JetBrains Mono" font-size="11" text-anchor="middle">Revenue</text>
+
+                    <rect x="310" y="70" width="110" height="48" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
+                    <text x="365" y="99" fill="#888" font-family="JetBrains Mono" font-size="11" text-anchor="middle">Data</text>
+
+                    <rect x="460" y="70" width="130" height="48" fill="#161616" stroke="#6cb6ff" stroke-width="1"/>
+                    <text x="525" y="99" fill="#6cb6ff" font-family="JetBrains Mono" font-size="11" text-anchor="middle">Better System</text>
+
+                    <rect x="630" y="70" width="130" height="48" fill="#161616" stroke="#4a9eff" stroke-width="1"/>
+                    <text x="695" y="91" fill="#4a9eff" font-family="JetBrains Mono" font-size="10" text-anchor="middle">MORE</text>
+                    <text x="695" y="105" fill="#4a9eff" font-family="JetBrains Mono" font-size="10" text-anchor="middle">BUSINESSES</text>
+
+                    <!-- Arrows between boxes -->
+                    <line x1="120" y1="94" x2="155" y2="94" stroke="#444" stroke-width="1" marker-end="url(#arrow)"/>
+                    <line x1="270" y1="94" x2="305" y2="94" stroke="#444" stroke-width="1" marker-end="url(#arrow)"/>
+                    <line x1="420" y1="94" x2="455" y2="94" stroke="#444" stroke-width="1" marker-end="url(#arrow)"/>
+                    <line x1="590" y1="94" x2="625" y2="94" stroke="#4a9eff" stroke-width="1" marker-end="url(#arrowB)"/>
+
+                    <!-- Feedback loop -->
+                    <path d="M 695 118 Q 695 170, 400 170 Q 65 170, 65 118" fill="none" stroke="#4a9eff" stroke-width="1" stroke-dasharray="3,2"/>
+                    <polygon points="65,125 62,118 68,118" fill="#4a9eff"/>
+
+                    <!-- Loop label -->
+                    <text x="400" y="198" fill="#555" font-family="JetBrains Mono" font-size="9" text-anchor="middle">COMPOUNDING LOOP</text>
+
+                    <!-- Multiplier -->
+                    <text x="695" y="52" fill="#4a9eff" font-family="JetBrains Mono" font-size="16" text-anchor="middle">×N</text>
+                </svg>
+
+                <div class="box accent-border" style="margin-top: 24px;">
+                    <p>Run one business autonomously → run hundreds.</p>
+                </div>
+
+                <p style="margin-top: 24px;">First autonomous company system = compounding money machine.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: What Proto Is -->
+        <div class="slide" data-slide="4">
+            <div class="slide-content">
+                <h3>THE PRODUCT</h3>
+                <h2>What Proto is.</h2>
+
+                <div class="two-col">
+                    <div class="col">
+                        <div class="col-header green">BUILT TODAY</div>
+                        <div class="list">
+                            <div class="list-item">
+                                <span class="list-marker">01</span>
+                                <span class="list-content"><strong>159 specialist agents</strong> organized like a company</span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">02</span>
+                                <span class="list-content"><strong>Project planning system</strong> for complex work</span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">03</span>
+                                <span class="list-content"><strong>Cross-platform</strong> Mac + cloud Linux</span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">04</span>
+                                <span class="list-content"><strong>Real computer use</strong> files, terminal, GUI, browser</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="col-header yellow">ON ROADMAP</div>
+                        <div class="list">
+                            <div class="list-item">
+                                <span class="list-marker">→</span>
+                                <span class="list-content">Multi-computer orchestration</span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">→</span>
+                                <span class="list-content">Self-improvement systems</span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">→</span>
+                                <span class="list-content">Hybrid human delegation</span>
+                            </div>
+                        </div>
+                        <div class="box" style="margin-top: 24px;">
+                            <p style="font-size: 20px;">This isn't a concept. It's built.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Demo -->
+        <div class="slide" data-slide="5">
+            <div class="slide-content">
+                <h3>DEMONSTRATION</h3>
+                <h2>See it work.</h2>
+
+                <div class="demo-frame">
+                    <div class="label">LIVE DEMO</div>
+                    <div class="main">Complex task → Multi-agent coordination → Output</div>
+                    <div class="sub">90-second demonstration</div>
+                </div>
+
+                <div class="terminal">
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span class="terminal-text">proto "Build authentication system with tests"</span>
+                    </div>
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">→</span>
+                        <span class="terminal-text">CEO delegating to Backend Dev, Security Engineer, QA...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Business Model -->
+        <div class="slide" data-slide="6">
+            <div class="slide-content">
+                <h3>BUSINESS MODEL</h3>
+                <h2>We run businesses.</h2>
+
+                <div class="box accent-border" style="margin-bottom: 40px;">
+                    <p>Proto is not SaaS. We operate autonomous companies.</p>
+                </div>
+
+                <div class="grid grid-3">
+                    <div class="grid-item">
+                        <h4>SAAS</h4>
+                        <p>Build and operate software products</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>AGENCIES</h4>
+                        <p>Marketing, dev, design services</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>CONTENT</h4>
+                        <p>Media, publishing, courses</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>E-COMMERCE</h4>
+                        <p>Product sourcing and sales</p>
+                    </div>
+                    <div class="grid-item">
+                        <h4>FREELANCE</h4>
+                        <p>Professional services at scale</p>
+                    </div>
+                    <div class="grid-item highlight">
+                        <h4>PHYSICAL + AI</h4>
+                        <p>AI hires humans when needed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Hybrid Model -->
+        <div class="slide" data-slide="7">
+            <div class="slide-content">
+                <h3>ON ROADMAP</h3>
+                <h2>The hybrid model.</h2>
+
+                <p style="margin-bottom: 32px;">When full automation isn't possible, Proto uses hybrid approaches.</p>
+
+                <table class="data-table" style="max-width: 800px;">
+                    <tr>
+                        <th style="width: 35%;">MODEL</th>
+                        <th>HOW IT WORKS</th>
+                    </tr>
+                    <tr>
+                        <td>AI does everything</td>
+                        <td class="dim">Fully automated end-to-end</td>
+                    </tr>
+                    <tr>
+                        <td>AI hires people</td>
+                        <td class="dim">Proto recruits and manages humans</td>
+                    </tr>
+                    <tr>
+                        <td>AI delegates</td>
+                        <td class="dim">Break down work, assign, synthesize</td>
+                    </tr>
+                    <tr>
+                        <td>Humans review</td>
+                        <td class="dim">AI executes, humans approve</td>
+                    </tr>
+                </table>
+
+                <div class="box accent-border" style="margin-top: 40px;">
+                    <p>The unlock: right playbook + specialized agent for each situation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Market Gap -->
+        <div class="slide" data-slide="8">
+            <div class="slide-content">
+                <h3>MARKET GAP</h3>
+                <h2>Everyone builds silos.</h2>
+
+                <div class="two-col">
+                    <div class="col">
+                        <div class="col-header" style="color: var(--text-muted); border-color: var(--text-muted);">CURRENT AGENTS</div>
+                        <p style="font-size: 16px; margin-bottom: 24px;">40% of enterprise apps have agents — all domain silos</p>
+                        <table class="data-table">
+                            <tr><td>Cursor, Claude Code</td><td class="dim">only code</td></tr>
+                            <tr><td>Apollo, Clay</td><td class="dim">only sales</td></tr>
+                            <tr><td>Harvey</td><td class="dim">only legal</td></tr>
+                            <tr><td>Torq</td><td class="dim">only security</td></tr>
+                        </table>
+                    </div>
+                    <div class="col">
+                        <div class="col-header green">WHAT'S MISSING</div>
+                        <div class="list">
+                            <div class="list-item">
+                                <span class="list-marker">×</span>
+                                <span class="list-content"><strong>Cross-domain coordination</strong><br><span style="color: var(--text-muted);">They don't talk to each other</span></span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">×</span>
+                                <span class="list-content"><strong>Self-improvement</strong><br><span style="color: var(--text-muted);">Each task makes Proto better at ALL tasks</span></span>
+                            </div>
+                            <div class="list-item">
+                                <span class="list-marker">×</span>
+                                <span class="list-content"><strong>Full autonomy goal</strong><br><span style="color: var(--text-muted);">Run businesses, not just tasks</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: Team + Why Now -->
+        <div class="slide" data-slide="9">
+            <div class="slide-content">
+                <h3>TEAM + TIMING</h3>
+                <h2>Why now. Why me.</h2>
+
+                <div class="grid grid-2" style="margin-bottom: 40px;">
+                    <div class="grid-item highlight">
+                        <h4>SOLO BUILDER</h4>
+                        <p>Built entire stack: backend, frontend, agent orchestration, cross-platform infrastructure. All working.</p>
+                    </div>
+                    <div class="grid-item highlight">
+                        <h4>FIRST PRINCIPLES</h4>
+                        <p>Started with end goal (autonomous companies), broke it down, built each piece systematically.</p>
+                    </div>
+                </div>
+
+                <div class="box accent-border">
+                    <p style="font-size: 24px;"><strong>The window:</strong> Models work. Computer use works. Massive resources flowing in. Gap in the market.</p>
+                </div>
+
+                <p style="margin-top: 32px;">First system with real self-improvement compounds. That's the moat.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: The Ask -->
+        <div class="slide" data-slide="10">
+            <div class="slide-content">
+                <h3>THE ASK</h3>
+                <h2>Investment terms.</h2>
+
+                <div class="ask-grid">
+                    <div class="ask-item">
+                        <div class="label">RAISING</div>
+                        <div class="value">$500K</div>
+                        <div class="detail">Close A → $1.5M Close B</div>
+                    </div>
+                    <div class="ask-item">
+                        <div class="label">TERMS</div>
+                        <div class="value">$5M</div>
+                        <div class="detail">Post-Money SAFE</div>
+                    </div>
+                    <div class="ask-item">
+                        <div class="label">USE OF FUNDS</div>
+                        <div class="value">12mo</div>
+                        <div class="detail">Founder + 2 Engineers + Compute</div>
+                    </div>
+                    <div class="ask-item">
+                        <div class="label">MILESTONES</div>
+                        <div class="value" style="font-size: 24px;">Self-improve → Mastery → Autonomous</div>
+                        <div class="detail">Domain mastery, then autonomous operation</div>
+                    </div>
+                </div>
+
+                <div class="box accent-border" style="margin-top: 40px;">
+                    <p style="font-size: 24px;">Looking for investors who see the opportunity in autonomous companies.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: End -->
+        <div class="slide" data-slide="11">
+            <div class="slide-content" style="text-align: center;">
+                <h3>CONTACT</h3>
+                <h1 style="font-size: 72px;">Questions?</h1>
+                <p class="tagline" style="margin-top: 32px;">nir@proto.ai</p>
+                <p style="margin-top: 80px; font-size: 16px; color: var(--text-muted);">PROTO / THE AUTONOMOUS COMPANY FACTORY</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav" id="nav"></div>
+    <div class="slide-counter" id="counter">01/11</div>
+    <div class="controls-hint">← → navigate</div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const nav = document.getElementById('nav');
+        const counter = document.getElementById('counter');
+        let currentSlide = 0;
+
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.addEventListener('click', () => goToSlide(i));
+            nav.appendChild(dot);
+        });
+
+        function goToSlide(index) {
+            slides[currentSlide].classList.remove('active');
+            nav.children[currentSlide].classList.remove('active');
+
+            currentSlide = index;
+            if (currentSlide < 0) currentSlide = slides.length - 1;
+            if (currentSlide >= slides.length) currentSlide = 0;
+
+            slides[currentSlide].classList.add('active');
+            nav.children[currentSlide].classList.add('active');
+            counter.textContent = `${String(currentSlide + 1).padStart(2, '0')}/${slides.length}`;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                goToSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft') {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-dot')) return;
+            if (e.clientX > window.innerWidth / 2) {
+                goToSlide(currentSlide + 1);
+            } else {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) goToSlide(currentSlide + 1);
+                else goToSlide(currentSlide - 1);
+            }
+        });
+    </script>
+</body>
+</html>
