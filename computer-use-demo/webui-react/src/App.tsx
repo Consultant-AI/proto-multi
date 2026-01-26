@@ -40,13 +40,27 @@ function App() {
     fetchComputers()
   }, [])
 
+  // Constrain chat width when window is resized
+  useEffect(() => {
+    const handleResize = () => {
+      setChatWidth(prev => {
+        const maxWidth = window.innerWidth - 200 - 5
+        return Math.min(prev, maxWidth)
+      })
+    }
+    // Constrain on initial load
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const handleChatResize = (deltaX: number) => {
     setChatWidth(prev => {
       // Dragging right = chat gets smaller (negative delta for chat)
       const newWidth = prev - deltaX
-      // Ensure chat is at least 280px and leaves at least 300px for viewer
-      const maxWidth = window.innerWidth - 300 - 5 // 5px for resizer
-      return Math.max(280, Math.min(maxWidth, newWidth))
+      // Ensure chat is at least 200px and leaves at least 200px for viewer
+      const maxWidth = window.innerWidth - 200 - 5 // 5px for resizer
+      return Math.max(200, Math.min(maxWidth, newWidth))
     })
   }
 
@@ -74,7 +88,7 @@ function App() {
 
       {/* Chat Panel */}
       {chatVisible && (
-        <div className="chat-panel" style={viewerVisible ? { width: `${chatWidth}px` } : {}}>
+        <div className={`chat-panel ${!viewerVisible ? 'chat-expanded' : ''}`} style={viewerVisible ? { width: `${chatWidth}px` } : {}}>
           <Chat
             viewerVisible={viewerVisible}
             onToggleViewer={() => setViewerVisible(!viewerVisible)}

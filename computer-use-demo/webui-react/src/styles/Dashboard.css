@@ -86,6 +86,29 @@
   box-sizing: border-box;
 }
 
+/* Responsive grid for smaller widths */
+@media (max-width: 1200px) {
+  .dashboard-content {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard {
+    padding: 16px;
+  }
+}
+
 .dashboard-section {
   display: flex;
   flex-direction: column;

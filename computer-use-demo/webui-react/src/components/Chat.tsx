@@ -361,7 +361,7 @@ export default function Chat({
   return (
     <div className="chat">
       {/* Header */}
-      <div className="chat-header" onDoubleClick={handleHeaderDoubleClick}>
+      <div className={`chat-header ${!viewerVisible ? 'viewer-hidden' : ''}`} onDoubleClick={handleHeaderDoubleClick}>
         <div className="chat-header-left">
           {!viewerVisible && (
             <button
@@ -374,13 +374,13 @@ export default function Chat({
               <PanelLeftOpen size={18} />
             </button>
           )}
-          <div className="chat-agent-info">
+          <div className={`chat-agent-info ${!viewerVisible ? 'viewer-hidden' : ''}`}>
             <div className="chat-agent-name">
               {messages.length > 0 ? messages[0].content : 'New conversation'}
             </div>
           </div>
         </div>
-        <div className="chat-header-right">
+        <div className={`chat-header-right ${!viewerVisible ? 'viewer-hidden' : ''}`}>
           <SessionHistory
             onLoadSession={handleLoadSession}
             refreshTrigger={sessionRefreshTrigger}

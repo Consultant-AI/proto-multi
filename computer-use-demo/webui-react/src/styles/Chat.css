@@ -41,6 +41,10 @@
   -webkit-app-region: drag; /* Make header draggable for Electron window */
 }
 
+.chat-header.viewer-hidden {
+  padding-left: 80px; /* Extra left padding for macOS traffic lights when viewer is hidden */
+}
+
 .chat-header-left {
   display: flex;
   align-items: center;
@@ -50,6 +54,7 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  max-width: calc(100% - 200px);
 }
 
 .chat-header-right {
@@ -60,6 +65,7 @@
   z-index: 100;
   flex-shrink: 0;
 }
+
 
 .chat-header h2 {
   font-size: 16px;
@@ -96,6 +102,10 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
+}
+
+.chat-agent-info.viewer-hidden {
+  max-width: 120px;
 }
 
 .chat-agent-icon {

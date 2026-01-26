@@ -11,8 +11,8 @@ function createWindow() {
     height,
     x: 0,
     y: 0,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth: 200,
+    minHeight: 200,
     webPreferences: {
       webviewTag: true,  // Enable <webview> for embedding browsers
       nodeIntegration: true,
