@@ -1,0 +1,22 @@
+{
+  "include": [
+    "computer_use_demo"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    "venv",
+    ".venv",
+    "dist",
+    "build"
+  ],
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Darwin",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "useLibraryCodeForTypes": true,
+  "venvPath": ".",
+  "venv": ".venv"
+}
