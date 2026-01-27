@@ -20,7 +20,8 @@ Would you consider coming in at $[25K/50K]? That's [specific deliverable-e.g., "
 
 Happy to hop on a quick call this week to finalize.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -38,7 +39,8 @@ This was the proof point you mentioned needing. Round is [X]% allocated, targeti
 
 Would you consider $[amount]? Ready to send the SAFE this week if you're in.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -58,7 +60,8 @@ I'm formally asking: want to come in on this round?
 
 If yes, I can send the SAFE this week. If you need something else to decide, let me know what it is.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -77,7 +80,8 @@ Where are you at on Proto? Happy to:
 
 Just want to know where we stand so I can plan accordingly.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 

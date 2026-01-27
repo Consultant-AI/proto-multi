@@ -151,4 +151,4 @@ The first system with real self-improvement compounds-every business makes it be
 
 ---
 
-**Contact:** me@nirfeinste.in | **Demo:** [90-sec video link] | **Calendly:** [scheduling link]
+**Contact:** nir@proto.works | **Demo:** [90-sec video link] | **Calendly:** [scheduling link]

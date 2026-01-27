@@ -18,7 +18,8 @@ I'm building that system. Proto coordinates specialist AI agents to run business
 
 Raising $500K pre-seed. Would you consider a 20-min call?
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -41,7 +42,8 @@ Raising $500K to hire 2 engineers and cross the reliability threshold.
 
 Happy to do a 20-min call if this is in your wheelhouse.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -63,7 +65,8 @@ What changes at the threshold: instead of selling software, we spawn companies. 
 
 Would love 20 minutes to talk through the thesis if it resonates.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 

@@ -178,6 +178,8 @@
 - "Here's exactly where it goes: me full-time, two senior engineers, aggressive compute."
 - "Looking for investors who see the opportunity in autonomous companies."
 
+**Contact:** nir@proto.works | **Demo:** [90-sec video link]
+
 ---
 
 ## APPENDIX

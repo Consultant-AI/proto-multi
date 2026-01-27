@@ -52,4 +52,4 @@ All components exist: model capability, computer use, orchestration frameworks. 
 
 ---
 
-**Contact:** me@nirfeinste.in | **Demo:** [90-sec video link]
+**Contact:** nir@proto.works | **Demo:** [90-sec video link]

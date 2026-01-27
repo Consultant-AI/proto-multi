@@ -35,7 +35,8 @@ One-pager: [link]
 
 Raising $500K pre-seed. Worth a 20-min call?
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 

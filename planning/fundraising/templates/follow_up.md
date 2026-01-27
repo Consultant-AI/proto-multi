@@ -33,7 +33,8 @@ Would you consider coming in at $[25K/50K/amount discussed]? That's [what this s
 What does your timeline look like for making a decision?
 
 Talk soon,
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -53,7 +54,8 @@ Also attached:
 
 Happy to schedule a technical deep-dive call if that's helpful.
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 
@@ -69,7 +71,8 @@ Thinking more about [concern they raised].
 
 I understand this is a real consideration. Happy to discuss further or connect you with [reference who can speak to this].
 
-[Your name]
+Nir Feinstein
+nir@proto.works
 
 ---
 

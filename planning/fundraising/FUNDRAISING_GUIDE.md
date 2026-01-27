@@ -1240,7 +1240,7 @@ Would you be open to a 20-minute call? Happy to share our 90-sec demo.
 
 Best,
 Nir Feinstein
-me@nirfeinste.in | Demo: [link]
+nir@proto.works | Demo: [link]
 ```
 
 ### Warm Intro Template

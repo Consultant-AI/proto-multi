@@ -34,6 +34,7 @@ If you think [Investor Name] would find this interesting, happy to send you a bl
 
 Thanks,
 Nir
+nir@proto.works
 
 ---
 
