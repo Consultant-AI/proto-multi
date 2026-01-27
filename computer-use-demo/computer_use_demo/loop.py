@@ -604,6 +604,10 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
         text="".join(prompt_parts),
     )
 
+    # Track compaction retries to prevent infinite loops
+    compact_retry_count = 0
+    max_compact_retries = 2
+
     while True:
         # Check if stop was requested
         if stop_flag and stop_flag():
@@ -638,6 +642,12 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
                 only_n_most_recent_images,
                 min_removal_threshold=image_truncation_threshold,
             )
+
+        # Proactive compacting: if we have many messages (>15), compact to prevent 413 errors
+        if len(messages) > 15:
+            print(f"[Compact] Proactively compacting {len(messages)} messages to prevent request_too_large error...")
+            messages = _compact_messages(messages, keep_recent=6)
+
         extra_body = {}
         # Dynamically adjust max_tokens for thinking
         effective_max_tokens = max_tokens
@@ -721,9 +731,49 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
             api_response_callback(None, None, e)
             return messages
         except (APIStatusError, APIResponseValidationError) as e:
+            # Check if this is a "request too large" error (413)
+            status_code = getattr(e, 'status_code', None)
+            error_type = None
+            if hasattr(e, 'response') and hasattr(e.response, 'json'):
+                try:
+                    error_json = e.response.json()
+                    error_type = error_json.get('error', {}).get('type')
+                except:
+                    pass
+
+            # Automatically compact messages and retry on request_too_large (413)
+            if (status_code == 413 or error_type == 'request_too_large') and len(messages) > 4 and compact_retry_count < max_compact_retries:
+                compact_retry_count += 1
+                print(f"[Compact] Request too large error detected. Auto-compacting messages (attempt {compact_retry_count}/{max_compact_retries})...")
+                messages = _compact_messages(messages, keep_recent=4)
+                print(f"[Compact] Retrying with compacted messages...")
+                # Continue the loop to retry with compacted messages
+                continue
+            elif (status_code == 413 or error_type == 'request_too_large'):
+                print(f"[Compact] Request too large - max retries exceeded or too few messages to compact")
+                # Fall through to return error
+
             api_response_callback(e.request, e.response, e)
             return messages
         except APIError as e:
+            # Check for request_too_large in generic API errors
+            error_type = getattr(e, 'type', None) if hasattr(e, 'type') else None
+            error_body = getattr(e, 'body', {}) if hasattr(e, 'body') else {}
+            if isinstance(error_body, dict):
+                error_type = error_type or error_body.get('error', {}).get('type')
+
+            # Automatically compact messages and retry on request_too_large
+            if error_type == 'request_too_large' and len(messages) > 4 and compact_retry_count < max_compact_retries:
+                compact_retry_count += 1
+                print(f"[Compact] Request too large error detected. Auto-compacting messages (attempt {compact_retry_count}/{max_compact_retries})...")
+                messages = _compact_messages(messages, keep_recent=4)
+                print(f"[Compact] Retrying with compacted messages...")
+                # Continue the loop to retry with compacted messages
+                continue
+            elif error_type == 'request_too_large':
+                print(f"[Compact] Request too large - max retries exceeded or too few messages to compact")
+                # Fall through to return error
+
             api_response_callback(e.request, e.body, e)
             return messages
 
@@ -732,6 +782,9 @@ Remember: You're the CEO - orchestrate, delegate, and track progress in TASKS.md
         )
 
         response = raw_response.parse()
+
+        # Reset compact retry counter on successful API call
+        compact_retry_count = 0
 
         response_params = _response_to_params(response)
         messages.append(
@@ -814,6 +867,120 @@ def _maybe_filter_to_n_most_recent_images(
                         continue
                 new_content.append(content)
             tool_result["content"] = new_content
+
+
+def _compact_messages(
+    messages: list[BetaMessageParam],
+    keep_recent: int = 4,
+) -> list[BetaMessageParam]:
+    """
+    Compact older messages to reduce token usage, similar to Claude Code's auto-compact.
+    Keeps the most recent messages intact and summarizes older conversation turns.
+
+    Args:
+        messages: The full message history
+        keep_recent: Number of recent message turns to keep intact (default: 4)
+
+    Returns:
+        Compacted message list with older messages summarized
+    """
+    if len(messages) <= keep_recent:
+        return messages
+
+    # Find a safe split point that doesn't break tool_use/tool_result pairs
+    # We need to ensure that if a recent message has tool_result, we keep the previous tool_use
+    split_index = len(messages) - keep_recent
+
+    # Look back to ensure we don't split tool_use/tool_result pairs
+    # Check if the message at split_index contains tool_result blocks
+    while split_index > 0:
+        msg_at_split = messages[split_index]
+        if _has_tool_results(msg_at_split):
+            # This message has tool results, need to include previous assistant message with tool_use
+            split_index -= 1
+            # Continue checking in case there are multiple tool results
+            continue
+        break
+
+    # Ensure we always keep at least 2 messages (minimum valid conversation)
+    if split_index >= len(messages) - 2:
+        split_index = max(0, len(messages) - 2)
+
+    # Split into old (to summarize) and recent (to keep)
+    old_messages = messages[:split_index]
+    recent_messages = messages[split_index:]
+
+    # If nothing to compact, return original
+    if len(old_messages) == 0:
+        return messages
+
+    # Create a summary of old messages - only text, no tools
+    summary_parts = []
+
+    for msg in old_messages:
+        text = _extract_text_from_message(msg)
+        if text and not text.startswith("[Used tool:"):
+            role_label = "User" if msg["role"] == "user" else "Assistant"
+            # Truncate long messages
+            if len(text) > 300:
+                text = text[:300] + "..."
+            summary_parts.append(f"{role_label}: {text}")
+
+    # Create a single summary message if we have content
+    if summary_parts:
+        summary_text = "Previous conversation summary:\n\n" + "\n".join(summary_parts)
+        compacted = [
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": summary_text}],
+            }
+        ]
+    else:
+        compacted = []
+
+    # Add recent messages
+    compacted.extend(recent_messages)
+
+    print(f"[Compact] Reduced {len(messages)} messages to {len(compacted)} messages")
+
+    return compacted
+
+
+def _has_tool_results(msg: BetaMessageParam) -> bool:
+    """Check if a message contains tool_result blocks."""
+    content = msg.get("content", [])
+
+    if isinstance(content, list):
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "tool_result":
+                return True
+
+    return False
+
+
+def _extract_text_from_message(msg: BetaMessageParam) -> str:
+    """Extract text content from a message, ignoring images and tool calls."""
+    content = msg.get("content", [])
+
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        text_parts = []
+        for item in content:
+            if isinstance(item, dict):
+                if item.get("type") == "text":
+                    text_parts.append(item.get("text", ""))
+                elif item.get("type") == "tool_use":
+                    # Summarize tool use
+                    tool_name = item.get("name", "unknown")
+                    text_parts.append(f"[Used tool: {tool_name}]")
+                elif item.get("type") == "tool_result":
+                    # Skip tool results in summary to save space
+                    continue
+        return " ".join(text_parts)
+
+    return ""
 
 
 def _response_to_params(

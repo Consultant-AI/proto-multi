@@ -37,14 +37,26 @@ export default function Chat({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const websocketRef = useRef<WebSocket | null>(null)
   const toolsDropdownRef = useRef<HTMLDivElement>(null)
+  const streamingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isConnectingRef = useRef(false)
 
   // Establish persistent WebSocket connection on mount
   useEffect(() => {
     const connectWebSocket = () => {
-      // Close existing connection if any
-      if (websocketRef.current) {
-        websocketRef.current.close()
+      // Prevent multiple simultaneous connection attempts
+      if (isConnectingRef.current) {
+        console.log('[WebSocket] Already connecting, skipping...')
+        return
       }
+
+      // Close existing connection if any
+      if (websocketRef.current?.readyState === WebSocket.OPEN) {
+        console.log('[WebSocket] Already connected, skipping...')
+        return
+      }
+
+      isConnectingRef.current = true
 
       // Create WebSocket connection
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -52,12 +64,22 @@ export default function Chat({
       websocketRef.current = ws
 
       ws.onopen = () => {
-        console.log('WebSocket connected')
+        console.log('[WebSocket] Connected successfully')
+        isConnectingRef.current = false
+        // Clear any pending reconnect attempts
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current)
+          reconnectTimeoutRef.current = null
+        }
       }
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data)
+          console.log('[WebSocket] Received update:', {
+            running: data.running,
+            messageCount: data.messages?.length
+          })
 
           // Handle different message types
           if (data.messages && Array.isArray(data.messages)) {
@@ -87,6 +109,12 @@ export default function Chat({
 
             setMessages(formattedMessages)
             setIsStreaming(data.running || false)
+
+            // Clear timeout when we receive updates
+            if (!data.running && streamingTimeoutRef.current) {
+              clearTimeout(streamingTimeoutRef.current)
+              streamingTimeoutRef.current = null
+            }
           }
         } catch (error) {
           console.error('Error parsing WebSocket data:', error)
@@ -94,13 +122,22 @@ export default function Chat({
       }
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+        console.error('[WebSocket] Error:', error)
+        isConnectingRef.current = false
       }
 
-      ws.onclose = () => {
-        console.log('WebSocket closed, reconnecting in 3s...')
-        // Reconnect after 3 seconds
-        setTimeout(connectWebSocket, 3000)
+      ws.onclose = (event) => {
+        console.log('[WebSocket] Closed:', event.code, event.reason)
+        isConnectingRef.current = false
+
+        // Only reconnect if it wasn't a normal closure and no reconnect is pending
+        if (event.code !== 1000 && !reconnectTimeoutRef.current) {
+          console.log('[WebSocket] Scheduling reconnect in 3s...')
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null
+            connectWebSocket()
+          }, 3000)
+        }
       }
     }
 
@@ -135,14 +172,28 @@ export default function Chat({
 
     // Cleanup on unmount
     return () => {
-      if (websocketRef.current) {
-        websocketRef.current.close()
+      // Clear reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
       }
+      // Close WebSocket
+      if (websocketRef.current) {
+        websocketRef.current.close(1000, 'Component unmounting')
+      }
+      isConnectingRef.current = false
     }
   }, [])
 
   const handleLoadSession = async (sessionId: string) => {
     try {
+      // Clear timeout when switching sessions
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+        streamingTimeoutRef.current = null
+      }
+      setIsStreaming(false)
+
       // First switch to the session
       const switchResponse = await fetch(`/api/sessions/${sessionId}/switch`, {
         method: 'POST'
@@ -180,6 +231,13 @@ export default function Chat({
 
   const handleNewConversation = async () => {
     try {
+      // Clear timeout when creating new conversation
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+        streamingTimeoutRef.current = null
+      }
+      setIsStreaming(false)
+
       const response = await fetch('/api/sessions/new', {
         method: 'POST'
       })
@@ -245,9 +303,19 @@ export default function Chat({
     setInput('')
     setIsStreaming(true)
 
+    // Set a 2-minute timeout to prevent infinite loading
+    if (streamingTimeoutRef.current) {
+      clearTimeout(streamingTimeoutRef.current)
+    }
+    streamingTimeoutRef.current = setTimeout(() => {
+      console.error('Streaming timeout - no completion signal received within 2 minutes')
+      setIsStreaming(false)
+      streamingTimeoutRef.current = null
+    }, 120000) // 2 minutes
+
     try {
       // Send message - API returns immediately and processes in background
-      // Use agent-specific endpoint if an agent is selected
+      // WebSocket will receive all updates automatically
       const endpoint = selectedAgentId
         ? `/api/agents/${selectedAgentId}/chat`
         : '/api/messages'
@@ -261,60 +329,17 @@ export default function Chat({
         })
       })
 
-      if (!response.ok) throw new Error('Failed to send message')
-
-      // Connect to SSE stream for updates
-      const eventSource = new EventSource('/api/stream')
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data)
-
-          // Handle different message types
-          if (data.messages && Array.isArray(data.messages)) {
-            // Full messages array - update all messages including tool calls
-            const formattedMessages = data.messages.map((msg: any) => {
-              let content = ''
-
-              if (msg.role === 'user') {
-                content = msg.text || msg.content || ''
-              } else if (msg.role === 'assistant') {
-                content = msg.text || msg.content || ''
-              } else if (msg.role === 'tool') {
-                // Just use the text directly - the label/icon will show the tool name
-                content = msg.text || ''
-              }
-
-              return {
-                role: msg.role === 'tool' ? 'assistant' : msg.role,
-                content: content,
-                timestamp: new Date().toISOString(),
-                images: msg.images || [],
-                agent_name: msg.agent_name,    // ✅ Include agent identity
-                agent_role: msg.agent_role,     // ✅ Include agent role
-                label: msg.label                // ✅ Include message label (e.g., "Delegation Status")
-              }
-            })
-
-            setMessages(formattedMessages)
-            setIsStreaming(data.running || false)
-
-            if (!data.running) {
-              eventSource.close()
-            }
-          }
-        } catch (error) {
-          console.error('Error parsing SSE data:', error)
-        }
+      if (!response.ok) {
+        throw new Error('Failed to send message')
       }
 
-      eventSource.onerror = () => {
-        eventSource.close()
-        setIsStreaming(false)
-      }
-
+      // WebSocket will handle all updates - no need for SSE
     } catch (error) {
       console.error('Error sending message:', error)
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+        streamingTimeoutRef.current = null
+      }
       setIsStreaming(false)
     }
   }
@@ -322,9 +347,22 @@ export default function Chat({
   const handleStop = async () => {
     try {
       await fetch('/api/stop', { method: 'POST' })
-      setIsStreaming(false)
+
+      // Clear timeout when stopping
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+        streamingTimeoutRef.current = null
+      }
+
+      // WebSocket will receive the stopped state automatically
     } catch (error) {
       console.error('Error stopping agent:', error)
+      // Fallback: set to false locally if API call fails
+      if (streamingTimeoutRef.current) {
+        clearTimeout(streamingTimeoutRef.current)
+        streamingTimeoutRef.current = null
+      }
+      setIsStreaming(false)
     }
   }
 
