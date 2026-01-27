@@ -5,11 +5,21 @@ import Resizer from './components/Resizer'
 import './styles/App.css'
 
 function App() {
-  const [viewerVisible, setViewerVisible] = useState(true)
-  const [chatVisible, setChatVisible] = useState(true)
+  const [viewerVisible, setViewerVisible] = useState(() => {
+    const saved = localStorage.getItem('viewerVisible')
+    return saved !== null ? saved === 'true' : true
+  })
+  const [chatVisible, setChatVisible] = useState(() => {
+    const saved = localStorage.getItem('chatVisible')
+    return saved !== null ? saved === 'true' : true
+  })
   const [chatWidth, setChatWidth] = useState(() => {
     const saved = localStorage.getItem('chatWidth')
     return saved ? parseInt(saved, 10) : 420
+  })
+  const [isDarkTheme, setIsDarkTheme] = useState(() => {
+    const saved = localStorage.getItem('isDarkTheme')
+    return saved !== null ? saved === 'true' : true
   })
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>('ceo-agent')
   const [selectedComputer, setSelectedComputer] = useState('local')
@@ -19,10 +29,33 @@ function App() {
     setSelectedAgentId(agentId)
   }
 
-  // Save chat width to localStorage
+  // Apply theme to document
+  useEffect(() => {
+    if (isDarkTheme) {
+      document.documentElement.classList.remove('light-theme')
+      document.documentElement.classList.add('dark-theme')
+    } else {
+      document.documentElement.classList.remove('dark-theme')
+      document.documentElement.classList.add('light-theme')
+    }
+  }, [isDarkTheme])
+
+  // Save UI state to localStorage
   useEffect(() => {
     localStorage.setItem('chatWidth', chatWidth.toString())
   }, [chatWidth])
+
+  useEffect(() => {
+    localStorage.setItem('viewerVisible', viewerVisible.toString())
+  }, [viewerVisible])
+
+  useEffect(() => {
+    localStorage.setItem('chatVisible', chatVisible.toString())
+  }, [chatVisible])
+
+  useEffect(() => {
+    localStorage.setItem('isDarkTheme', isDarkTheme.toString())
+  }, [isDarkTheme])
 
   // Fetch computers on mount
   useEffect(() => {
@@ -74,6 +107,8 @@ function App() {
             chatVisible={chatVisible}
             onToggleChat={() => setChatVisible(!chatVisible)}
             selectedComputer={selectedComputer}
+            isDarkTheme={isDarkTheme}
+            onToggleTheme={() => setIsDarkTheme(!isDarkTheme)}
           />
         </div>
       )}

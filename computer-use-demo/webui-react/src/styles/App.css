@@ -51,21 +51,3 @@
   flex: 1;
   width: 100% !important;
 }
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-  .app {
-    flex-direction: column;
-  }
-
-  .viewer-panel {
-    width: 100% !important;
-    height: 40%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .chat-panel {
-    height: 60%;
-  }
-}

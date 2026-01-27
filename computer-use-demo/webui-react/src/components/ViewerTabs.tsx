@@ -16,6 +16,8 @@ interface ViewerTabsProps {
   chatVisible: boolean
   onToggleChat: () => void
   selectedComputer?: string
+  isDarkTheme: boolean
+  onToggleTheme: () => void
 }
 
 const DEFAULT_TAB_ICONS: Record<TabType, JSX.Element> = {
@@ -69,7 +71,6 @@ interface StoredState {
   activeTabId: string
   tabHistories: SerializableTabHistory[]
   selectedPath: string | null
-  isDarkTheme: boolean
 }
 
 const STORAGE_KEY = 'viewerTabsState'
@@ -121,8 +122,7 @@ const getInitialState = () => {
       tabs,
       activeTabId: stored.activeTabId,
       tabHistories,
-      selectedPath: stored.selectedPath,
-      isDarkTheme: stored.isDarkTheme
+      selectedPath: stored.selectedPath
     }
   }
 
@@ -132,12 +132,11 @@ const getInitialState = () => {
     tabs: [defaultTab],
     activeTabId: '1',
     tabHistories: [{ tabId: '1', history: [defaultTab], currentIndex: 0 }],
-    selectedPath: null,
-    isDarkTheme: true
+    selectedPath: null
   }
 }
 
-export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selectedComputer }: ViewerTabsProps) {
+export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selectedComputer, isDarkTheme, onToggleTheme }: ViewerTabsProps) {
   const initialState = getInitialState()
   const [tabs, setTabs] = useState<Tab[]>(initialState.tabs)
   const [activeTabId, setActiveTabId] = useState(initialState.activeTabId)
@@ -146,7 +145,6 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   const [explorerVisible, setExplorerVisible] = useState(true)
   const [tabHistories, setTabHistories] = useState<TabHistory[]>(initialState.tabHistories)
   const [addressBarInput, setAddressBarInput] = useState('')
-  const [isDarkTheme, setIsDarkTheme] = useState(initialState.isDarkTheme)
   const [explorerRefreshKey, setExplorerRefreshKey] = useState(0)
 
   // Web tab state
@@ -154,17 +152,6 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
   const [webTabNavState, setWebTabNavState] = useState<Record<string, { canGoBack: boolean; canGoForward: boolean }>>({})
   const [webTabLoading, setWebTabLoading] = useState<Record<string, boolean>>({})
   const browserRefs = useRef<Record<string, BrowserPanelRef | null>>({})
-
-  // Apply theme on mount and when it changes
-  useEffect(() => {
-    if (isDarkTheme) {
-      document.documentElement.classList.remove('light-theme')
-      document.documentElement.classList.add('dark-theme')
-    } else {
-      document.documentElement.classList.remove('dark-theme')
-      document.documentElement.classList.add('light-theme')
-    }
-  }, [isDarkTheme])
 
   // Save state to localStorage whenever tabs or related state changes
   useEffect(() => {
@@ -176,19 +163,14 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
         history: th.history.map(serializeTab),
         currentIndex: th.currentIndex
       })),
-      selectedPath,
-      isDarkTheme
+      selectedPath
     }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     } catch (e) {
       console.error('Failed to save tabs state:', e)
     }
-  }, [tabs, activeTabId, tabHistories, selectedPath, isDarkTheme])
-
-  const toggleTheme = () => {
-    setIsDarkTheme(prev => !prev)
-  }
+  }, [tabs, activeTabId, tabHistories, selectedPath])
 
   // Double-click on header toggles window maximize (macOS-style behavior)
   const handleHeaderDoubleClick = (e: React.MouseEvent) => {
@@ -847,7 +829,7 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
           )}
           <button
             className="toggle-theme-btn"
-            onClick={toggleTheme}
+            onClick={onToggleTheme}
             data-tooltip={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
             aria-label={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
           >
