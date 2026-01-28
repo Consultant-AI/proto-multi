@@ -1,0 +1,56 @@
+# System and IDE
+.DS_Store
+.vscode/
+.idea/
+.zed/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Vite/Build
+dist/
+build/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+
+# Local/Runtime Data
+.proto/
+.proto_todos.json
+.computer-use-cli/
+logs/
+projects/
+*.sqlite
+*.db
+
+# Secrets and Configs
+.env
+.env.*
+!.env.example
+.claude/
+.anthropic/
+*api_key*
+site-packages/
+
+
