@@ -45,11 +45,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
       />
 
       {/* Modal */}
-      <div className="relative bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-700">
+      <div className="relative bg-theme-card rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-theme">
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-theme-muted hover:text-theme-primary transition-colors"
+          aria-label="Close modal"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -58,10 +60,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
 
         {/* Content */}
         <div className="p-8">
-          <h2 className="text-3xl font-bold text-white mb-2">
+          <h2 className="text-3xl font-bold text-theme-primary mb-2">
             {mode === 'login' ? 'Welcome Back' : 'Create Account'}
           </h2>
-          <p className="text-gray-400 mb-6">
+          <p className="text-theme-muted mb-6">
             {mode === 'login'
               ? 'Sign in to access your cloud computers'
               : 'Start your journey with CloudBot Platform'}
@@ -75,7 +77,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-theme-secondary mb-2">
                 Email Address
               </label>
               <input
@@ -84,13 +86,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-theme-tertiary border border-theme rounded-lg text-theme-primary placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-theme-secondary mb-2">
                 Password
               </label>
               <input
@@ -99,15 +101,15 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-theme-tertiary border border-theme rounded-lg text-theme-primary placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your password"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+              className="w-full px-4 py-3 text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
             >
               {loading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
@@ -115,8 +117,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
 
           <div className="mt-6 text-center">
             <button
+              type="button"
               onClick={onSwitchMode}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm text-theme-muted hover:text-theme-primary transition-colors"
             >
               {mode === 'login' ? (
                 <>

@@ -7,6 +7,7 @@ from app.db.models import Instance, User
 from app.auth.middleware import get_current_user
 import asyncio
 import socket
+import uuid as uuid_mod
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,12 +20,18 @@ async def proxy_vnc(
     db: AsyncSession
 ):
     """Proxy VNC connection from browser to EC2 instance"""
-    await websocket.accept()
+    await websocket.accept(subprotocol="binary")
 
     # Get instance
+    try:
+        inst_uuid = uuid_mod.UUID(instance_id)
+    except ValueError:
+        await websocket.close(code=1008, reason="Invalid instance ID")
+        return
+
     result = await db.execute(
         select(Instance).where(
-            Instance.id == instance_id,
+            Instance.id == inst_uuid,
             Instance.user_id == current_user.id
         )
     )
@@ -62,7 +69,7 @@ async def proxy_vnc(
             """Forward VNC responses to WebSocket"""
             try:
                 while True:
-                    data = await reader.read(8192)
+                    data = await reader.read(65536)
                     if not data:
                         break
                     await websocket.send_bytes(data)

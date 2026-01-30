@@ -113,7 +113,25 @@
   color: var(--text-primary);
 }
 
-/* New tab button */
+/* Newtab tab - compact, just the + icon */
+.viewer-tab.newtab-only {
+  padding: 8px;
+  gap: 0;
+  min-width: auto;
+  border: none;
+  background: transparent;
+}
+
+.viewer-tab.newtab-only:hover {
+  background: var(--hover);
+}
+
+.viewer-tab.newtab-only.active {
+  background: transparent;
+  border: none;
+}
+
+/* Legacy new tab button - keeping for reference */
 .new-tab-btn {
   display: flex;
   align-items: center;

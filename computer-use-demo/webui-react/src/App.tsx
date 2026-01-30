@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { MessageSquare } from 'lucide-react'
 import ViewerTabs from './components/ViewerTabs'
 import Chat from './components/Chat'
 import Resizer from './components/Resizer'
@@ -135,6 +136,19 @@ function App() {
             computers={computers}
           />
         </div>
+      )}
+
+      {/* Floating button to show chat when hidden */}
+      {!chatVisible && (
+        <button
+          type="button"
+          className="floating-chat-btn"
+          onClick={() => setChatVisible(true)}
+          data-tooltip="Show Chat"
+          aria-label="Show Chat"
+        >
+          <MessageSquare size={20} />
+        </button>
       )}
     </div>
   )

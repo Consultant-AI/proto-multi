@@ -74,6 +74,7 @@ interface StoredState {
 }
 
 const STORAGE_KEY = 'viewerTabsState'
+const STORAGE_VERSION = 3 // Increment to force clear old state
 
 // Convert tab to serializable format
 const serializeTab = (tab: Tab): SerializableTab => ({
@@ -102,7 +103,13 @@ const loadStoredState = (): StoredState | null => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return null
-    return JSON.parse(stored)
+    const parsed = JSON.parse(stored)
+    // Check version - clear old state if version mismatch
+    if (parsed.version !== STORAGE_VERSION) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -155,7 +162,8 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
 
   // Save state to localStorage whenever tabs or related state changes
   useEffect(() => {
-    const state: StoredState = {
+    const state = {
+      version: STORAGE_VERSION,
       tabs: tabs.map(serializeTab),
       activeTabId,
       tabHistories: tabHistories.map(th => ({
@@ -787,47 +795,30 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
             {tabs.map(tab => (
               <div
                 key={tab.id}
-                className={`viewer-tab ${activeTabId === tab.id ? 'active' : ''}`}
+                className={`viewer-tab ${activeTabId === tab.id ? 'active' : ''} ${tab.type === 'newtab' ? 'newtab-only' : ''}`}
                 onClick={() => setActiveTabId(tab.id)}
               >
                 <span className="viewer-tab-icon">{getTabIcon(tab)}</span>
-                <span className="viewer-tab-title">{tab.title}</span>
-                <button
-                  className="viewer-tab-close"
-                  onClick={(e) => handleCloseTab(tab.id, e)}
-                  data-tooltip="Close tab"
-                  aria-label="Close tab"
-                >
-                  <X size={14} />
-                </button>
+                {tab.type !== 'newtab' && <span className="viewer-tab-title">{tab.title}</span>}
+                {tab.type !== 'newtab' && (
+                  <button
+                    type="button"
+                    className="viewer-tab-close"
+                    onClick={(e) => handleCloseTab(tab.id, e)}
+                    data-tooltip="Close tab"
+                    aria-label="Close tab"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
-
-          {/* New tab button - next to tabs */}
-          <button
-            type="button"
-            className="new-tab-btn"
-            onClick={() => handleAddTab('newtab')}
-            data-tooltip="New tab"
-            aria-label="New tab"
-          >
-            <Plus size={16} />
-          </button>
         </div>
 
         <div className="viewer-header-controls">
-          {!chatVisible && (
-            <button
-              className="toggle-chat-btn"
-              onClick={onToggleChat}
-              data-tooltip="Show Chat"
-              aria-label="Show Chat"
-            >
-              <MessageSquare size={16} />
-            </button>
-          )}
           <button
+            type="button"
             className="toggle-theme-btn"
             onClick={onToggleTheme}
             data-tooltip={isDarkTheme ? "Switch to Light Theme" : "Switch to Dark Theme"}
@@ -835,9 +826,19 @@ export default function ViewerTabs({ onClose, chatVisible, onToggleChat, selecte
           >
             {isDarkTheme ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          {onClose && (
-            <button className="viewer-close-btn" onClick={onClose} data-tooltip="Close Viewer" aria-label="Close Viewer">
+          {onClose ? (
+            <button type="button" className="viewer-close-btn" onClick={onClose} data-tooltip="Close Viewer" aria-label="Close Viewer">
               <X size={16} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="toggle-chat-btn"
+              onClick={onToggleChat}
+              data-tooltip="Show Chat"
+              aria-label="Show Chat"
+            >
+              <MessageSquare size={16} />
             </button>
           )}
         </div>

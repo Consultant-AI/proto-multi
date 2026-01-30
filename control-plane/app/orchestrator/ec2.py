@@ -5,11 +5,18 @@ from app.config import settings
 import logging
 from typing import Optional, Dict, Any
 import base64
+import gzip
 
 logger = logging.getLogger(__name__)
 
 
 class EC2Orchestrator:
+    # Required ports for CloudBot instances
+    REQUIRED_PORTS = [
+        (5900, 'VNC Server'),
+        (18789, 'CloudBot Gateway'),
+    ]
+
     def __init__(self):
         """Initialize EC2 client"""
         if settings.local_dev_mode:
@@ -22,12 +29,67 @@ class EC2Orchestrator:
                 aws_access_key_id=settings.aws_access_key_id,
                 aws_secret_access_key=settings.aws_secret_access_key
             )
+            # Ensure security group has required ports
+            self._ensure_security_group_rules()
 
-    def _read_user_data_script(self) -> str:
-        """Read the user data bash script"""
+    def _ensure_security_group_rules(self):
+        """Ensure the security group has rules for required ports"""
+        if not settings.ec2_security_group_id:
+            logger.warning("No security group ID configured")
+            return
+
+        try:
+            # Get current security group rules
+            response = self.ec2_client.describe_security_groups(
+                GroupIds=[settings.ec2_security_group_id]
+            )
+
+            if not response['SecurityGroups']:
+                logger.error(f"Security group {settings.ec2_security_group_id} not found")
+                return
+
+            sg = response['SecurityGroups'][0]
+            existing_ports = set()
+
+            # Check existing inbound rules
+            for rule in sg.get('IpPermissions', []):
+                if rule.get('IpProtocol') == 'tcp':
+                    from_port = rule.get('FromPort')
+                    to_port = rule.get('ToPort')
+                    if from_port == to_port:
+                        existing_ports.add(from_port)
+
+            # Add missing rules
+            for port, description in self.REQUIRED_PORTS:
+                if port not in existing_ports:
+                    logger.info(f"Adding security group rule for port {port} ({description})")
+                    try:
+                        self.ec2_client.authorize_security_group_ingress(
+                            GroupId=settings.ec2_security_group_id,
+                            IpPermissions=[{
+                                'IpProtocol': 'tcp',
+                                'FromPort': port,
+                                'ToPort': port,
+                                'IpRanges': [{'CidrIp': '0.0.0.0/0', 'Description': description}]
+                            }]
+                        )
+                        logger.info(f"Added rule for port {port}")
+                    except ClientError as e:
+                        if 'InvalidPermission.Duplicate' in str(e):
+                            logger.info(f"Rule for port {port} already exists")
+                        else:
+                            logger.error(f"Failed to add rule for port {port}: {e}")
+                else:
+                    logger.info(f"Port {port} ({description}) already allowed")
+
+        except ClientError as e:
+            logger.error(f"Failed to check/update security group: {e}")
+
+    def _read_user_data_script(self, api_keys: dict = None) -> str:
+        """Read the user data bash script, inject API keys, and compress if needed"""
         try:
             with open('app/orchestrator/user_data.sh', 'r') as f:
-                return f.read()
+                script = f.read()
         except FileNotFoundError:
             logger.error("user_data.sh not found")
             # Return minimal script
@@ -36,10 +98,58 @@ echo "CloudBot instance starting..."
 # TODO: Install CloudBot and VNC
 """
 
+        # Inject environment variables at the beginning of the script
+        env_exports = []
+
+        # Add control plane URL if configured
+        if settings.control_plane_url:
+            env_exports.append(f"export CONTROL_PLANE_URL='{settings.control_plane_url}'")
+
+        # Add moltbot tarball URL if configured
+        if settings.moltbot_tarball_url:
+            env_exports.append(f"export MOLTBOT_TARBALL_URL='{settings.moltbot_tarball_url}'")
+
+        # Add API keys
+        if api_keys:
+            for provider, key in api_keys.items():
+                # Map provider names to environment variables
+                env_var = f"{provider.upper()}_API_KEY"
+                # Escape any special characters in the key
+                escaped_key = key.replace("'", "'\"'\"'")
+                env_exports.append(f"export {env_var}='{escaped_key}'")
+
+        if env_exports:
+            # Insert after the shebang line
+            env_block = "\n# Environment from CloudBot Platform\n" + "\n".join(env_exports) + "\n"
+            script = script.replace("#!/bin/bash\n", "#!/bin/bash\n" + env_block, 1)
+            logger.info(f"Injected {len(env_exports)} environment variables into user_data script")
+
+        # Check if script exceeds 16KB limit - compress if needed
+        script_bytes = script.encode('utf-8')
+        if len(script_bytes) > 15000:  # Leave some margin
+            logger.info(f"Script size {len(script_bytes)} bytes exceeds limit, compressing...")
+            compressed = gzip.compress(script_bytes)
+            encoded = base64.b64encode(compressed).decode('ascii')
+
+            # Create a bootstrap script that decompresses and runs the main script
+            bootstrap = f"""#!/bin/bash
+# Bootstrap loader - decompresses and runs the main setup script
+echo "Decompressing setup script..."
+echo '{encoded}' | base64 -d | gunzip > /tmp/cloudbot-setup.sh
+chmod +x /tmp/cloudbot-setup.sh
+exec /tmp/cloudbot-setup.sh
+"""
+            logger.info(f"Compressed from {len(script_bytes)} to {len(bootstrap.encode('utf-8'))} bytes")
+            return bootstrap
+
+        return script
+
     async def create_instance(
         self,
         user_id: str,
-        instance_name: Optional[str] = None
+        instance_name: Optional[str] = None,
+        instance_type: str = 't3.large',
+        api_keys: Dict[str, str] = None
     ) -> Dict[str, Any]:
         """Provision a new EC2 instance"""
         if settings.local_dev_mode:
@@ -53,19 +163,34 @@ echo "CloudBot instance starting..."
             }
 
         try:
-            # Read user data script
-            user_data = self._read_user_data_script()
+            # Read user data script with API keys injected
+            user_data = self._read_user_data_script(api_keys)
 
-            # Launch EC2 instance
+            # Launch EC2 instance with 20GB root volume
+            # Validate instance type
+            valid_types = ['t3.micro', 't3.small', 't3.medium', 't3.large', 't3.xlarge', 't3.2xlarge']
+            if instance_type not in valid_types:
+                instance_type = 't3.micro'
+
             response = self.ec2_client.run_instances(
-                ImageId=settings.aws.ec2.ubuntu_ami_id,
-                InstanceType='t3.large',
+                ImageId=settings.ubuntu_ami_id,
+                InstanceType=instance_type,
                 MinCount=1,
                 MaxCount=1,
-                KeyName=settings.aws.ec2.key_pair_name,
-                SecurityGroupIds=[settings.aws.ec2.security_group_id],
-                SubnetId=settings.aws.ec2.subnet_id,
+                KeyName=settings.ec2_key_pair_name,
+                SecurityGroupIds=[settings.ec2_security_group_id],
+                SubnetId=settings.ec2_subnet_id,
                 UserData=user_data,
+                BlockDeviceMappings=[
+                    {
+                        'DeviceName': '/dev/sda1',
+                        'Ebs': {
+                            'VolumeSize': 20,
+                            'VolumeType': 'gp3',
+                            'DeleteOnTermination': True,
+                        }
+                    }
+                ],
                 TagSpecifications=[
                     {
                         'ResourceType': 'instance',
@@ -76,13 +201,6 @@ echo "CloudBot instance starting..."
                         ]
                     }
                 ],
-                InstanceMarketOptions={
-                    'MarketType': 'spot',
-                    'SpotOptions': {
-                        'MaxPrice': '0.10',  # Max price per hour
-                        'SpotInstanceType': 'one-time'
-                    }
-                }
             )
 
             instance = response['Instances'][0]

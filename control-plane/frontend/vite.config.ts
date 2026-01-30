@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['@novnc/novnc']
+    include: ['@novnc/novnc/lib/rfb']
   },
   build: {
     commonjsOptions: {

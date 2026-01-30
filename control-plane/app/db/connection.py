@@ -1,21 +1,28 @@
 """Database connection management"""
-import asyncpg
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy import text
 from redis.asyncio import Redis
 from app.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 # SQLAlchemy Base
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
+
+
+# Ensure URL uses asyncpg driver
+db_url = settings.database_url
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Async engine for PostgreSQL
 engine = create_async_engine(
-    settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
-    echo=settings.environment == "development",
+    db_url,
+    echo=False,
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
@@ -56,12 +63,17 @@ async def get_redis():
 
 
 async def init_db():
-    """Initialize database connection"""
+    """Initialize database connection and create tables"""
     try:
+        # Import models to register them with Base
+        from app.db import models  # noqa: F401
+
         async with engine.begin() as conn:
             # Test connection
-            await conn.execute("SELECT 1")
-        logger.info("✅ Database connection established")
+            await conn.execute(text("SELECT 1"))
+            # Create all tables
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("✅ Database connection established and tables created")
     except Exception as e:
         logger.error(f"❌ Database connection failed: {e}")
         raise

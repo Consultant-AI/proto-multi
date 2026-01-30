@@ -4,13 +4,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 from app.db.connection import get_db
-from app.db.models import User, Instance
+from app.db.models import User, Instance, UserApiKey
 from app.auth.middleware import get_current_user
 from app.orchestrator.ec2 import orchestrator
 from app.config import settings
+from app.utils.encryption import decrypt_api_key
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -24,9 +28,28 @@ def _get_user_id(current_user: Union[User, dict]) -> str:
     return str(current_user.id)
 
 
+async def _get_user_api_keys(user_id, db: AsyncSession) -> Dict[str, str]:
+    """Fetch and decrypt user's API keys"""
+    result = await db.execute(
+        select(UserApiKey).where(UserApiKey.user_id == user_id)
+    )
+    api_keys = result.scalars().all()
+
+    decrypted_keys = {}
+    for key in api_keys:
+        try:
+            decrypted_keys[key.provider] = decrypt_api_key(key.encrypted_key)
+        except Exception as e:
+            logger.warning(f"Failed to decrypt API key for provider {key.provider}: {e}")
+
+    return decrypted_keys
+
+
 # Request/Response models
 class CreateInstanceRequest(BaseModel):
     name: Optional[str] = None
+    instance_type: str = 't3.large'  # t3.medium, t3.large, t3.xlarge, t3.2xlarge
+    api_keys: Optional[Dict[str, str]] = None  # Provider -> API key mapping
 
 
 class InstanceResponse(BaseModel):
@@ -72,7 +95,7 @@ async def create_instance(
             "public_ip": "127.0.0.1",
             "ec2_instance_id": mock_ec2_id,
             "vnc_port": 5900,
-            "cloudbot_port": 3000,
+            "cloudbot_port": 18789,
             "created_at": datetime.utcnow(),
         }
         _demo_instances[instance_id] = instance_data
@@ -112,9 +135,18 @@ async def create_instance(
     await db.flush()
 
     try:
+        # Use API keys from request if provided, otherwise fetch from database
+        api_keys = request.api_keys
+        if not api_keys:
+            api_keys = await _get_user_api_keys(current_user.id, db)
+        if not api_keys:
+            logger.warning(f"No API keys found for user {current_user.id}")
+
         ec2_result = await orchestrator.create_instance(
             user_id=str(current_user.id),
-            instance_name=instance.name
+            instance_name=instance.name,
+            instance_type=request.instance_type,
+            api_keys=api_keys
         )
         instance.ec2_instance_id = ec2_result["instance_id"]
         instance.public_ip = ec2_result.get("public_ip")
@@ -172,6 +204,19 @@ async def list_instances(
         select(Instance).where(Instance.user_id == current_user.id).order_by(Instance.created_at.desc())
     )
     instances = result.scalars().all()
+
+    # Sync status from EC2 for non-terminated instances
+    for inst in instances:
+        if inst.ec2_instance_id and inst.status not in ('terminated', 'failed'):
+            try:
+                ec2_status = await orchestrator.get_instance_status(inst.ec2_instance_id)
+                if ec2_status.get("status"):
+                    inst.status = ec2_status["status"]
+                    if ec2_status.get("public_ip"):
+                        inst.public_ip = ec2_status["public_ip"]
+            except Exception:
+                pass
+    await db.commit()
 
     return InstanceListResponse(
         instances=[

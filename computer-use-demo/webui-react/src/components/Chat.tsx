@@ -401,17 +401,6 @@ export default function Chat({
       {/* Header */}
       <div className={`chat-header ${!viewerVisible ? 'viewer-hidden' : ''}`} onDoubleClick={handleHeaderDoubleClick}>
         <div className="chat-header-left">
-          {!viewerVisible && (
-            <button
-              type="button"
-              className="toggle-viewer-btn"
-              onClick={onToggleViewer}
-              data-tooltip="Show Viewer"
-              aria-label="Show Viewer"
-            >
-              <PanelLeftOpen size={18} />
-            </button>
-          )}
           <div className={`chat-agent-info ${!viewerVisible ? 'viewer-hidden' : ''}`}>
             <div className="chat-agent-name">
               {messages.length > 0 ? messages[0].content : 'New conversation'}
@@ -432,7 +421,7 @@ export default function Chat({
           >
             <Plus size={18} />
           </button>
-          {onHideChat && (
+          {onHideChat ? (
             <button
               type="button"
               className="hide-chat-btn"
@@ -441,6 +430,16 @@ export default function Chat({
               onClick={onHideChat}
             >
               <X size={18} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="toggle-viewer-btn"
+              data-tooltip="Show Viewer"
+              aria-label="Show Viewer"
+              onClick={onToggleViewer}
+            >
+              <PanelLeftOpen size={18} />
             </button>
           )}
         </div>

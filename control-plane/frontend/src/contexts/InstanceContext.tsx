@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import api from '../services/api';
 
 // Define Instance type directly to bypass cache issues
@@ -18,7 +18,7 @@ interface InstanceContextType {
   selectedInstance: Instance | null;
   loading: boolean;
   fetchInstances: () => Promise<void>;
-  createInstance: (name?: string) => Promise<Instance>;
+  createInstance: (name?: string, instanceType?: string, apiKeys?: Record<string, string>) => Promise<Instance>;
   deleteInstance: (id: string) => Promise<void>;
   selectInstance: (instance: Instance | null) => void;
   refreshInstance: (id: string) => Promise<void>;
@@ -43,8 +43,12 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const createInstance = async (name?: string): Promise<Instance> => {
-    const response = await api.post('/api/instances', { name });
+  const createInstance = async (name?: string, instanceType?: string, apiKeys?: Record<string, string>): Promise<Instance> => {
+    const response = await api.post('/api/instances', {
+      name,
+      instance_type: instanceType || 't3.large',
+      api_keys: apiKeys
+    });
     const newInstance = response.data;
     setInstances((prev) => [newInstance, ...prev]);
     return newInstance;

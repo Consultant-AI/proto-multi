@@ -1,7 +1,116 @@
 @import "tailwindcss";
 
-/* Custom base styles */
+/* Theme CSS Variables */
+:root {
+  /* Light theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-nav: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --bg-hover: #e2e8f0;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e1;
+
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-muted: #93c5fd;
+
+  --success: #22c55e;
+  --warning: #eab308;
+  --error: #ef4444;
+}
+
+.dark {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #141414;
+  --bg-nav: #0a0a0a;
+  --bg-card: #0f0f0f;
+  --bg-input: #141414;
+  --bg-hover: #1f1f1f;
+
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+
+  --border-color: #262626;
+  --border-hover: #3a3a3a;
+
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-muted: #1e40af;
+
+  --success: #22c55e;
+  --warning: #eab308;
+  --error: #ef4444;
+}
+
+/* Apply theme to body */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Utility classes for theme */
+.bg-theme-primary { background-color: var(--bg-primary); }
+.bg-theme-secondary { background-color: var(--bg-secondary); }
+.bg-theme-tertiary { background-color: var(--bg-tertiary); }
+.bg-theme-nav { background-color: var(--bg-nav); }
+.bg-theme-card { background-color: var(--bg-card); }
+.bg-theme-input { background-color: var(--bg-input); }
+.bg-theme-hover { background-color: var(--bg-hover); }
+
+.text-theme-primary { color: var(--text-primary); }
+.text-theme-secondary { color: var(--text-secondary); }
+.text-theme-muted { color: var(--text-muted); }
+
+.border-theme { border-color: var(--border-color); }
+.border-theme-hover { border-color: var(--border-hover); }
+
+/* Scrollbar styling for dark theme */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-hover);
+}
+
+/* Light theme scrollbar */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     # Features
     local_dev_mode: bool = Field(default=False, alias="LOCAL_DEV_MODE")
     max_instances_per_user: int = Field(default=2, alias="MAX_INSTANCES_PER_USER")
+    control_plane_url: Optional[str] = Field(default=None, alias="CONTROL_PLANE_URL")  # Public URL for instances to access
+    moltbot_tarball_url: Optional[str] = Field(default=None, alias="MOLTBOT_TARBALL_URL")  # S3 URL for moltbot tarball
 
     # CORS
     cors_origins: str = Field(

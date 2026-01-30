@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
 from app.db.connection import get_db
 from app.db.models import User, Session as DBSession
 from app.auth.jwt import (
@@ -50,7 +51,7 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
