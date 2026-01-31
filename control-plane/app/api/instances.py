@@ -48,7 +48,7 @@ async def _get_user_api_keys(user_id, db: AsyncSession) -> Dict[str, str]:
 # Request/Response models
 class CreateInstanceRequest(BaseModel):
     name: Optional[str] = None
-    instance_type: str = 't3.large'  # t3.medium, t3.large, t3.xlarge, t3.2xlarge
+    instance_type: str = 't3.micro'  # t3.micro, t3.small, t3.medium, t3.large, t3.xlarge
     api_keys: Optional[Dict[str, str]] = None  # Provider -> API key mapping
 
 
@@ -137,10 +137,15 @@ async def create_instance(
     try:
         # Use API keys from request if provided, otherwise fetch from database
         api_keys = request.api_keys
-        if not api_keys:
+        if api_keys:
+            logger.info(f"API keys provided in request: {list(api_keys.keys())}")
+        else:
+            logger.info(f"No API keys in request, fetching from database for user {current_user.id}")
             api_keys = await _get_user_api_keys(current_user.id, db)
         if not api_keys:
             logger.warning(f"No API keys found for user {current_user.id}")
+        else:
+            logger.info(f"Passing API keys to EC2: {list(api_keys.keys())}")
 
         ec2_result = await orchestrator.create_instance(
             user_id=str(current_user.id),

@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { InstanceProvider } from './contexts/InstanceContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import LandingPage from './components/Landing/LandingPage';
+import WaitlistPage from './components/Landing/WaitlistPage';
+import PrivacyPage from './components/Landing/PrivacyPage';
+import TermsPage from './components/Landing/TermsPage';
 import ApiKeySetup from './components/Auth/ApiKeySetup';
 import InstanceList from './components/Dashboard/InstanceList';
 import CreateInstance from './components/Dashboard/CreateInstance';
@@ -175,6 +178,13 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Waitlist page */}
+      <Route path="/waitlist" element={<WaitlistPage />} />
+
+      {/* Legal pages */}
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
 
       {/* Redirect old routes */}
       <Route path="/login" element={<Navigate to="/" replace />} />

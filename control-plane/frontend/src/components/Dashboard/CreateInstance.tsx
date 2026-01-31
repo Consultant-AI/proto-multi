@@ -3,10 +3,40 @@ import { useNavigate } from 'react-router-dom';
 import { useInstances } from '../../contexts/InstanceContext';
 
 const INSTANCE_TYPES = [
-  { value: 't3.micro', label: 'Micro', specs: '2 vCPU, 1GB RAM', price: 'Free Tier', freeTier: true },
-  { value: 't3.small', label: 'Small', specs: '2 vCPU, 2GB RAM', price: '~$0.02/hr' },
-  { value: 't3.medium', label: 'Medium', specs: '2 vCPU, 4GB RAM', price: '~$0.04/hr' },
-  { value: 't3.large', label: 'Large', specs: '2 vCPU, 8GB RAM', price: '~$0.08/hr', recommended: true },
+  {
+    value: 't3.micro',
+    label: 'Micro',
+    specs: '2 vCPU, 1GB RAM',
+    price: 'Free Tier',
+    freeTier: true,
+    fallbackOnly: true,
+    note: 'Fallback gateway only'
+  },
+  {
+    value: 't3.small',
+    label: 'Small',
+    specs: '2 vCPU, 2GB RAM',
+    price: '~$0.02/hr',
+    fallbackOnly: true,
+    note: 'Fallback gateway only'
+  },
+  {
+    value: 't3.medium',
+    label: 'Medium',
+    specs: '2 vCPU, 4GB RAM',
+    price: '~$0.04/hr',
+    supportsOpenclaw: true,
+    recommended: true,
+    note: 'Full openclaw support'
+  },
+  {
+    value: 't3.large',
+    label: 'Large',
+    specs: '2 vCPU, 8GB RAM',
+    price: '~$0.08/hr',
+    supportsOpenclaw: true,
+    note: 'Best performance'
+  },
 ];
 
 // LLM providers supported by CloudBot
@@ -24,7 +54,7 @@ const LLM_PROVIDERS = [
 
 const CreateInstance: React.FC = () => {
   const [name, setName] = useState('');
-  const [instanceType, setInstanceType] = useState('t3.large');
+  const [instanceType, setInstanceType] = useState('t3.medium');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState('anthropic');
@@ -95,6 +125,9 @@ const CreateInstance: React.FC = () => {
           <label className="block text-sm font-medium text-theme-secondary mb-2">
             Instance Size
           </label>
+          <p className="text-xs text-theme-muted mb-2">
+            t3.medium or larger required for full openclaw bot. Smaller instances use a basic fallback gateway.
+          </p>
           <div className="grid grid-cols-2 gap-3">
             {INSTANCE_TYPES.map((type) => (
               <button
@@ -104,6 +137,8 @@ const CreateInstance: React.FC = () => {
                 className={`relative p-4 border rounded-lg text-left transition-all ${
                   instanceType === type.value
                     ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500'
+                    : type.fallbackOnly
+                    ? 'border-theme bg-theme-card hover:border-theme-hover opacity-75'
                     : 'border-theme bg-theme-card hover:border-theme-hover'
                 }`}
               >
@@ -112,7 +147,7 @@ const CreateInstance: React.FC = () => {
                     Recommended
                   </span>
                 )}
-                {type.freeTier && (
+                {type.freeTier && !type.recommended && (
                   <span className="absolute -top-2 right-2 px-2 py-0.5 text-xs bg-blue-500 text-white rounded-full">
                     Free Tier
                   </span>
@@ -120,6 +155,11 @@ const CreateInstance: React.FC = () => {
                 <div className="font-medium text-theme-primary">{type.label}</div>
                 <div className="text-xs text-theme-muted mt-1">{type.specs}</div>
                 <div className="text-xs text-theme-muted mt-0.5">{type.price}</div>
+                {type.note && (
+                  <div className={`text-xs mt-1 ${type.supportsOpenclaw ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {type.note}
+                  </div>
+                )}
               </button>
             ))}
           </div>

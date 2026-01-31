@@ -111,12 +111,19 @@ echo "CloudBot instance starting..."
 
         # Add API keys
         if api_keys:
+            logger.info(f"Injecting API keys for providers: {list(api_keys.keys())}")
             for provider, key in api_keys.items():
                 # Map provider names to environment variables
-                env_var = f"{provider.upper()}_API_KEY"
+                # Handle both formats: 'ANTHROPIC_API_KEY' or 'ANTHROPIC'
+                env_var = provider.upper()
+                if not env_var.endswith('_API_KEY'):
+                    env_var = f"{env_var}_API_KEY"
                 # Escape any special characters in the key
                 escaped_key = key.replace("'", "'\"'\"'")
                 env_exports.append(f"export {env_var}='{escaped_key}'")
+                logger.info(f"  - Added {env_var} (length: {len(key)})")
+        else:
+            logger.warning("No API keys provided for user_data script")
 
         if env_exports:
             # Insert after the shebang line
@@ -148,7 +155,7 @@ exec /tmp/cloudbot-setup.sh
         self,
         user_id: str,
         instance_name: Optional[str] = None,
-        instance_type: str = 't3.large',
+        instance_type: str = 't3.micro',
         api_keys: Dict[str, str] = None
     ) -> Dict[str, Any]:
         """Provision a new EC2 instance"""
@@ -168,9 +175,7 @@ exec /tmp/cloudbot-setup.sh
 
             # Launch EC2 instance with 20GB root volume
             # Validate instance type
-            valid_types = ['t3.micro', 't3.small', 't3.medium', 't3.large', 't3.xlarge', 't3.2xlarge']
-            if instance_type not in valid_types:
-                instance_type = 't3.micro'
+            # Launch EC2 instance with 20GB root volume
 
             response = self.ec2_client.run_instances(
                 ImageId=settings.ubuntu_ami_id,

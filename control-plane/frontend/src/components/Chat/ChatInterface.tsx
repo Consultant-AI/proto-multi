@@ -200,14 +200,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
             id: generateId(),
             method: 'connect',
             params: {
-              minProtocol: 1,
-              maxProtocol: 1,
+              minProtocol: 3,
+              maxProtocol: 3,
               client: {
-                id: `webchat-${instanceId}`,
-                displayName: 'Web Chat',
+                id: 'openclaw-control-ui',
+                displayName: 'CloudBot Web',
                 version: '1.0.0',
                 platform: 'web',
-                mode: 'interactive',
+                mode: 'ui',
               },
               auth: {
                 password: 'cloudbot-gateway-secret',
