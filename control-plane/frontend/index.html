@@ -5,6 +5,36 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <!-- Import map for TalkingHead's bare module specifiers -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+    </script>
+    <!-- Load TalkingHead and HeadTTS libraries (deferred, non-blocking) -->
+    <script type="module">
+      (async () => {
+        try {
+          // Load TalkingHead
+          const { TalkingHead } = await import('https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.7/modules/talkinghead.mjs');
+          window.TalkingHead = TalkingHead;
+          console.log('TalkingHead library loaded');
+
+          // Load HeadTTS for browser-based neural TTS with lip-sync
+          const { HeadTTS } = await import('https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.2/+esm');
+          window.HeadTTS = HeadTTS;
+          console.log('HeadTTS library loaded');
+
+          window.dispatchEvent(new Event('talkinghead-loaded'));
+        } catch (err) {
+          console.error('Failed to load libraries:', err);
+          window.dispatchEvent(new CustomEvent('talkinghead-error', { detail: err.message }));
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

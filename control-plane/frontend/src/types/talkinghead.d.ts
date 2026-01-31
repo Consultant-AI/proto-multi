@@ -24,9 +24,19 @@ declare module '@met4citizen/talkinghead' {
     lightSpotIntensity?: number;
     /** Background color */
     backgroundColor?: string;
+    /** Lip-sync modules to load */
+    lipsyncModules?: string[];
+    /** Lip-sync language */
+    lipsyncLang?: string;
+    /** TTS endpoint */
+    ttsEndpoint?: string;
+    /** TTS API key */
+    ttsApikey?: string;
   }
 
   export interface AvatarOptions {
+    /** URL to the GLB avatar file */
+    url: string;
     /** Body type 'M' or 'F' */
     body?: 'M' | 'F';
     /** Lip-sync language */
@@ -48,8 +58,6 @@ declare module '@met4citizen/talkinghead' {
   }
 
   export interface SpeakOptions {
-    /** Text to speak */
-    text?: string;
     /** TTS language */
     ttsLang?: string;
     /** TTS voice */
@@ -62,6 +70,8 @@ declare module '@met4citizen/talkinghead' {
     lipsyncLang?: string;
     /** Exclude from subtitles */
     excludeSubtitles?: boolean;
+    /** Avatar mood */
+    avatarMood?: string;
   }
 
   export interface StreamOptions {
@@ -80,14 +90,11 @@ declare module '@met4citizen/talkinghead' {
   export class TalkingHead {
     constructor(container: HTMLElement | null, options?: TalkingHeadOptions);
 
-    /** Load avatar from URL */
-    loadAvatar(url: string, options?: AvatarOptions, onProgress?: (url: string, event: ProgressEvent) => void): Promise<void>;
-
-    /** Show avatar */
-    showAvatar(): void;
+    /** Load and show avatar from URL */
+    showAvatar(options: AvatarOptions, onProgress?: (url: string, event: ProgressEvent) => void): Promise<void>;
 
     /** Start speaking text */
-    speakText(text: string, options?: SpeakOptions): Promise<void>;
+    speakText(text: string, options?: SpeakOptions, onSubtitles?: SubtitlesCallback, excludes?: number[][]): Promise<void>;
 
     /** Start speaking with pre-generated audio */
     speakAudio(audio: ArrayBuffer | ArrayBuffer[], options?: SpeakOptions): Promise<void>;
@@ -120,24 +127,27 @@ declare module '@met4citizen/talkinghead' {
     setMood(mood: string): void;
 
     /** Look at position */
-    lookAt(x: number, y: number, z: number): void;
+    lookAt(x: number, y: number, t: number): void;
 
     /** Start animation */
-    playAnimation(name: string, duration?: number, repeat?: number): void;
+    playAnimation(url: string, onProgress?: (url: string, event: ProgressEvent) => void, dur?: number, ndx?: number, scale?: number): void;
 
     /** Stop current animation */
     stopAnimation(): void;
 
     /** Mute/unmute */
-    setMute(mute: boolean): void;
+    setMute?(mute: boolean): void;
 
     /** Check if speaking */
-    isSpeaking(): boolean;
+    isSpeaking?(): boolean;
 
     /** Get current mood */
-    getMood(): string;
+    getMood?(): string;
 
-    /** Dispose resources */
-    dispose(): void;
+    /** Start the animation loop */
+    start?(): void;
+
+    /** Dispose resources - may not exist in all versions */
+    dispose?(): void;
   }
 }

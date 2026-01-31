@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TalkingAvatar, checkWebGLSupport } from '../Avatar';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { checkWebGLSupport } from '../Avatar';
+
+// Lazy load the avatar component - only loads when avatar is enabled
+const TalkingAvatar = lazy(() => import('../Avatar/TalkingAvatar'));
 
 interface Message {
   id: string;
@@ -43,6 +46,21 @@ const MicIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const SpeakerIcon: React.FC<{ className?: string; muted?: boolean }> = ({ className, muted }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    {muted ? (
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+      </>
+    ) : (
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+      </>
+    )}
+  </svg>
+);
+
 // Status dot component
 const StatusDot: React.FC<{ status: 'connected' | 'connecting' | 'error' | 'disconnected' }> = ({ status }) => {
   const colors = {
@@ -77,24 +95,380 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
   });
   const [currentSpeech, setCurrentSpeech] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [avatarCharacter, setAvatarCharacter] = useState(() => {
+    return localStorage.getItem('cloudbot-avatar-character') || 'sophia';
+  });
+
+  // Auto-speak state (TTS for AI responses)
+  const [autoSpeak, setAutoSpeak] = useState(() => {
+    const saved = localStorage.getItem('cloudbot-auto-speak');
+    return saved !== null ? saved === 'true' : true; // Default to enabled
+  });
+  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Voice input state (speech-to-text)
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0));
+  const recognitionRef = useRef<any>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const silenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const transcriptRef = useRef<string>(''); // Track latest transcript for auto-send
+  const isRecordingRef = useRef<boolean>(false); // Track recording state for callbacks
+  const connectedRef = useRef<boolean>(false); // Track connection state for callbacks
+
+  // Keep connectedRef in sync with connected state
+  useEffect(() => {
+    connectedRef.current = connected;
+  }, [connected]);
 
   // Save avatar preference
   useEffect(() => {
     localStorage.setItem('cloudbot-avatar-enabled', avatarEnabled.toString());
   }, [avatarEnabled]);
 
+  // Save avatar character preference
+  useEffect(() => {
+    localStorage.setItem('cloudbot-avatar-character', avatarCharacter);
+  }, [avatarCharacter]);
+
+  // Save auto-speak preference
+  useEffect(() => {
+    localStorage.setItem('cloudbot-auto-speak', autoSpeak.toString());
+  }, [autoSpeak]);
+
+  // Fallback browser TTS when avatar is not available
+  const speakWithBrowserTTS = useCallback((text: string) => {
+    if (!autoSpeak || !('speechSynthesis' in window)) return;
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.15; // Slightly faster for snappier response
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // Try to find a good English voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v =>
+      v.name.includes('Google US English') ||
+      v.name.includes('Samantha') ||
+      (v.lang.startsWith('en') && v.localService)
+    ) || voices.find(v => v.lang.startsWith('en'));
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      speechSynthRef.current = null;
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      speechSynthRef.current = null;
+    };
+
+    speechSynthRef.current = utterance;
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  }, [autoSpeak]);
+
+  // Stop browser TTS
+  const stopBrowserTTS = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    speechSynthRef.current = null;
+  }, []);
+
   // Trigger avatar speech when new assistant message arrives
   const handleAvatarSpeak = useCallback((text: string) => {
-    if (avatarEnabled && text) {
+    if (!autoSpeak || !text) return;
+
+    console.log('handleAvatarSpeak called:', { avatarEnabled, avatarLoaded, textLength: text.length });
+
+    if (avatarEnabled) {
+      // Always use avatar when enabled - it handles its own TTS
+      console.log('Using avatar for speech');
       setCurrentSpeech(text);
       setIsSpeaking(true);
+    } else {
+      // Fallback to browser TTS only when avatar is disabled
+      console.log('Avatar disabled, using browser TTS');
+      speakWithBrowserTTS(text);
     }
-  }, [avatarEnabled]);
+  }, [avatarEnabled, autoSpeak, speakWithBrowserTTS]);
 
   const handleSpeakingEnd = useCallback(() => {
     setIsSpeaking(false);
     setCurrentSpeech(null);
+    stopBrowserTTS();
+  }, [stopBrowserTTS]);
+
+  // Track when avatar loads successfully
+  const handleAvatarLoaded = useCallback(() => {
+    setAvatarLoaded(true);
   }, []);
+
+  // Track when avatar fails to load
+  const handleAvatarError = useCallback(() => {
+    setAvatarLoaded(false);
+  }, []);
+
+  // Voice recording functions
+  // Helper to send voice message (uses same format as handleSend)
+  const sendVoiceMessage = useCallback((text: string) => {
+    console.log('sendVoiceMessage called:', { text, connected: connectedRef.current });
+
+    if (!text.trim()) return;
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (!connectedRef.current) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: text.trim(),
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setLoading(true);
+
+    // Use same format as handleSend
+    const requestId = generateId();
+    const request = {
+      type: 'req',
+      id: requestId,
+      method: 'chat.send',
+      params: {
+        sessionKey: sessionKeyRef.current,
+        message: text.trim(),
+        idempotencyKey: requestId,
+      },
+    };
+
+    console.log('sendVoiceMessage: sending request:', request);
+    wsRef.current.send(JSON.stringify(request));
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    try {
+      // Get microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      // Set up audio analyzer for visualizer
+      audioContextRef.current = new AudioContext();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 64;
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+
+      // Mark as recording
+      isRecordingRef.current = true;
+      setIsRecording(true);
+      setTranscript('');
+      transcriptRef.current = '';
+
+      // Update audio levels for visualizer
+      const updateLevels = () => {
+        if (!analyserRef.current || !isRecordingRef.current) return;
+        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const levels = Array.from(dataArray.slice(0, 20)).map(v => v / 255);
+        setAudioLevels(levels);
+        animationFrameRef.current = requestAnimationFrame(updateLevels);
+      };
+
+      // Set up speech recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        throw new Error('Speech recognition not supported');
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event: any) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += result;
+          } else {
+            interimTranscript += result;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        setTranscript(currentText);
+        transcriptRef.current = currentText;
+
+        // Reset silence timeout on speech
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current);
+        }
+
+        // Auto-send after 2 seconds of silence when we have final text
+        if (finalTranscript.trim()) {
+          silenceTimeoutRef.current = setTimeout(() => {
+            console.log('Auto-sending after silence:', finalTranscript.trim());
+            // Stop everything
+            if (recognitionRef.current) {
+              recognitionRef.current.stop();
+              recognitionRef.current = null;
+            }
+            if (mediaStreamRef.current) {
+              mediaStreamRef.current.getTracks().forEach(track => track.stop());
+              mediaStreamRef.current = null;
+            }
+            if (audioContextRef.current) {
+              audioContextRef.current.close();
+              audioContextRef.current = null;
+            }
+            if (animationFrameRef.current) {
+              cancelAnimationFrame(animationFrameRef.current);
+              animationFrameRef.current = null;
+            }
+            isRecordingRef.current = false;
+            setIsRecording(false);
+            setAudioLevels(new Array(20).fill(0));
+            setTranscript('');
+            transcriptRef.current = '';
+            // Send the message
+            sendVoiceMessage(finalTranscript.trim());
+          }, 2000);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        cancelRecording();
+      };
+
+      recognition.onend = () => {
+        // Restart if still recording
+        if (isRecordingRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            // Already started or stopped
+          }
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      updateLevels();
+
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      alert('Could not access microphone. Please allow microphone access.');
+    }
+  }, [sendVoiceMessage]);
+
+  const stopRecording = useCallback((finalText?: string) => {
+    // Use provided text, or ref (most recent), or state as fallback
+    const textToSend = finalText || transcriptRef.current || transcript;
+
+    // Clear silence timeout first
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+
+    // Stop recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    // Stop audio
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    // Stop audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    // Stop animation
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    isRecordingRef.current = false;
+    setIsRecording(false);
+    setAudioLevels(new Array(20).fill(0));
+    setTranscript('');
+    transcriptRef.current = '';
+
+    // Send the message if there's text
+    if (textToSend.trim()) {
+      sendVoiceMessage(textToSend.trim());
+    }
+  }, [transcript, sendVoiceMessage]);
+
+  const cancelRecording = useCallback(() => {
+    // Clear silence timeout first
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+
+    // Stop recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    // Stop audio
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    // Stop audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    // Stop animation
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    isRecordingRef.current = false;
+    transcriptRef.current = '';
+    setIsRecording(false);
+    setTranscript('');
+    setAudioLevels(new Array(20).fill(0));
+  }, []);
+
+  // Cleanup recording on unmount
+  useEffect(() => {
+    return () => {
+      cancelRecording();
+    };
+  }, [cancelRecording]);
 
   // Retry configuration
   const MAX_RETRIES = 15;
@@ -420,6 +794,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
           <div className="flex items-center gap-1">
             <button
               type="button"
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              className={`p-1.5 rounded hover:bg-theme-hover transition-colors ${
+                autoSpeak ? 'text-blue-500' : 'text-theme-muted hover:text-theme-primary'
+              }`}
+              aria-label={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
+              title={autoSpeak ? 'Auto-speak enabled' : 'Auto-speak disabled'}
+            >
+              <SpeakerIcon className="w-4 h-4" muted={!autoSpeak} />
+            </button>
+            <button
+              type="button"
               className="p-1.5 rounded hover:bg-theme-hover text-theme-muted hover:text-theme-primary transition-colors"
               aria-label="Settings"
             >
@@ -437,17 +822,31 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
         </div>
       )}
 
-      {/* Avatar Section */}
+      {/* Avatar Section - lazy loaded */}
       {avatarEnabled && connected && (
         <div className="border-b border-theme bg-theme-tertiary/30">
           <div className="relative">
-            <TalkingAvatar
-              text={currentSpeech}
-              isSpeaking={isSpeaking}
-              onSpeakingEnd={handleSpeakingEnd}
-              height={180}
-              enabled={avatarEnabled}
-            />
+            <Suspense fallback={
+              <div className="flex items-center justify-center bg-gradient-to-b from-blue-900/50 to-purple-900/50 rounded-lg" style={{ height: 220 }}>
+                <div className="text-center">
+                  <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-sm text-white/80">Loading avatar...</p>
+                </div>
+              </div>
+            }>
+              <TalkingAvatar
+                text={currentSpeech}
+                isSpeaking={isSpeaking}
+                onSpeakingEnd={handleSpeakingEnd}
+                onLoaded={handleAvatarLoaded}
+                onError={handleAvatarError}
+                height={220}
+                enabled={avatarEnabled}
+                characterId={avatarCharacter}
+                onCharacterChange={setAvatarCharacter}
+                showCharacterSelector={true}
+              />
+            </Suspense>
             {/* Avatar toggle button */}
             <button
               type="button"
@@ -578,34 +977,90 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
 
       {/* Input Area */}
       <div className="p-3 border-t border-theme bg-theme-nav">
-        <div className="relative flex items-center gap-2 bg-theme-tertiary border border-theme rounded-xl px-3 py-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={connected ? "Ask to do anything" : connectionStatus}
-            disabled={loading || !connected}
-            className="flex-1 bg-transparent text-sm text-theme-primary placeholder-theme-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <button
-            type="button"
-            className="p-1.5 text-theme-muted hover:text-theme-primary transition-colors"
-            aria-label="Voice input"
-          >
-            <MicIcon className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={loading || !input.trim() || !connected}
-            aria-label="Send message"
-            className="p-1.5 text-theme-muted hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <SendIcon className="w-4 h-4" />
-          </button>
-        </div>
+        {isRecording ? (
+          /* Recording UI */
+          <div className="flex items-center gap-3 bg-theme-tertiary border border-theme rounded-xl px-3 py-2">
+            {/* Delete/Cancel button */}
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-full transition-colors"
+              aria-label="Cancel recording"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+
+            {/* Recording indicator */}
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+
+            {/* Audio visualizer */}
+            <div className="flex-1 flex items-center justify-center gap-[2px] h-8">
+              {audioLevels.map((level, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-blue-500 rounded-full transition-all duration-75"
+                  style={{
+                    height: `${Math.max(4, level * 28)}px`,
+                    opacity: 0.5 + level * 0.5,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Transcript preview */}
+            {transcript && (
+              <div className="max-w-[120px] truncate text-xs text-theme-muted">
+                {transcript}
+              </div>
+            )}
+
+            {/* Stop/Send button */}
+            <button
+              type="button"
+              onClick={() => stopRecording()}
+              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+              aria-label="Stop and send"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 6h12v12H6z" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          /* Normal input UI */
+          <div className="relative flex items-center gap-2 bg-theme-tertiary border border-theme rounded-xl px-3 py-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={connected ? "Ask to do anything" : connectionStatus}
+              disabled={loading || !connected}
+              className="flex-1 bg-transparent text-sm text-theme-primary placeholder-theme-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <button
+              type="button"
+              onClick={startRecording}
+              disabled={!connected || loading}
+              className="p-1.5 text-theme-muted hover:text-theme-primary disabled:opacity-30 transition-colors"
+              aria-label="Voice input"
+            >
+              <MicIcon className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={loading || !input.trim() || !connected}
+              aria-label="Send message"
+              className="p-1.5 text-theme-muted hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <SendIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         {statusType === 'error' && (
           <p className="mt-2 text-xs text-red-500 text-center">
             {connectionStatus}

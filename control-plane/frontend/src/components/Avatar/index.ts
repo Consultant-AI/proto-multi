@@ -1,2 +1,2 @@
 export { default as TalkingAvatar } from './TalkingAvatar';
-export * from './avatarConfig';
+export { checkWebGLSupport } from './avatarConfig';
