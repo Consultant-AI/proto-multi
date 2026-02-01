@@ -67,7 +67,7 @@ class InstanceListResponse(BaseModel):
     instances: List[InstanceResponse]
 
 
-@router.post("/", response_model=InstanceResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=InstanceResponse, status_code=status.HTTP_201_CREATED)
 async def create_instance(
     request: CreateInstanceRequest,
     current_user=Depends(get_current_user),
@@ -178,7 +178,7 @@ async def create_instance(
     )
 
 
-@router.get("/", response_model=InstanceListResponse)
+@router.get("", response_model=InstanceListResponse)
 async def list_instances(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db)

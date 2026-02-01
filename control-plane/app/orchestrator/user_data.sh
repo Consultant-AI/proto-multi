@@ -193,122 +193,25 @@ if [ -n "$OPENCLAW_TARBALL_URL" ]; then
       echo "=== OPENCLAW NOT FOUND - WILL USE FALLBACK ==="
     fi
   else
-    echo "Failed to download OpenClaw tarball, falling back to simple gateway"
+    echo "FATAL: Failed to download OpenClaw tarball"
   fi
 else
-  echo "No CONTROL_PLANE_URL or MOLTBOT_TARBALL_URL provided, using simple gateway"
+  echo "FATAL: No CONTROL_PLANE_URL or MOLTBOT_TARBALL_URL provided - cannot install OpenClaw"
 fi
 
-# If real moltbot not installed, create fallback simple gateway
+# OpenClaw MUST be installed - no fallback
 if [ "$OPENCLAW_INSTALLED" = false ]; then
-  echo "Setting up fallback simple gateway..."
-  mkdir -p /opt/cloudbot-gateway
-  cd /opt/cloudbot-gateway
-
-  # Install ws package for WebSocket server
-  npm init -y
-  npm install ws
-
-  # Create the simple gateway server (follows moltbot/clawdbot protocol)
-  cat > /opt/cloudbot-gateway/server.js << 'GATEWAYSERVER'
-const WebSocket = require('ws');
-const https = require('https');
-
-const PORT = 18789;
-const PASSWORD = 'cloudbot-gateway-secret';
-const PING_INTERVAL = 30000;
-
-const wss = new WebSocket.Server({ port: PORT, host: '0.0.0.0' });
-console.log(`Simple CloudBot gateway started on port ${PORT}`);
-
-function heartbeat() { this.isAlive = true; }
-
-const pingInterval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) return ws.terminate();
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, PING_INTERVAL);
-
-wss.on('close', () => clearInterval(pingInterval));
-
-async function callAnthropic(apiKey, messages) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, messages });
-    const req = https.request({
-      hostname: 'api.anthropic.com', port: 443, path: '/v1/messages', method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
-    }, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(body);
-          if (json.content && json.content[0]) resolve(json.content[0].text);
-          else if (json.error) reject(new Error(json.error.message));
-          else reject(new Error('Unexpected response format'));
-        } catch (e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
-
-const sessions = new Map();
-
-wss.on('connection', function connection(ws, req) {
-  console.log('Client connected from', req.socket.remoteAddress);
-  let authenticated = false;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  ws.isAlive = true;
-  ws.on('pong', heartbeat);
-
-  ws.send(JSON.stringify({ type: 'event', event: 'connect.challenge', payload: { methods: ['password'] } }));
-
-  ws.on('message', async function message(data) {
-    try {
-      const msg = JSON.parse(data.toString());
-      if (msg.type === 'req') {
-        const { id, method, params } = msg;
-        if (method === 'connect') {
-          if (params?.auth?.password === PASSWORD) {
-            authenticated = true;
-            ws.send(JSON.stringify({ type: 'res', id, ok: true, payload: { type: 'hello-ok', protocol: 1, server: { id: 'cloudbot-simple', displayName: 'CloudBot Simple Gateway', version: '1.0.0' } } }));
-          } else {
-            ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'auth_failed', message: 'Authentication failed' } }));
-          }
-          return;
-        }
-        if (!authenticated) { ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'not_authenticated', message: 'Not authenticated' } })); return; }
-        if (method === 'chat.send') {
-          const { sessionKey, message: userMessage } = params;
-          const runId = `run-${Date.now()}`;
-          if (!sessions.has(sessionKey)) sessions.set(sessionKey, []);
-          const history = sessions.get(sessionKey);
-          ws.send(JSON.stringify({ type: 'res', id, ok: true, payload: { status: 'started', runId } }));
-          history.push({ role: 'user', content: userMessage });
-          if (!apiKey) { ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: 'No API key configured.' }] } } })); return; }
-          try {
-            const response = await callAnthropic(apiKey, history);
-            history.push({ role: 'assistant', content: response });
-            ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: response }] } } }));
-          } catch (error) { ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'error', errorMessage: `API error: ${error.message}` } })); }
-          return;
-        }
-        ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'unknown_method', message: `Unknown method: ${method}` } }));
-      }
-    } catch (e) { console.error('Parse error:', e); }
-  });
-  ws.on('close', () => console.log('Client disconnected'));
-  ws.on('error', (err) => console.error('WebSocket error:', err));
-});
-GATEWAYSERVER
+  echo "=== FATAL ERROR: OpenClaw failed to install ==="
+  echo "OpenClaw is required. Check the logs above for installation errors."
+  echo "Common issues:"
+  echo "  - Tarball URL not set (CONTROL_PLANE_URL or MOLTBOT_TARBALL_URL)"
+  echo "  - Tarball download failed"
+  echo "  - npm install -g failed"
+  echo "  - Binary not created in expected location"
+  # Don't exit - continue to see what else fails
 fi
 
-echo "OpenClaw/Gateway setup complete (real openclaw: $OPENCLAW_INSTALLED)"
+echo "OpenClaw/Gateway setup complete (openclaw installed: $OPENCLAW_INSTALLED)"
 
 # Set up desktop wallpaper and theme
 echo "Configuring desktop appearance..."
@@ -663,13 +566,20 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
   "agents": {
     "defaults": {
       "workspace": "/root/cloudbot-workspace",
-      "skipBootstrap": true
+      "skipBootstrap": true,
+      "thinkingDefault": "off",
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-20250514"
+      }
     },
     "list": [
       {
         "id": "cloudbot",
         "default": true,
         "workspace": "/root/cloudbot-workspace",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-20250514"
+        },
         "identity": {
           "name": "CloudBot",
           "theme": "cloud desktop assistant",
@@ -721,135 +631,26 @@ OPENCLAW_GATEWAY_PASSWORD=cloudbot-gateway-secret
 ENVFILE
 
 # Append API keys to environment file (no quotes - systemd EnvironmentFile format)
+# IMPORTANT: Use printf to avoid $ expansion in API keys
 if [ -n "$ANTHROPIC_API_KEY" ]; then
-  echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> /etc/openclaw.env
+  printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" >> /etc/openclaw.env
   echo "Added ANTHROPIC_API_KEY to /etc/openclaw.env (length: ${#ANTHROPIC_API_KEY})"
 fi
-[ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> /etc/openclaw.env && echo "Added OPENAI_API_KEY"
-[ -n "$GOOGLE_API_KEY" ] && echo "GOOGLE_API_KEY=$GOOGLE_API_KEY" >> /etc/openclaw.env && echo "Added GOOGLE_API_KEY"
-[ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY=$GROQ_API_KEY" >> /etc/openclaw.env && echo "Added GROQ_API_KEY"
-[ -n "$TOGETHER_API_KEY" ] && echo "TOGETHER_API_KEY=$TOGETHER_API_KEY" >> /etc/openclaw.env && echo "Added TOGETHER_API_KEY"
-[ -n "$OPENROUTER_API_KEY" ] && echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY" >> /etc/openclaw.env && echo "Added OPENROUTER_API_KEY"
-[ -n "$MISTRAL_API_KEY" ] && echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" >> /etc/openclaw.env && echo "Added MISTRAL_API_KEY"
-[ -n "$DEEPSEEK_API_KEY" ] && echo "DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY" >> /etc/openclaw.env && echo "Added DEEPSEEK_API_KEY"
-[ -n "$XAI_API_KEY" ] && echo "XAI_API_KEY=$XAI_API_KEY" >> /etc/openclaw.env && echo "Added XAI_API_KEY"
+[ -n "$OPENAI_API_KEY" ] && printf 'OPENAI_API_KEY=%s\n' "$OPENAI_API_KEY" >> /etc/openclaw.env && echo "Added OPENAI_API_KEY"
+[ -n "$GOOGLE_API_KEY" ] && printf 'GOOGLE_API_KEY=%s\n' "$GOOGLE_API_KEY" >> /etc/openclaw.env && echo "Added GOOGLE_API_KEY"
+[ -n "$GROQ_API_KEY" ] && printf 'GROQ_API_KEY=%s\n' "$GROQ_API_KEY" >> /etc/openclaw.env && echo "Added GROQ_API_KEY"
+[ -n "$TOGETHER_API_KEY" ] && printf 'TOGETHER_API_KEY=%s\n' "$TOGETHER_API_KEY" >> /etc/openclaw.env && echo "Added TOGETHER_API_KEY"
+[ -n "$OPENROUTER_API_KEY" ] && printf 'OPENROUTER_API_KEY=%s\n' "$OPENROUTER_API_KEY" >> /etc/openclaw.env && echo "Added OPENROUTER_API_KEY"
+[ -n "$MISTRAL_API_KEY" ] && printf 'MISTRAL_API_KEY=%s\n' "$MISTRAL_API_KEY" >> /etc/openclaw.env && echo "Added MISTRAL_API_KEY"
+[ -n "$DEEPSEEK_API_KEY" ] && printf 'DEEPSEEK_API_KEY=%s\n' "$DEEPSEEK_API_KEY" >> /etc/openclaw.env && echo "Added DEEPSEEK_API_KEY"
+[ -n "$XAI_API_KEY" ] && printf 'XAI_API_KEY=%s\n' "$XAI_API_KEY" >> /etc/openclaw.env && echo "Added XAI_API_KEY"
 
 echo "=== Contents of /etc/openclaw.env (redacted) ==="
 cat /etc/openclaw.env | sed 's/=.*/=***REDACTED***/'
 
 chmod 600 /etc/openclaw.env
 
-# Configure CloudBot gateway service - use web-compatible gateway
-# Note: Real openclaw requires device pairing which web clients can't provide
-# The CloudBot gateway provides equivalent chat functionality for web users
-mkdir -p /opt/cloudbot-gateway
-cd /opt/cloudbot-gateway
-
-# Install ws if needed
-if [ ! -f /opt/cloudbot-gateway/node_modules/ws/package.json ]; then
-  npm init -y
-  npm install ws
-fi
-
-# Create the CloudBot gateway server
-cat > /opt/cloudbot-gateway/server.js << 'GATEWAYSERVER'
-const WebSocket = require('ws');
-const https = require('https');
-
-const PORT = 18789;
-const PASSWORD = 'cloudbot-gateway-secret';
-const PING_INTERVAL = 30000;
-
-const wss = new WebSocket.Server({ port: PORT, host: '0.0.0.0' });
-console.log(`CloudBot Gateway started on port ${PORT}`);
-
-function heartbeat() { this.isAlive = true; }
-
-const pingInterval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) return ws.terminate();
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, PING_INTERVAL);
-
-wss.on('close', () => clearInterval(pingInterval));
-
-async function callAnthropic(apiKey, messages) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, messages });
-    const req = https.request({
-      hostname: 'api.anthropic.com', port: 443, path: '/v1/messages', method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
-    }, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(body);
-          if (json.content && json.content[0]) resolve(json.content[0].text);
-          else if (json.error) reject(new Error(json.error.message));
-          else reject(new Error('Unexpected response format'));
-        } catch (e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
-
-const sessions = new Map();
-
-wss.on('connection', function connection(ws, req) {
-  console.log('Client connected from', req.socket.remoteAddress);
-  let authenticated = false;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  ws.isAlive = true;
-  ws.on('pong', heartbeat);
-
-  ws.send(JSON.stringify({ type: 'event', event: 'connect.challenge', payload: { methods: ['password'] } }));
-
-  ws.on('message', async function message(data) {
-    try {
-      const msg = JSON.parse(data.toString());
-      if (msg.type === 'req') {
-        const { id, method, params } = msg;
-        if (method === 'connect') {
-          if (params?.auth?.password === PASSWORD) {
-            authenticated = true;
-            ws.send(JSON.stringify({ type: 'res', id, ok: true, payload: { type: 'hello-ok', protocol: 1, server: { id: 'cloudbot', displayName: 'CloudBot Gateway', version: '1.0.0' } } }));
-          } else {
-            ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'auth_failed', message: 'Authentication failed' } }));
-          }
-          return;
-        }
-        if (!authenticated) { ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'not_authenticated', message: 'Not authenticated' } })); return; }
-        if (method === 'chat.send') {
-          const { sessionKey, message: userMessage } = params;
-          const runId = `run-${Date.now()}`;
-          if (!sessions.has(sessionKey)) sessions.set(sessionKey, []);
-          const history = sessions.get(sessionKey);
-          ws.send(JSON.stringify({ type: 'res', id, ok: true, payload: { status: 'started', runId } }));
-          history.push({ role: 'user', content: userMessage });
-          if (!apiKey) { ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: 'No API key configured. Please add your Anthropic API key when creating the instance.' }] } } })); return; }
-          try {
-            const response = await callAnthropic(apiKey, history);
-            history.push({ role: 'assistant', content: response });
-            ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: response }] } } }));
-          } catch (error) { ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'error', errorMessage: `API error: ${error.message}` } })); }
-          return;
-        }
-        ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'unknown_method', message: `Unknown method: ${method}` } }));
-      }
-    } catch (e) { console.error('Parse error:', e); }
-  });
-  ws.on('close', () => console.log('Client disconnected'));
-  ws.on('error', (err) => console.error('WebSocket error:', err));
-});
-GATEWAYSERVER
-
-# Configure systemd service based on whether real openclaw is installed
+# Configure systemd service - ONLY use real OpenClaw (no fallback)
 if [ "$OPENCLAW_INSTALLED" = true ]; then
   echo "Configuring openclaw service for REAL openclaw..."
   cat > /etc/systemd/system/openclaw.service <<'EOF'
@@ -865,7 +666,8 @@ WorkingDirectory=/root/cloudbot-workspace
 Environment=DISPLAY=:99
 Environment=HOME=/root
 Environment=OPENCLAW_GATEWAY_PASSWORD=cloudbot-gateway-secret
-ExecStart=/usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password --password cloudbot-gateway-secret
+Environment=NODE_OPTIONS=--max-old-space-size=384
+ExecStart=/usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password
 Restart=always
 RestartSec=5
 
@@ -873,25 +675,6 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
   echo "OpenClaw gateway service configured (real openclaw)"
-else
-  echo "Configuring openclaw service for fallback gateway..."
-  cat > /etc/systemd/system/openclaw.service <<'EOF'
-[Unit]
-Description=OpenClaw Gateway (Fallback)
-After=network.target
-
-[Service]
-Type=simple
-EnvironmentFile=/etc/openclaw.env
-WorkingDirectory=/opt/cloudbot-gateway
-ExecStart=/usr/bin/node /opt/cloudbot-gateway/server.js
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-  echo "OpenClaw fallback gateway service configured"
 fi
 
 # Enable and start services
@@ -933,29 +716,16 @@ ss -tlnp | grep 18789 && echo "OpenClaw listening on 18789: OK" || {
     source /etc/openclaw.env
     set +a
 
-    # Check if real openclaw or simple gateway
-    if [ "$OPENCLAW_INSTALLED" = true ]; then
-      # Try running real openclaw gateway directly
-      cd /root
+    # Only try real OpenClaw - no fallback
+    echo "Testing openclaw binary..."
+    openclaw --version > /var/log/openclaw-version.log 2>&1 || echo "openclaw --version failed"
+    cat /var/log/openclaw-version.log
 
-      # First test if openclaw can run at all
-      echo "Testing openclaw binary..."
-      openclaw --version > /var/log/openclaw-version.log 2>&1 || echo "openclaw --version failed"
-      cat /var/log/openclaw-version.log
-
-      echo "Starting OpenClaw gateway..."
-      # Use full path and ensure environment is passed
-      cd /root/cloudbot-workspace
-      DISPLAY=:99 HOME=/root nohup /usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password --password cloudbot-gateway-secret > /var/log/openclaw-direct.log 2>&1 &
-      OPENCLAW_PID=$!
-      echo "Started real OpenClaw gateway directly with PID: $OPENCLAW_PID"
-    else
-      # Try running simple gateway directly
-      cd /opt/cloudbot-gateway
-      nohup node server.js > /var/log/cloudbot-direct.log 2>&1 &
-      GATEWAY_PID=$!
-      echo "Started simple gateway directly with PID: $GATEWAY_PID"
-    fi
+    echo "Starting OpenClaw gateway directly..."
+    cd /root/cloudbot-workspace
+    DISPLAY=:99 HOME=/root NODE_OPTIONS="--max-old-space-size=384" nohup /usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password > /var/log/openclaw-direct.log 2>&1 &
+    OPENCLAW_PID=$!
+    echo "Started OpenClaw gateway directly with PID: $OPENCLAW_PID"
 
     # Wait longer for OpenClaw to fully initialize (it starts browser/chrome)
     echo "Waiting 60 seconds for OpenClaw to fully start..."
@@ -969,138 +739,10 @@ ss -tlnp | grep 18789 && echo "OpenClaw listening on 18789: OK" || {
     done
 
     ss -tlnp | grep 18789 && echo "Gateway running directly: OK" || {
-      echo "Direct run failed after 60s, checking logs..."
-      if [ "$OPENCLAW_INSTALLED" = true ]; then
-        echo "=== openclaw-direct.log ==="
-        cat /var/log/openclaw-direct.log 2>/dev/null || echo "(empty or not found)"
-        echo "=== checking process ==="
-        ps aux | grep -i openclaw || true
-        echo "=== checking if process crashed ==="
-        dmesg | tail -20 || true
-
-        # Real OpenClaw failed completely, fall back to simple gateway
-        echo "Real OpenClaw failed, setting up simple gateway as fallback..."
-        mkdir -p /opt/cloudbot-gateway
-        cd /opt/cloudbot-gateway
-
-        # Install ws if needed
-        if [ ! -f /opt/cloudbot-gateway/node_modules/ws/package.json ]; then
-          npm init -y
-          npm install ws
-        fi
-
-        # Create the simple gateway server
-        cat > /opt/cloudbot-gateway/server.js << 'FALLBACKSERVER'
-const WebSocket = require('ws');
-const https = require('https');
-
-const PORT = 18789;
-const PASSWORD = 'cloudbot-gateway-secret';
-const PING_INTERVAL = 30000;
-
-const wss = new WebSocket.Server({ port: PORT, host: '0.0.0.0' });
-console.log(`Simple CloudBot gateway (fallback) started on port ${PORT}`);
-
-function heartbeat() { this.isAlive = true; }
-
-const pingInterval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (ws.isAlive === false) return ws.terminate();
-    ws.isAlive = false;
-    ws.ping();
-  });
-}, PING_INTERVAL);
-
-wss.on('close', () => clearInterval(pingInterval));
-
-async function callAnthropic(apiKey, messages) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, messages });
-    const req = https.request({
-      hostname: 'api.anthropic.com', port: 443, path: '/v1/messages', method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
-    }, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(body);
-          if (json.content && json.content[0]) resolve(json.content[0].text);
-          else if (json.error) reject(new Error(json.error.message));
-          else reject(new Error('Unexpected response format'));
-        } catch (e) { reject(e); }
-      });
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
-
-const sessions = new Map();
-
-wss.on('connection', function connection(ws, req) {
-  console.log('Client connected from', req.socket.remoteAddress);
-  let authenticated = false;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  ws.isAlive = true;
-  ws.on('pong', heartbeat);
-
-  ws.send(JSON.stringify({ type: 'event', event: 'connect.challenge', payload: { methods: ['password'] } }));
-
-  ws.on('message', async function message(data) {
-    try {
-      const msg = JSON.parse(data.toString());
-      if (msg.type === 'req') {
-        const { id, method, params } = msg;
-        if (method === 'connect') {
-          if (params?.auth?.password === PASSWORD) {
-            authenticated = true;
-            ws.send(JSON.stringify({ type: 'res', id, ok: true, payload: { type: 'hello-ok', protocol: 1, server: { id: 'cloudbot-fallback', displayName: 'CloudBot Fallback Gateway', version: '1.0.0' } } }));
-          } else {
-            ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'auth_failed', message: 'Authentication failed' } }));
-          }
-          return;
-        }
-        if (!authenticated) { ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'not_authenticated', message: 'Not authenticated' } })); return; }
-        if (method === 'chat.send') {
-          const { sessionKey, message: userMessage } = params;
-          const runId = `run-${Date.now()}`;
-          if (!sessions.has(sessionKey)) sessions.set(sessionKey, []);
-          const history = sessions.get(sessionKey);
-          ws.send(JSON.stringify({ type: 'res', id, ok: true, payload: { status: 'started', runId } }));
-          history.push({ role: 'user', content: userMessage });
-          if (!apiKey) { ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: 'No API key configured. Please add your Anthropic API key in settings.' }] } } })); return; }
-          try {
-            const response = await callAnthropic(apiKey, history);
-            history.push({ role: 'assistant', content: response });
-            ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: response }] } } }));
-          } catch (error) { ws.send(JSON.stringify({ type: 'event', event: 'chat', payload: { runId, state: 'error', errorMessage: `API error: ${error.message}` } })); }
-          return;
-        }
-        ws.send(JSON.stringify({ type: 'res', id, ok: false, error: { code: 'unknown_method', message: `Unknown method: ${method}` } }));
-      }
-    } catch (e) { console.error('Parse error:', e); }
-  });
-  ws.on('close', () => console.log('Client disconnected'));
-  ws.on('error', (err) => console.error('WebSocket error:', err));
-});
-FALLBACKSERVER
-
-        # Run the fallback simple gateway
-        nohup node /opt/cloudbot-gateway/server.js > /var/log/cloudbot-fallback.log 2>&1 &
-        FALLBACK_PID=$!
-        echo "Started fallback simple gateway with PID: $FALLBACK_PID"
-
-        sleep 5
-        ss -tlnp | grep 18789 && echo "Fallback gateway running: OK" || {
-          echo "Fallback gateway also failed"
-          cat /var/log/cloudbot-fallback.log 2>/dev/null | tail -20 || true
-        }
-      else
-        cat /var/log/cloudbot-direct.log 2>/dev/null | tail -50 || true
-        echo "All gateway start methods failed"
-      fi
+      echo "=== OpenClaw failed to start. Checking logs... ==="
+      cat /var/log/openclaw-direct.log 2>/dev/null || echo "(no logs)"
+      ps aux | grep -i openclaw || true
+      echo "=== OpenClaw FAILED - No fallback available ==="
     }
   }
 }
@@ -1157,10 +799,69 @@ class LogHandler(BaseHTTPRequestHandler):
             logs.append(subprocess.getoutput('ss -tlnp | grep 18789 || echo "(nothing listening)"'))
             logs.append("\n=== ps aux openclaw ===")
             logs.append(subprocess.getoutput('ps aux | grep -i openclaw | grep -v grep || echo "(not running)"'))
+            logs.append("\n=== openclaw detailed log ===")
+            logs.append(subprocess.getoutput('tail -100 /tmp/openclaw/openclaw-*.log 2>/dev/null || echo "(no log file)"'))
+            # Check openclaw process environment for ANTHROPIC_API_KEY
+            logs.append("\n=== openclaw process env (ANTHROPIC_API_KEY) ===")
+            logs.append(subprocess.getoutput('pid=$(pgrep -f "openclaw-gateway" | head -1); if [ -n "$pid" ]; then cat /proc/$pid/environ 2>/dev/null | tr "\\0" "\\n" | grep ANTHROPIC_API_KEY | sed "s/=.*/=***REDACTED***/"; else echo "(openclaw not running)"; fi'))
             self.send_response(200)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
             self.wfile.write('\n'.join(logs).encode())
+            return
+        elif self.path == '/testapi':
+            import os
+            key = os.environ.get('ANTHROPIC_API_KEY', '')
+            key_info = f"len={len(key)}, start={key[:15]}..., end=...{key[-4:]}" if key else "NOT SET"
+            # Read from env file
+            file_key = ""
+            try:
+                with open('/etc/openclaw.env', 'r') as f:
+                    for line in f:
+                        if line.startswith('ANTHROPIC_API_KEY='):
+                            file_key = line.split('=', 1)[1].strip()
+            except Exception as e:
+                file_key = f"ERR:{e}"
+            file_info = f"len={len(file_key)}, start={file_key[:15]}..., end=...{file_key[-4:]}" if file_key and len(file_key) > 20 else file_key or "NOT IN FILE"
+            match = "MATCH" if key == file_key else "MISMATCH"
+            # Test API with env key
+            import urllib.request
+            import json as jsonlib
+            test1 = "?"
+            try:
+                req = urllib.request.Request('https://api.anthropic.com/v1/messages',
+                    data=jsonlib.dumps({"model": "claude-3-haiku-20240307", "max_tokens": 10, "messages": [{"role": "user", "content": "hi"}]}).encode(),
+                    headers={'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01'})
+                with urllib.request.urlopen(req, timeout=10) as r: test1 = f"OK:{r.status}"
+            except urllib.error.HTTPError as e: test1 = f"HTTP:{e.code}"
+            except Exception as e: test1 = f"ERR:{e}"
+            # Test API with file key
+            test2 = "?"
+            try:
+                req = urllib.request.Request('https://api.anthropic.com/v1/messages',
+                    data=jsonlib.dumps({"model": "claude-3-haiku-20240307", "max_tokens": 10, "messages": [{"role": "user", "content": "hi"}]}).encode(),
+                    headers={'Content-Type': 'application/json', 'x-api-key': file_key, 'anthropic-version': '2023-06-01'})
+                with urllib.request.urlopen(req, timeout=10) as r: test2 = f"OK:{r.status}"
+            except urllib.error.HTTPError as e: test2 = f"HTTP:{e.code}"
+            except Exception as e: test2 = f"ERR:{e}"
+            # Test with sonnet model (same as OpenClaw uses)
+            test3 = "?"
+            try:
+                req = urllib.request.Request('https://api.anthropic.com/v1/messages',
+                    data=jsonlib.dumps({"model": "claude-sonnet-4-20250514", "max_tokens": 50, "messages": [{"role": "user", "content": "say hello"}]}).encode(),
+                    headers={'Content-Type': 'application/json', 'x-api-key': file_key, 'anthropic-version': '2023-06-01'})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    resp = jsonlib.loads(r.read().decode())
+                    text = resp.get('content', [{}])[0].get('text', '')[:50]
+                    test3 = f"OK:{r.status} '{text}'"
+            except urllib.error.HTTPError as e: test3 = f"HTTP:{e.code}-{e.read().decode()[:100]}"
+            except Exception as e: test3 = f"ERR:{e}"
+            result = f"Bash env: {key_info}\nEnv file: {file_info}\nKeys: {match}\nTest haiku: {test1}\nTest file key: {test2}\nTest sonnet-4: {test3}"
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(result.encode())
+            return
         else:
             self.send_response(404)
             self.end_headers()
