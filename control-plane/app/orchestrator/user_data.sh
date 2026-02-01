@@ -84,29 +84,36 @@ npm --version
 # Enable corepack for pnpm
 corepack enable
 
-# Install Moltbot/CloudBot AI Gateway
-echo "Setting up Moltbot gateway..."
+# Install OpenClaw AI Gateway
+echo "Setting up OpenClaw gateway..."
 
-MOLTBOT_INSTALLED=false
+OPENCLAW_INSTALLED=false
 
-# Check if we have a tarball URL for real moltbot
-if [ -n "$MOLTBOT_TARBALL_URL" ]; then
-  echo "Installing real Moltbot from $MOLTBOT_TARBALL_URL..."
+# Download OpenClaw tarball - try control-plane first, then fallback to MOLTBOT_TARBALL_URL
+OPENCLAW_TARBALL_URL=""
+if [ -n "$CONTROL_PLANE_URL" ]; then
+  OPENCLAW_TARBALL_URL="${CONTROL_PLANE_URL}/assets/openclaw.tgz"
+elif [ -n "$MOLTBOT_TARBALL_URL" ]; then
+  OPENCLAW_TARBALL_URL="$MOLTBOT_TARBALL_URL"
+fi
+
+if [ -n "$OPENCLAW_TARBALL_URL" ]; then
+  echo "Installing OpenClaw from $OPENCLAW_TARBALL_URL..."
 
   # Download tarball
-  curl -fsSL "$MOLTBOT_TARBALL_URL" -o /tmp/moltbot.tgz
+  curl -fsSL "$OPENCLAW_TARBALL_URL" -o /tmp/openclaw.tgz
 
-  if [ -f /tmp/moltbot.tgz ]; then
-    # Install globally - skip postinstall to test if that's the issue
+  if [ -f /tmp/openclaw.tgz ]; then
+    # Install globally
     echo "=== STARTING NPM GLOBAL INSTALL ==="
-    echo "Tarball size: $(ls -la /tmp/moltbot.tgz)"
+    echo "Tarball size: $(ls -la /tmp/openclaw.tgz)"
     echo "NPM version: $(npm --version)"
     echo "Node version: $(node --version)"
 
-    echo "Running: npm install -g /tmp/moltbot.tgz"
+    echo "Running: npm install -g /tmp/openclaw.tgz"
 
     # Capture full output
-    NPM_OUTPUT=$(npm install -g /tmp/moltbot.tgz 2>&1)
+    NPM_OUTPUT=$(npm install -g /tmp/openclaw.tgz 2>&1)
     NPM_EXIT_CODE=$?
     echo "=== NPM OUTPUT START ==="
     echo "$NPM_OUTPUT"
@@ -118,7 +125,7 @@ if [ -n "$MOLTBOT_TARBALL_URL" ]; then
     else
       echo "npm install FAILED with exit code $NPM_EXIT_CODE"
     fi
-    rm -f /tmp/moltbot.tgz
+    rm -f /tmp/openclaw.tgz
 
     # Find where npm installed the binaries
     NPM_PREFIX=$(npm config get prefix)
@@ -170,26 +177,26 @@ if [ -n "$MOLTBOT_TARBALL_URL" ]; then
     if [ -x "$NPM_PREFIX/bin/openclaw" ]; then
       echo "OpenClaw found at $NPM_PREFIX/bin/openclaw"
       ln -sf "$NPM_PREFIX/bin/openclaw" /usr/local/bin/openclaw
-      MOLTBOT_INSTALLED=true
+      OPENCLAW_INSTALLED=true
     elif [ -x /usr/local/bin/openclaw ]; then
       echo "OpenClaw found at /usr/local/bin/openclaw"
-      MOLTBOT_INSTALLED=true
+      OPENCLAW_INSTALLED=true
     elif [ -x /usr/bin/openclaw ]; then
       echo "OpenClaw found at /usr/bin/openclaw"
       ln -sf /usr/bin/openclaw /usr/local/bin/openclaw
-      MOLTBOT_INSTALLED=true
+      OPENCLAW_INSTALLED=true
     else
       echo "=== OPENCLAW NOT FOUND - WILL USE FALLBACK ==="
     fi
   else
-    echo "Failed to download moltbot tarball, falling back to simple gateway"
+    echo "Failed to download OpenClaw tarball, falling back to simple gateway"
   fi
 else
-  echo "No MOLTBOT_TARBALL_URL provided, using simple gateway"
+  echo "No CONTROL_PLANE_URL or MOLTBOT_TARBALL_URL provided, using simple gateway"
 fi
 
 # If real moltbot not installed, create fallback simple gateway
-if [ "$MOLTBOT_INSTALLED" = false ]; then
+if [ "$OPENCLAW_INSTALLED" = false ]; then
   echo "Setting up fallback simple gateway..."
   mkdir -p /opt/cloudbot-gateway
   cd /opt/cloudbot-gateway
@@ -297,7 +304,7 @@ wss.on('connection', function connection(ws, req) {
 GATEWAYSERVER
 fi
 
-echo "Moltbot/Gateway setup complete (real moltbot: $MOLTBOT_INSTALLED)"
+echo "OpenClaw/Gateway setup complete (real openclaw: $OPENCLAW_INSTALLED)"
 
 # Set up desktop wallpaper and theme
 echo "Configuring desktop appearance..."
@@ -554,8 +561,8 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-# Create moltbot config directory and workspace
-mkdir -p /root/.clawdbot
+# Create OpenClaw config directory and workspace
+mkdir -p /root/.openclaw
 mkdir -p /root/cloudbot-workspace
 
 # Create workspace files for the agent
@@ -633,9 +640,9 @@ cat > /root/cloudbot-workspace/TOOLS.md <<'TOOLSMD'
 - LibreOffice for documents, spreadsheets, presentations
 TOOLSMD
 
-# Build moltbot.json with full agent configuration
+# Build openclaw.json with full agent configuration
 # dangerouslyDisableDeviceAuth: true bypasses device pairing for web clients
-cat > /root/.clawdbot/moltbot.json <<'MOLTCFG'
+cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
 {
   "gateway": {
     "mode": "local",
@@ -673,9 +680,9 @@ cat > /root/.clawdbot/moltbot.json <<'MOLTCFG'
     "noSandbox": true
   }
 }
-MOLTCFG
+OPENCLAWCFG
 
-echo "Moltbot workspace created at /root/cloudbot-workspace"
+echo "OpenClaw workspace created at /root/cloudbot-workspace"
 ls -la /root/cloudbot-workspace/
 
 # Log which API keys are configured (without showing values)
@@ -690,12 +697,12 @@ echo "=== API Keys Available ==="
 [ -n "$DEEPSEEK_API_KEY" ] && echo "  - DEEPSEEK_API_KEY: set"
 [ -n "$XAI_API_KEY" ] && echo "  - XAI_API_KEY: set"
 
-echo "Moltbot config contents:"
-cat /root/.clawdbot/moltbot.json
+echo "OpenClaw config contents:"
+cat /root/.openclaw/openclaw.json
 
-# Create environment file for moltbot service with API keys
-echo "=== Creating /etc/moltbot.env ==="
-cat > /etc/moltbot.env <<ENVFILE
+# Create environment file for openclaw service with API keys
+echo "=== Creating /etc/openclaw.env ==="
+cat > /etc/openclaw.env <<ENVFILE
 DISPLAY=:99
 HOME=/root
 OPENCLAW_GATEWAY_PASSWORD=cloudbot-gateway-secret
@@ -703,22 +710,22 @@ ENVFILE
 
 # Append API keys to environment file (with proper quoting for special chars)
 if [ -n "$ANTHROPIC_API_KEY" ]; then
-  echo "ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY'" >> /etc/moltbot.env
-  echo "Added ANTHROPIC_API_KEY to /etc/moltbot.env (length: ${#ANTHROPIC_API_KEY})"
+  echo "ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY'" >> /etc/openclaw.env
+  echo "Added ANTHROPIC_API_KEY to /etc/openclaw.env (length: ${#ANTHROPIC_API_KEY})"
 fi
-[ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY='$OPENAI_API_KEY'" >> /etc/moltbot.env && echo "Added OPENAI_API_KEY"
-[ -n "$GOOGLE_API_KEY" ] && echo "GOOGLE_API_KEY='$GOOGLE_API_KEY'" >> /etc/moltbot.env && echo "Added GOOGLE_API_KEY"
-[ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY='$GROQ_API_KEY'" >> /etc/moltbot.env && echo "Added GROQ_API_KEY"
-[ -n "$TOGETHER_API_KEY" ] && echo "TOGETHER_API_KEY='$TOGETHER_API_KEY'" >> /etc/moltbot.env && echo "Added TOGETHER_API_KEY"
-[ -n "$OPENROUTER_API_KEY" ] && echo "OPENROUTER_API_KEY='$OPENROUTER_API_KEY'" >> /etc/moltbot.env && echo "Added OPENROUTER_API_KEY"
-[ -n "$MISTRAL_API_KEY" ] && echo "MISTRAL_API_KEY='$MISTRAL_API_KEY'" >> /etc/moltbot.env && echo "Added MISTRAL_API_KEY"
-[ -n "$DEEPSEEK_API_KEY" ] && echo "DEEPSEEK_API_KEY='$DEEPSEEK_API_KEY'" >> /etc/moltbot.env && echo "Added DEEPSEEK_API_KEY"
-[ -n "$XAI_API_KEY" ] && echo "XAI_API_KEY='$XAI_API_KEY'" >> /etc/moltbot.env && echo "Added XAI_API_KEY"
+[ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY='$OPENAI_API_KEY'" >> /etc/openclaw.env && echo "Added OPENAI_API_KEY"
+[ -n "$GOOGLE_API_KEY" ] && echo "GOOGLE_API_KEY='$GOOGLE_API_KEY'" >> /etc/openclaw.env && echo "Added GOOGLE_API_KEY"
+[ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY='$GROQ_API_KEY'" >> /etc/openclaw.env && echo "Added GROQ_API_KEY"
+[ -n "$TOGETHER_API_KEY" ] && echo "TOGETHER_API_KEY='$TOGETHER_API_KEY'" >> /etc/openclaw.env && echo "Added TOGETHER_API_KEY"
+[ -n "$OPENROUTER_API_KEY" ] && echo "OPENROUTER_API_KEY='$OPENROUTER_API_KEY'" >> /etc/openclaw.env && echo "Added OPENROUTER_API_KEY"
+[ -n "$MISTRAL_API_KEY" ] && echo "MISTRAL_API_KEY='$MISTRAL_API_KEY'" >> /etc/openclaw.env && echo "Added MISTRAL_API_KEY"
+[ -n "$DEEPSEEK_API_KEY" ] && echo "DEEPSEEK_API_KEY='$DEEPSEEK_API_KEY'" >> /etc/openclaw.env && echo "Added DEEPSEEK_API_KEY"
+[ -n "$XAI_API_KEY" ] && echo "XAI_API_KEY='$XAI_API_KEY'" >> /etc/openclaw.env && echo "Added XAI_API_KEY"
 
-echo "=== Contents of /etc/moltbot.env (redacted) ==="
-cat /etc/moltbot.env | sed 's/=.*/=***REDACTED***/'
+echo "=== Contents of /etc/openclaw.env (redacted) ==="
+cat /etc/openclaw.env | sed 's/=.*/=***REDACTED***/'
 
-chmod 600 /etc/moltbot.env
+chmod 600 /etc/openclaw.env
 
 # Configure CloudBot gateway service - use web-compatible gateway
 # Note: Real openclaw requires device pairing which web clients can't provide
@@ -831,9 +838,9 @@ wss.on('connection', function connection(ws, req) {
 GATEWAYSERVER
 
 # Configure systemd service based on whether real openclaw is installed
-if [ "$MOLTBOT_INSTALLED" = true ]; then
-  echo "Configuring moltbot service for REAL openclaw..."
-  cat > /etc/systemd/system/moltbot.service <<'EOF'
+if [ "$OPENCLAW_INSTALLED" = true ]; then
+  echo "Configuring openclaw service for REAL openclaw..."
+  cat > /etc/systemd/system/openclaw.service <<'EOF'
 [Unit]
 Description=OpenClaw Gateway
 After=network.target xvfb.service
@@ -841,12 +848,12 @@ Requires=xvfb.service
 
 [Service]
 Type=simple
-EnvironmentFile=/etc/moltbot.env
-WorkingDirectory=/root
+EnvironmentFile=/etc/openclaw.env
+WorkingDirectory=/root/cloudbot-workspace
 Environment=DISPLAY=:99
 Environment=HOME=/root
 Environment=OPENCLAW_GATEWAY_PASSWORD=cloudbot-gateway-secret
-ExecStart=/usr/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password --password cloudbot-gateway-secret
+ExecStart=/usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password --password cloudbot-gateway-secret
 Restart=always
 RestartSec=5
 
@@ -855,15 +862,15 @@ WantedBy=multi-user.target
 EOF
   echo "OpenClaw gateway service configured (real openclaw)"
 else
-  echo "Configuring moltbot service for fallback gateway..."
-  cat > /etc/systemd/system/moltbot.service <<'EOF'
+  echo "Configuring openclaw service for fallback gateway..."
+  cat > /etc/systemd/system/openclaw.service <<'EOF'
 [Unit]
-Description=CloudBot Gateway (Fallback)
+Description=OpenClaw Gateway (Fallback)
 After=network.target
 
 [Service]
 Type=simple
-EnvironmentFile=/etc/moltbot.env
+EnvironmentFile=/etc/openclaw.env
 WorkingDirectory=/opt/cloudbot-gateway
 ExecStart=/usr/bin/node /opt/cloudbot-gateway/server.js
 Restart=always
@@ -872,50 +879,50 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-  echo "CloudBot fallback gateway service configured"
+  echo "OpenClaw fallback gateway service configured"
 fi
 
 # Enable and start services
 echo "Starting services..."
 systemctl daemon-reload
-systemctl enable xvfb x11vnc xfce-session moltbot
+systemctl enable xvfb x11vnc xfce-session openclaw
 systemctl start xvfb
 sleep 3
 systemctl start x11vnc
 sleep 2
 systemctl start xfce-session
 sleep 5
-echo "Starting moltbot gateway..."
-systemctl start moltbot
+echo "Starting OpenClaw gateway..."
+systemctl start openclaw
 
 # Verify services
 echo "=== Service Status ==="
 systemctl is-active xvfb && echo "Xvfb: OK" || echo "Xvfb: FAILED"
 systemctl is-active x11vnc && echo "x11vnc: OK" || echo "x11vnc: FAILED"
 systemctl is-active xfce-session && echo "XFCE: OK" || echo "XFCE: FAILED"
-systemctl is-active moltbot && echo "Moltbot: OK" || echo "Moltbot: FAILED"
+systemctl is-active openclaw && echo "OpenClaw: OK" || echo "OpenClaw: FAILED"
 
-# Wait a moment and verify moltbot is actually listening
+# Wait a moment and verify OpenClaw is actually listening
 sleep 10
 echo "=== Port Check ==="
-ss -tlnp | grep 18789 && echo "Moltbot listening on 18789: OK" || {
-  echo "Moltbot not listening on 18789, checking logs..."
-  journalctl -u moltbot --no-pager -n 50
+ss -tlnp | grep 18789 && echo "OpenClaw listening on 18789: OK" || {
+  echo "OpenClaw not listening on 18789, checking logs..."
+  journalctl -u openclaw --no-pager -n 50
 
   echo "Attempting manual restart..."
-  systemctl restart moltbot
+  systemctl restart openclaw
   sleep 10
 
-  ss -tlnp | grep 18789 && echo "CloudBot gateway now listening: OK" || {
+  ss -tlnp | grep 18789 && echo "OpenClaw gateway now listening: OK" || {
     echo "Systemd restart failed, trying to run gateway directly..."
 
     # Source the environment file and run directly
     set -a
-    source /etc/moltbot.env
+    source /etc/openclaw.env
     set +a
 
-    # Check if real moltbot or simple gateway
-    if [ "$MOLTBOT_INSTALLED" = true ]; then
+    # Check if real openclaw or simple gateway
+    if [ "$OPENCLAW_INSTALLED" = true ]; then
       # Try running real openclaw gateway directly
       cd /root
 
@@ -924,21 +931,22 @@ ss -tlnp | grep 18789 && echo "Moltbot listening on 18789: OK" || {
       openclaw --version > /var/log/openclaw-version.log 2>&1 || echo "openclaw --version failed"
       cat /var/log/openclaw-version.log
 
-      echo "Starting openclaw gateway..."
-      # Use full path and ensure environment is passed (note: NODE_OPTIONS doesn't work for SEA binaries)
-      DISPLAY=:99 HOME=/root nohup /usr/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password --password cloudbot-gateway-secret > /var/log/openclaw-direct.log 2>&1 &
-      MOLTBOT_PID=$!
-      echo "Started real openclaw gateway directly with PID: $MOLTBOT_PID"
+      echo "Starting OpenClaw gateway..."
+      # Use full path and ensure environment is passed
+      cd /root/cloudbot-workspace
+      DISPLAY=:99 HOME=/root nohup /usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password --password cloudbot-gateway-secret > /var/log/openclaw-direct.log 2>&1 &
+      OPENCLAW_PID=$!
+      echo "Started real OpenClaw gateway directly with PID: $OPENCLAW_PID"
     else
       # Try running simple gateway directly
       cd /opt/cloudbot-gateway
       nohup node server.js > /var/log/cloudbot-direct.log 2>&1 &
-      MOLTBOT_PID=$!
-      echo "Started simple gateway directly with PID: $MOLTBOT_PID"
+      GATEWAY_PID=$!
+      echo "Started simple gateway directly with PID: $GATEWAY_PID"
     fi
 
-    # Wait longer for openclaw to fully initialize (it starts browser/chrome)
-    echo "Waiting 60 seconds for openclaw to fully start..."
+    # Wait longer for OpenClaw to fully initialize (it starts browser/chrome)
+    echo "Waiting 60 seconds for OpenClaw to fully start..."
     for i in 1 2 3 4 5 6; do
       sleep 10
       if ss -tlnp | grep -q 18789; then
@@ -950,7 +958,7 @@ ss -tlnp | grep 18789 && echo "Moltbot listening on 18789: OK" || {
 
     ss -tlnp | grep 18789 && echo "Gateway running directly: OK" || {
       echo "Direct run failed after 60s, checking logs..."
-      if [ "$MOLTBOT_INSTALLED" = true ]; then
+      if [ "$OPENCLAW_INSTALLED" = true ]; then
         echo "=== openclaw-direct.log ==="
         cat /var/log/openclaw-direct.log 2>/dev/null || echo "(empty or not found)"
         echo "=== checking process ==="
@@ -958,8 +966,8 @@ ss -tlnp | grep 18789 && echo "Moltbot listening on 18789: OK" || {
         echo "=== checking if process crashed ==="
         dmesg | tail -20 || true
 
-        # Real openclaw failed completely, fall back to simple gateway
-        echo "Real moltbot failed, setting up simple gateway as fallback..."
+        # Real OpenClaw failed completely, fall back to simple gateway
+        echo "Real OpenClaw failed, setting up simple gateway as fallback..."
         mkdir -p /opt/cloudbot-gateway
         cd /opt/cloudbot-gateway
 
@@ -1085,11 +1093,11 @@ FALLBACKSERVER
   }
 }
 
-# Create watchdog script to restart CloudBot gateway if not listening
-cat > /etc/cron.d/cloudbot-watchdog <<'CRON'
-* * * * * root ss -tlnp | grep -q 18789 || systemctl restart moltbot
+# Create watchdog script to restart OpenClaw gateway if not listening
+cat > /etc/cron.d/openclaw-watchdog <<'CRON'
+* * * * * root ss -tlnp | grep -q 18789 || systemctl restart openclaw
 CRON
-chmod 644 /etc/cron.d/cloudbot-watchdog
+chmod 644 /etc/cron.d/openclaw-watchdog
 
 # Create a simple debug HTTP server to serve logs
 cat > /opt/debug-server.py <<'DEBUGPY'
@@ -1129,10 +1137,10 @@ class LogHandler(BaseHTTPRequestHandler):
             logs.append(subprocess.getoutput('cat /var/log/openclaw-version.log 2>/dev/null || echo "(not found)"'))
             logs.append("\n=== openclaw-direct.log ===")
             logs.append(subprocess.getoutput('cat /var/log/openclaw-direct.log 2>/dev/null || echo "(not found)"'))
-            logs.append("\n=== moltbot service status ===")
-            logs.append(subprocess.getoutput('systemctl status moltbot 2>/dev/null || echo "(not available)"'))
-            logs.append("\n=== moltbot journal ===")
-            logs.append(subprocess.getoutput('journalctl -u moltbot --no-pager -n 100 2>/dev/null || echo "(not available)"'))
+            logs.append("\n=== openclaw service status ===")
+            logs.append(subprocess.getoutput('systemctl status openclaw 2>/dev/null || echo "(not available)"'))
+            logs.append("\n=== openclaw journal ===")
+            logs.append(subprocess.getoutput('journalctl -u openclaw --no-pager -n 100 2>/dev/null || echo "(not available)"'))
             logs.append("\n=== processes on 18789 ===")
             logs.append(subprocess.getoutput('ss -tlnp | grep 18789 || echo "(nothing listening)"'))
             logs.append("\n=== ps aux openclaw ===")
@@ -1154,7 +1162,7 @@ echo "Debug server started on port 8080"
 
 echo "=== CloudBot Instance Setup Complete ==="
 echo "VNC running on port 5900"
-echo "Moltbot gateway running on port 18789"
+echo "OpenClaw gateway running on port 18789"
 echo "Debug server running on port 8080"
 echo "Resolution: 1920x1080"
 echo "Date: $(date)"

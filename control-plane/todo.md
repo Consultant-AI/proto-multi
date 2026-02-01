@@ -8,9 +8,14 @@ talk to the avatar
 
 ## Actual Software
 
-make it talk
 
-connect to real openclaw
+connect to real openclaw - test it i just made a fix if not working so to fix
+
+
+
+
+make buttons for video + audio + body, + voice + backgtound 
+
 
 gui control
 

@@ -976,11 +976,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-theme-tertiary rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-theme-muted rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 bg-theme-muted rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 bg-theme-muted rounded-full animate-bounce" />
+                <div className="bg-theme-tertiary rounded-2xl px-4 py-3 min-w-[80px]">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce" />
+                    </div>
+                    <span className="text-xs text-theme-muted animate-pulse">Thinking...</span>
                   </div>
                 </div>
               </div>

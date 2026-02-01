@@ -72,6 +72,15 @@ async def get_wallpaper():
     return JSONResponse(status_code=404, content={"error": "Wallpaper not found"})
 
 
+@app.get("/assets/openclaw.tgz")
+async def get_openclaw_tarball():
+    """Serve the OpenClaw tarball for EC2 instance installation"""
+    tarball_path = os.path.join(os.path.dirname(__file__), "..", "openclaw.tgz")
+    if os.path.exists(tarball_path):
+        return FileResponse(tarball_path, media_type="application/gzip", filename="openclaw.tgz")
+    return JSONResponse(status_code=404, content={"error": "OpenClaw tarball not found"})
+
+
 # API info endpoint
 @app.get("/api")
 async def api_info():
