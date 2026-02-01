@@ -428,29 +428,76 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
         || voices.find(v => v.lang.startsWith('en'))
         || voices[0];
 
-      // Split text into words for lip sync timing
+      // Convert text to visemes (mouth shapes) for lip sync
+      // Oculus viseme IDs: sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U
+      const charToViseme = (char: string): string => {
+        const c = char.toLowerCase();
+        if ('aáàâä'.includes(c)) return 'aa';
+        if ('eéèêë'.includes(c)) return 'E';
+        if ('iíìîï'.includes(c)) return 'I';
+        if ('oóòôö'.includes(c)) return 'O';
+        if ('uúùûü'.includes(c)) return 'U';
+        if ('pbm'.includes(c)) return 'PP';
+        if ('fv'.includes(c)) return 'FF';
+        if ('td'.includes(c)) return 'DD';
+        if ('kg'.includes(c)) return 'kk';
+        if ('sz'.includes(c)) return 'SS';
+        if ('nl'.includes(c)) return 'nn';
+        if ('r'.includes(c)) return 'RR';
+        if ('jy'.includes(c)) return 'CH';
+        if ('wq'.includes(c)) return 'U';
+        if ('hx'.includes(c)) return 'SS';
+        if ('c'.includes(c)) return 'kk';
+        return 'sil'; // silence for spaces, punctuation, etc.
+      };
+
+      // Generate viseme sequence from text
+      const visemes: string[] = [];
+      const vtimes: number[] = [];
+      const vdurations: number[] = [];
+
+      // ~60ms per character at normal speech rate
+      const msPerChar = 60;
+      let currentTime = 0;
+
+      for (const char of cleanText) {
+        const viseme = charToViseme(char);
+        visemes.push(viseme);
+        vtimes.push(currentTime);
+        vdurations.push(msPerChar);
+        currentTime += msPerChar;
+      }
+
+      const totalDuration = currentTime / 1000; // seconds
+
+      // Also create word timing for subtitles
       const words = cleanText.split(/\s+/).filter(w => w.length > 0);
-
-      // Estimate timing: ~250ms per word average
-      const avgWordDuration = 250;
-      const totalDuration = words.length * avgWordDuration / 1000; // seconds
-
-      // Create word timing arrays for speakAudio
-      const wtimes = words.map((_, i) => i * avgWordDuration); // start times in ms
-      const wdurations = words.map(() => avgWordDuration); // duration for each word in ms
+      const avgWordDuration = totalDuration * 1000 / words.length;
+      const wtimes = words.map((_, i) => i * avgWordDuration);
+      const wdurations = words.map(() => avgWordDuration);
 
       console.log('Browser TTS with voice:', voice?.name);
-      console.log('Words:', words.length, 'Estimated duration:', totalDuration.toFixed(1) + 's');
+      console.log('Generated', visemes.length, 'visemes, duration:', totalDuration.toFixed(1) + 's');
 
-      // Create an AudioContext for the empty audio buffer
+      // Create an AudioBuffer using Web Audio API for TalkingHead
+      // TalkingHead's playAudio expects an AudioBuffer, not a WAV ArrayBuffer
       const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
       const audioCtx = audioContextRef.current || new AudioContextClass();
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
 
-      // Create an empty/silent audio buffer for TalkingHead's lip sync
-      // TalkingHead will use the word timing to animate the mouth
       const sampleRate = 22050;
-      const numSamples = Math.round(totalDuration * sampleRate);
-      const audioBuffer = audioCtx.createBuffer(2, numSamples, sampleRate);
+      const numSamples = Math.floor(totalDuration * sampleRate);
+      // Create a valid AudioBuffer with near-silent audio (tiny noise to pass validation)
+      const audioBuffer = audioCtx.createBuffer(1, Math.max(numSamples, sampleRate), sampleRate);
+      const channelData = audioBuffer.getChannelData(0);
+      // Fill with very quiet noise (nearly inaudible but valid audio)
+      for (let i = 0; i < channelData.length; i++) {
+        channelData[i] = (Math.random() - 0.5) * 0.001; // Very quiet random noise
+      }
+
+      console.log('Created AudioBuffer:', audioBuffer.duration.toFixed(1) + 's');
 
       // Start browser TTS for actual audio
       const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -487,21 +534,23 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
         }
       }, 10000);
 
-      // Use TalkingHead's speakAudio with word timing for lip sync
-      // The library will generate visemes from the word array
+      // Use TalkingHead's speakAudio with viseme data for lip sync
       try {
-        console.log('Starting speakAudio for lip sync...');
-        await head.speakAudio({
+        console.log('Starting speakAudio for lip sync with', visemes.length, 'visemes...');
+        head.speakAudio({
           audio: audioBuffer,
           words: words,
           wtimes: wtimes,
           wdurations: wdurations,
+          visemes: visemes,
+          vtimes: vtimes,
+          vdurations: vdurations,
           markers: [],
           mtimes: []
         }, {
           lipsyncLang: 'en'
         });
-        console.log('speakAudio lip sync completed');
+        console.log('speakAudio started');
       } catch (err) {
         console.error('speakAudio failed:', err);
       }
