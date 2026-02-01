@@ -12,7 +12,9 @@ interface Subscription {
 }
 
 interface StripeConfig {
+  configured: boolean;
   publishable_key: string;
+  dev_mode: boolean;
   plans: {
     [key: string]: {
       name: string;

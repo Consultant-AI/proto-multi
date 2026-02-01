@@ -61,13 +61,27 @@ PLAN_CONFIG = {
 }
 
 
+def is_stripe_configured() -> bool:
+    """Check if Stripe is properly configured with real keys (not placeholders)"""
+    secret = settings.stripe_secret_key or ""
+    pub = settings.stripe_publishable_key or ""
+    # Check that keys exist and aren't placeholder values
+    return bool(
+        secret and pub and
+        "REPLACE" not in secret and "REPLACE" not in pub and
+        (secret.startswith("sk_test_") or secret.startswith("sk_live_")) and
+        (pub.startswith("pk_test_") or pub.startswith("pk_live_"))
+    )
+
+
 @router.get("/config")
 async def get_stripe_config():
     """Get Stripe publishable key for frontend"""
-    if not settings.stripe_publishable_key:
-        raise HTTPException(status_code=503, detail="Stripe not configured")
+    # Return config even if Stripe is not configured - frontend will handle it
     return {
-        "publishable_key": settings.stripe_publishable_key,
+        "configured": is_stripe_configured(),
+        "publishable_key": settings.stripe_publishable_key or "",
+        "dev_mode": settings.environment == "development" or not is_stripe_configured(),
         "plans": {
             "starter": {"name": "Starter", "instance_type": "t3.medium", "max_workers": 2},
             "pro": {"name": "Pro", "instance_type": "t3.large", "max_workers": 5},
@@ -138,6 +152,17 @@ async def get_subscription(
     db: AsyncSession = Depends(get_db),
 ):
     """Get current user's active subscription"""
+    # In dev mode without Stripe, return a free dev subscription
+    if not is_stripe_configured():
+        return SubscriptionResponse(
+            id="dev-subscription",
+            plan_type="dev",
+            status="active",
+            instance_type="t3.large",
+            max_workers=5,  # Generous limit for development
+            current_period_end=None,
+        )
+
     result = await db.execute(
         select(Subscription)
         .where(Subscription.user_id == current_user.id)

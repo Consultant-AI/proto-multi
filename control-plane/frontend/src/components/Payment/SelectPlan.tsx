@@ -55,15 +55,19 @@ const SelectPlan: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState('pro');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { createCheckoutSession, hasActiveSubscription } = useSubscription();
+  const { createCheckoutSession, hasActiveSubscription, stripeConfig } = useSubscription();
   const navigate = useNavigate();
 
-  // If user already has a subscription, redirect to dashboard
+  // If Stripe not configured (dev mode) or user already has subscription, redirect to dashboard
   React.useEffect(() => {
     if (hasActiveSubscription) {
       navigate('/dashboard');
     }
-  }, [hasActiveSubscription, navigate]);
+    // In dev mode without Stripe, subscription is auto-granted
+    if (stripeConfig && stripeConfig.dev_mode && !stripeConfig.configured) {
+      navigate('/dashboard');
+    }
+  }, [hasActiveSubscription, stripeConfig, navigate]);
 
   const handleSubscribe = async () => {
     setLoading(true);
