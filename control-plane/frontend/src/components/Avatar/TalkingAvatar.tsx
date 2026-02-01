@@ -536,6 +536,9 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
 
       // Use TalkingHead's speakAudio with viseme data for lip sync
       try {
+        // Ensure animation loop is running (fixes second message issue)
+        try { head.start?.(); } catch { /* ignore */ }
+
         console.log('Starting speakAudio for lip sync with', visemes.length, 'visemes...');
         head.speakAudio({
           audio: audioBuffer,

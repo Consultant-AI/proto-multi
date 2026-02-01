@@ -8,7 +8,9 @@ talk to the avatar
 
 ## Actual Software
 
-show linux
+make it talk
+
+connect to real openclaw
 
 gui control
 
