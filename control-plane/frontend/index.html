@@ -14,7 +14,7 @@
       }
     }
     </script>
-    <!-- Load TalkingHead and HeadTTS libraries (deferred, non-blocking) -->
+    <!-- Load TalkingHead library -->
     <script type="module">
       (async () => {
         try {
@@ -23,15 +23,42 @@
           window.TalkingHead = TalkingHead;
           console.log('TalkingHead library loaded');
 
-          // Load HeadTTS for browser-based neural TTS with lip-sync
-          const { HeadTTS } = await import('https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.2/+esm');
-          window.HeadTTS = HeadTTS;
-          console.log('HeadTTS library loaded');
-
           window.dispatchEvent(new Event('talkinghead-loaded'));
         } catch (err) {
-          console.error('Failed to load libraries:', err);
+          console.error('Failed to load TalkingHead:', err);
           window.dispatchEvent(new CustomEvent('talkinghead-error', { detail: err.message }));
+        }
+      })();
+    </script>
+    <!-- Load HeadTTS for browser-based neural TTS with lip sync -->
+    <script type="module">
+      (async () => {
+        try {
+          const { HeadTTS } = await import('https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.5/+esm');
+          window.HeadTTS = HeadTTS;
+          window.HeadTTSConfig = {
+            workerModule: 'https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.5/modules/worker-tts.mjs',
+            dictionaryURL: 'https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.5/dictionaries/'
+          };
+          console.log('HeadTTS library loaded');
+          window.dispatchEvent(new Event('headtts-loaded'));
+        } catch (err) {
+          console.error('Failed to load HeadTTS:', err);
+          window.dispatchEvent(new CustomEvent('headtts-error', { detail: err.message }));
+        }
+      })();
+    </script>
+    <!-- Load noVNC from official GitHub (ESM with top-level await support) -->
+    <script type="module">
+      (async () => {
+        try {
+          const { default: RFB } = await import('https://cdn.jsdelivr.net/gh/novnc/noVNC@v1.5.0/core/rfb.js');
+          window.RFB = RFB;
+          console.log('noVNC RFB library loaded');
+          window.dispatchEvent(new Event('novnc-loaded'));
+        } catch (err) {
+          console.error('Failed to load noVNC:', err);
+          window.dispatchEvent(new CustomEvent('novnc-error', { detail: err.message }));
         }
       })();
     </script>

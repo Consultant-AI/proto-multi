@@ -46,6 +46,19 @@ const MicIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const AttachmentIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+  </svg>
+);
+
+const CameraIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
 const SpeakerIcon: React.FC<{ className?: string; muted?: boolean }> = ({ className, muted }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     {muted ? (
@@ -97,7 +110,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [avatarLoaded, setAvatarLoaded] = useState(false);
   const [avatarCharacter, setAvatarCharacter] = useState(() => {
-    return localStorage.getItem('cloudbot-avatar-character') || 'sophia';
+    return localStorage.getItem('cloudbot-avatar-character') || 'brunette';
   });
 
   // Auto-speak state (TTS for AI responses)
@@ -180,14 +193,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
     window.speechSynthesis.speak(utterance);
   }, [autoSpeak]);
 
-  // Stop browser TTS
-  const stopBrowserTTS = useCallback(() => {
+  // Stop browser TTS (kept for potential future use)
+  const _stopBrowserTTS = useCallback(() => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
     speechSynthRef.current = null;
   }, []);
+  void _stopBrowserTTS; // Suppress unused warning
 
   // Trigger avatar speech when new assistant message arrives
   const handleAvatarSpeak = useCallback((text: string) => {
@@ -210,8 +224,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
   const handleSpeakingEnd = useCallback(() => {
     setIsSpeaking(false);
     setCurrentSpeech(null);
-    stopBrowserTTS();
-  }, [stopBrowserTTS]);
+    // Don't call _stopBrowserTTS here - the avatar handles its own TTS cleanup
+    // _stopBrowserTTS() would cancel any ongoing speech prematurely
+  }, []);
 
   // Track when avatar loads successfully
   const handleAvatarLoaded = useCallback(() => {
@@ -827,9 +842,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
         <div className="border-b border-theme bg-theme-tertiary/30">
           <div className="relative">
             <Suspense fallback={
-              <div className="flex items-center justify-center bg-gradient-to-b from-blue-900/50 to-purple-900/50 rounded-lg" style={{ height: 220 }}>
+              <div className="flex items-center justify-center bg-gradient-to-b from-purple-500/20 to-pink-500/20 rounded-lg" style={{ height: 200 }}>
                 <div className="text-center">
-                  <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <div className="w-10 h-10 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                   <p className="text-sm text-white/80">Loading avatar...</p>
                 </div>
               </div>
@@ -840,7 +855,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
                 onSpeakingEnd={handleSpeakingEnd}
                 onLoaded={handleAvatarLoaded}
                 onError={handleAvatarError}
-                height={220}
+                height={200}
                 enabled={avatarEnabled}
                 characterId={avatarCharacter}
                 onCharacterChange={setAvatarCharacter}
@@ -975,90 +990,118 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="p-3 border-t border-theme bg-theme-nav">
+      {/* Input Area - WhatsApp style */}
+      <div className="px-2 py-2 bg-theme-primary">
         {isRecording ? (
           /* Recording UI */
-          <div className="flex items-center gap-3 bg-theme-tertiary border border-theme rounded-xl px-3 py-2">
-            {/* Delete/Cancel button */}
-            <button
-              type="button"
-              onClick={cancelRecording}
-              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-full transition-colors"
-              aria-label="Cancel recording"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-3 bg-theme-secondary dark:bg-gray-700 rounded-full px-4 py-2">
+              {/* Delete/Cancel button */}
+              <button
+                type="button"
+                onClick={cancelRecording}
+                className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                aria-label="Cancel recording"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
 
-            {/* Recording indicator */}
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              {/* Recording indicator */}
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
 
-            {/* Audio visualizer */}
-            <div className="flex-1 flex items-center justify-center gap-[2px] h-8">
-              {audioLevels.map((level, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-blue-500 rounded-full transition-all duration-75"
-                  style={{
-                    height: `${Math.max(4, level * 28)}px`,
-                    opacity: 0.5 + level * 0.5,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Transcript preview */}
-            {transcript && (
-              <div className="max-w-[120px] truncate text-xs text-theme-muted">
-                {transcript}
+              {/* Audio visualizer */}
+              <div className="flex-1 flex items-center justify-center gap-[2px] h-6">
+                {audioLevels.map((level, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-blue-500 rounded-full transition-all duration-75"
+                    style={{
+                      height: `${Math.max(3, level * 20)}px`,
+                      opacity: 0.5 + level * 0.5,
+                    }}
+                  />
+                ))}
               </div>
-            )}
+
+              {/* Transcript preview */}
+              {transcript && (
+                <div className="max-w-[100px] truncate text-xs text-theme-muted">
+                  {transcript}
+                </div>
+              )}
+            </div>
 
             {/* Stop/Send button */}
             <button
               type="button"
               onClick={() => stopRecording()}
-              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+              className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
               aria-label="Stop and send"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 6h12v12H6z" />
               </svg>
             </button>
           </div>
         ) : (
-          /* Normal input UI */
-          <div className="relative flex items-center gap-2 bg-theme-tertiary border border-theme rounded-xl px-3 py-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={connected ? "Ask to do anything" : connectionStatus}
-              disabled={loading || !connected}
-              className="flex-1 bg-transparent text-sm text-theme-primary placeholder-theme-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <button
-              type="button"
-              onClick={startRecording}
-              disabled={!connected || loading}
-              className="p-1.5 text-theme-muted hover:text-theme-primary disabled:opacity-30 transition-colors"
-              aria-label="Voice input"
-            >
-              <MicIcon className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={loading || !input.trim() || !connected}
-              aria-label="Send message"
-              className="p-1.5 text-theme-muted hover:text-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <SendIcon className="w-4 h-4" />
-            </button>
+          /* Normal input UI - WhatsApp style */
+          <div className="flex items-center gap-2">
+            {/* Input field with icons */}
+            <div className="flex-1 flex items-center bg-theme-secondary dark:bg-gray-700 rounded-full px-4 py-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={connected ? "Message" : connectionStatus}
+                disabled={loading || !connected}
+                className="flex-1 bg-transparent text-sm text-theme-primary placeholder-theme-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
+              />
+              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                <button
+                  type="button"
+                  disabled={!connected}
+                  className="p-1.5 text-theme-muted hover:text-theme-primary disabled:opacity-30 transition-colors"
+                  aria-label="Attach file"
+                >
+                  <AttachmentIcon className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={!connected}
+                  className="p-1.5 text-theme-muted hover:text-theme-primary disabled:opacity-30 transition-colors"
+                  aria-label="Camera"
+                >
+                  <CameraIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Mic or Send button */}
+            {input.trim() ? (
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={loading || !connected}
+                aria-label="Send message"
+                className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+              >
+                <SendIcon className="w-5 h-5" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startRecording}
+                disabled={!connected || loading}
+                className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+                aria-label="Voice input"
+              >
+                <MicIcon className="w-6 h-6" />
+              </button>
+            )}
           </div>
         )}
         {statusType === 'error' && (

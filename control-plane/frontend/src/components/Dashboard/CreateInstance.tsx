@@ -4,65 +4,51 @@ import { useInstances } from '../../contexts/InstanceContext';
 
 const INSTANCE_TYPES = [
   {
-    value: 't3.micro',
-    label: 'Micro',
-    specs: '2 vCPU, 1GB RAM',
-    price: 'Free Tier',
-    freeTier: true,
-    fallbackOnly: true,
-    note: 'Fallback gateway only'
-  },
-  {
-    value: 't3.small',
-    label: 'Small',
-    specs: '2 vCPU, 2GB RAM',
-    price: '~$0.02/hr',
-    fallbackOnly: true,
-    note: 'Fallback gateway only'
-  },
-  {
     value: 't3.medium',
-    label: 'Medium',
+    label: 'Light',
     specs: '2 vCPU, 4GB RAM',
     price: '~$0.04/hr',
     supportsOpenclaw: true,
-    recommended: true,
-    note: 'Full openclaw support'
+    note: 'Great for simple tasks'
   },
   {
     value: 't3.large',
-    label: 'Large',
+    label: 'Regular',
     specs: '2 vCPU, 8GB RAM',
     price: '~$0.08/hr',
     supportsOpenclaw: true,
-    note: 'Best performance'
+    recommended: true,
+    note: 'Best for everyday use'
+  },
+  {
+    value: 't3.xlarge',
+    label: 'Pro',
+    specs: '4 vCPU, 16GB RAM',
+    price: '~$0.17/hr',
+    supportsOpenclaw: true,
+    pro: true,
+    note: 'Maximum performance'
   },
 ];
 
 // LLM providers supported by CloudBot
 const LLM_PROVIDERS = [
-  { id: 'anthropic', name: 'Anthropic', icon: '🧠', placeholder: 'sk-ant-api03-...' },
-  { id: 'openai', name: 'OpenAI', icon: '💚', placeholder: 'sk-proj-...' },
-  { id: 'google', name: 'Gemini', icon: '✨', placeholder: 'AIza...' },
-  { id: 'groq', name: 'Groq', icon: '⚡', placeholder: 'gsk_...' },
-  { id: 'together', name: 'Together', icon: '🤝', placeholder: '' },
-  { id: 'openrouter', name: 'OpenRouter', icon: '🔀', placeholder: 'sk-or-...' },
-  { id: 'mistral', name: 'Mistral', icon: '🌬️', placeholder: '' },
-  { id: 'deepseek', name: 'DeepSeek', icon: '🔍', placeholder: 'sk-...' },
-  { id: 'xai', name: 'xAI', icon: '𝕏', placeholder: 'xai-...' },
+  { id: 'anthropic', name: 'Anthropic', placeholder: 'sk-ant-api03-...', enabled: true },
+  { id: 'openai', name: 'OpenAI', placeholder: 'sk-proj-...', enabled: false },
+  { id: 'google', name: 'Google Gemini', placeholder: 'AIza...', enabled: false },
+  { id: 'groq', name: 'Groq', placeholder: 'gsk_...', enabled: false },
+  { id: 'openrouter', name: 'OpenRouter', placeholder: 'sk-or-...', enabled: false },
 ];
 
 const CreateInstance: React.FC = () => {
   const [name, setName] = useState('');
-  const [instanceType, setInstanceType] = useState('t3.medium');
+  const [instanceType, setInstanceType] = useState('t3.large');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState('anthropic');
   const [apiKey, setApiKey] = useState('');
   const { createInstance, selectInstance } = useInstances();
   const navigate = useNavigate();
-
-  const currentProvider = LLM_PROVIDERS.find(p => p.id === selectedProvider);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,9 +112,9 @@ const CreateInstance: React.FC = () => {
             Instance Size
           </label>
           <p className="text-xs text-theme-muted mb-2">
-            t3.medium or larger required for full openclaw bot. Smaller instances use a basic fallback gateway.
+            Choose the right size for your workload.
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {INSTANCE_TYPES.map((type) => (
               <button
                 key={type.value}
@@ -137,26 +123,24 @@ const CreateInstance: React.FC = () => {
                 className={`relative p-4 border rounded-lg text-left transition-all ${
                   instanceType === type.value
                     ? 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500'
-                    : type.fallbackOnly
-                    ? 'border-theme bg-theme-card hover:border-theme-hover opacity-75'
                     : 'border-theme bg-theme-card hover:border-theme-hover'
                 }`}
               >
                 {type.recommended && (
                   <span className="absolute -top-2 right-2 px-2 py-0.5 text-xs bg-green-500 text-white rounded-full">
-                    Recommended
+                    Popular
                   </span>
                 )}
-                {type.freeTier && !type.recommended && (
-                  <span className="absolute -top-2 right-2 px-2 py-0.5 text-xs bg-blue-500 text-white rounded-full">
-                    Free Tier
+                {type.pro && (
+                  <span className="absolute -top-2 right-2 px-2 py-0.5 text-xs bg-purple-500 text-white rounded-full">
+                    Pro
                   </span>
                 )}
                 <div className="font-medium text-theme-primary">{type.label}</div>
                 <div className="text-xs text-theme-muted mt-1">{type.specs}</div>
                 <div className="text-xs text-theme-muted mt-0.5">{type.price}</div>
                 {type.note && (
-                  <div className={`text-xs mt-1 ${type.supportsOpenclaw ? 'text-green-500' : 'text-yellow-500'}`}>
+                  <div className="text-xs mt-1 text-green-500">
                     {type.note}
                   </div>
                 )}
@@ -168,53 +152,62 @@ const CreateInstance: React.FC = () => {
         {/* LLM Provider Selection */}
         <div>
           <label className="block text-sm font-medium text-theme-secondary mb-2">
-            LLM Provider
+            AI Provider
           </label>
           <p className="text-xs text-theme-muted mb-3">
-            Select your AI provider and enter the API key.
+            Connect your API key to power the AI assistant.
           </p>
 
-          {/* Provider radio buttons */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          {/* Provider radio list with inline input */}
+          <div className="space-y-2">
             {LLM_PROVIDERS.map((provider) => (
-              <label
+              <div
                 key={provider.id}
-                className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-all ${
-                  selectedProvider === provider.id
-                    ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500'
-                    : 'border-theme bg-theme-card hover:border-theme-hover'
+                className={`group relative flex items-center gap-3 p-3 border rounded-lg transition-all ${
+                  !provider.enabled
+                    ? 'border-theme bg-theme-card opacity-50 cursor-not-allowed'
+                    : selectedProvider === provider.id
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-theme bg-theme-card'
                 }`}
               >
                 <input
                   type="radio"
                   name="llm-provider"
+                  id={`provider-${provider.id}`}
                   value={provider.id}
                   checked={selectedProvider === provider.id}
+                  disabled={!provider.enabled}
                   onChange={(e) => {
                     setSelectedProvider(e.target.value);
-                    setApiKey(''); // Clear key when switching providers
+                    setApiKey('');
                   }}
-                  className="sr-only"
+                  className="w-4 h-4 text-blue-500 border-theme bg-theme-tertiary focus:ring-blue-500 disabled:opacity-50"
                 />
-                <span className="text-base">{provider.icon}</span>
-                <span className="text-sm text-theme-primary">{provider.name}</span>
-              </label>
+                <label
+                  htmlFor={`provider-${provider.id}`}
+                  className={`text-sm min-w-[100px] ${
+                    provider.enabled ? 'text-theme-primary cursor-pointer' : 'text-theme-muted cursor-not-allowed'
+                  }`}
+                >
+                  {provider.name}
+                </label>
+                {provider.enabled && selectedProvider === provider.id && (
+                  <input
+                    type="password"
+                    className="flex-1 px-3 py-1.5 border border-theme bg-theme-tertiary placeholder-theme-muted text-theme-primary rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder={provider.placeholder || 'Enter API key'}
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                  />
+                )}
+                {!provider.enabled && (
+                  <span className="absolute right-3 px-2 py-0.5 text-xs bg-theme-tertiary text-theme-muted rounded border border-theme opacity-0 group-hover:opacity-100 transition-opacity">
+                    Coming soon
+                  </span>
+                )}
+              </div>
             ))}
-          </div>
-
-          {/* API Key input */}
-          <div>
-            <label htmlFor="api-key" className="block text-xs font-medium text-theme-secondary mb-1">
-              {currentProvider?.icon} {currentProvider?.name} API Key
-            </label>
-            <input
-              id="api-key"
-              type="password"
-              className="appearance-none relative block w-full px-3 py-2 border border-theme bg-theme-tertiary placeholder-theme-muted text-theme-primary rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder={currentProvider?.placeholder || 'Enter API key'}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
           </div>
         </div>
 

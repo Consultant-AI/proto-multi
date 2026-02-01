@@ -1,5 +1,51 @@
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
+declare global {
+  interface Window {
+    RFB?: any;
+  }
+}
+
+// Wait for noVNC to load from CDN
+const waitForNoVNC = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    if (window.RFB) {
+      resolve(window.RFB);
+      return;
+    }
+
+    const handleLoaded = () => {
+      window.removeEventListener('novnc-loaded', handleLoaded);
+      window.removeEventListener('novnc-error', handleError);
+      if (window.RFB) {
+        resolve(window.RFB);
+      } else {
+        reject(new Error('RFB not found after loading'));
+      }
+    };
+
+    const handleError = (e: Event) => {
+      window.removeEventListener('novnc-loaded', handleLoaded);
+      window.removeEventListener('novnc-error', handleError);
+      reject(new Error((e as CustomEvent).detail || 'Failed to load noVNC'));
+    };
+
+    window.addEventListener('novnc-loaded', handleLoaded);
+    window.addEventListener('novnc-error', handleError);
+
+    // Timeout after 30 seconds
+    setTimeout(() => {
+      window.removeEventListener('novnc-loaded', handleLoaded);
+      window.removeEventListener('novnc-error', handleError);
+      if (window.RFB) {
+        resolve(window.RFB);
+      } else {
+        reject(new Error('Timeout waiting for noVNC to load'));
+      }
+    }, 30000);
+  });
+};
+
 export const connectToVNC = async (
   instanceId: string,
   token: string,
@@ -12,8 +58,8 @@ export const connectToVNC = async (
   const url = `${WS_BASE_URL}/api/instances/${instanceId}/vnc?token=${token}`;
 
   try {
-    // Dynamic import to avoid top-level await build issues
-    const { default: RFB } = await import('@novnc/novnc/lib/rfb');
+    // Wait for noVNC to load from CDN
+    const RFB = await waitForNoVNC();
 
     const rfb = new RFB(container, url, {
       wsProtocols: ['binary'],

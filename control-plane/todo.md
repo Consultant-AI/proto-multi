@@ -8,6 +8,9 @@ talk to the avatar
 
 ## Actual Software
 
+show linux
+
+gui control
 
 landingpage - >
 
