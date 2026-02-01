@@ -204,6 +204,67 @@ docker build -t cloudbot-control-plane .
 docker run -p 8000:8000 --env-file .env cloudbot-control-plane
 ```
 
+## Deploying OpenClaw Updates
+
+When you make changes to the `cloudbot/` code, new EC2 instances need the updated tarball.
+
+### Quick Deploy
+
+```bash
+# From repo root - builds and uploads to S3
+./control-plane/scripts/deploy-openclaw.sh
+```
+
+### Manual Deploy
+
+```bash
+# 1. Build the cloudbot package
+cd cloudbot
+npm run build
+npm pack
+
+# 2. Upload to S3
+aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
+
+# 3. Create a new instance from the dashboard to use the updated code
+```
+
+### How It Works
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│    cloudbot/    │     │       S3        │     │  EC2 Instance   │
+│                 │     │                 │     │                 │
+│  npm run build  │────▶│  openclaw.tgz   │────▶│  user_data.sh   │
+│  npm pack       │     │                 │     │  downloads &    │
+│                 │     │                 │     │  installs       │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+When an EC2 instance launches:
+1. `user_data.sh` runs on boot
+2. Downloads `openclaw.tgz` from `s3://cloudbot-moltbot-assets/`
+3. Installs OpenClaw as a systemd service
+4. API keys are set in `/etc/openclaw.env`
+
+**Note:** Existing instances won't get updates. You must create new instances after deploying.
+
+### Debugging Instance Issues
+
+```bash
+# SSH into the instance
+ssh -i ~/.ssh/cloudbot.pem ubuntu@<instance-ip>
+
+# Check OpenClaw service status
+sudo systemctl status openclaw
+
+# View OpenClaw logs
+sudo journalctl -u openclaw -f
+
+# Check API keys are set correctly
+sudo cat /etc/openclaw.env
+```
+
 ## License
 
 MIT
