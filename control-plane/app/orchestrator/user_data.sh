@@ -45,6 +45,10 @@ apt-get clean
 echo "Installing VNC..."
 DEBIAN_FRONTEND=noninteractive apt-get install -y x11vnc xvfb
 
+# Install screenshot and input tools for computer use
+echo "Installing computer use tools (scrot, xdotool, imagemagick)..."
+DEBIAN_FRONTEND=noninteractive apt-get install -y scrot xdotool imagemagick
+
 # Install basic tools
 echo "Installing basic tools..."
 DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -678,6 +682,14 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
     "enabled": true,
     "headless": true,
     "noSandbox": true
+  },
+  "computerUse": {
+    "enabled": true,
+    "displayWidth": 1280,
+    "displayHeight": 800,
+    "screenWidth": 1920,
+    "screenHeight": 1080,
+    "displayNum": 99
   }
 }
 OPENCLAWCFG
@@ -708,19 +720,19 @@ HOME=/root
 OPENCLAW_GATEWAY_PASSWORD=cloudbot-gateway-secret
 ENVFILE
 
-# Append API keys to environment file (with proper quoting for special chars)
+# Append API keys to environment file (no quotes - systemd EnvironmentFile format)
 if [ -n "$ANTHROPIC_API_KEY" ]; then
-  echo "ANTHROPIC_API_KEY='$ANTHROPIC_API_KEY'" >> /etc/openclaw.env
+  echo "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" >> /etc/openclaw.env
   echo "Added ANTHROPIC_API_KEY to /etc/openclaw.env (length: ${#ANTHROPIC_API_KEY})"
 fi
-[ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY='$OPENAI_API_KEY'" >> /etc/openclaw.env && echo "Added OPENAI_API_KEY"
-[ -n "$GOOGLE_API_KEY" ] && echo "GOOGLE_API_KEY='$GOOGLE_API_KEY'" >> /etc/openclaw.env && echo "Added GOOGLE_API_KEY"
-[ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY='$GROQ_API_KEY'" >> /etc/openclaw.env && echo "Added GROQ_API_KEY"
-[ -n "$TOGETHER_API_KEY" ] && echo "TOGETHER_API_KEY='$TOGETHER_API_KEY'" >> /etc/openclaw.env && echo "Added TOGETHER_API_KEY"
-[ -n "$OPENROUTER_API_KEY" ] && echo "OPENROUTER_API_KEY='$OPENROUTER_API_KEY'" >> /etc/openclaw.env && echo "Added OPENROUTER_API_KEY"
-[ -n "$MISTRAL_API_KEY" ] && echo "MISTRAL_API_KEY='$MISTRAL_API_KEY'" >> /etc/openclaw.env && echo "Added MISTRAL_API_KEY"
-[ -n "$DEEPSEEK_API_KEY" ] && echo "DEEPSEEK_API_KEY='$DEEPSEEK_API_KEY'" >> /etc/openclaw.env && echo "Added DEEPSEEK_API_KEY"
-[ -n "$XAI_API_KEY" ] && echo "XAI_API_KEY='$XAI_API_KEY'" >> /etc/openclaw.env && echo "Added XAI_API_KEY"
+[ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> /etc/openclaw.env && echo "Added OPENAI_API_KEY"
+[ -n "$GOOGLE_API_KEY" ] && echo "GOOGLE_API_KEY=$GOOGLE_API_KEY" >> /etc/openclaw.env && echo "Added GOOGLE_API_KEY"
+[ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY=$GROQ_API_KEY" >> /etc/openclaw.env && echo "Added GROQ_API_KEY"
+[ -n "$TOGETHER_API_KEY" ] && echo "TOGETHER_API_KEY=$TOGETHER_API_KEY" >> /etc/openclaw.env && echo "Added TOGETHER_API_KEY"
+[ -n "$OPENROUTER_API_KEY" ] && echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY" >> /etc/openclaw.env && echo "Added OPENROUTER_API_KEY"
+[ -n "$MISTRAL_API_KEY" ] && echo "MISTRAL_API_KEY=$MISTRAL_API_KEY" >> /etc/openclaw.env && echo "Added MISTRAL_API_KEY"
+[ -n "$DEEPSEEK_API_KEY" ] && echo "DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY" >> /etc/openclaw.env && echo "Added DEEPSEEK_API_KEY"
+[ -n "$XAI_API_KEY" ] && echo "XAI_API_KEY=$XAI_API_KEY" >> /etc/openclaw.env && echo "Added XAI_API_KEY"
 
 echo "=== Contents of /etc/openclaw.env (redacted) ==="
 cat /etc/openclaw.env | sed 's/=.*/=***REDACTED***/'
