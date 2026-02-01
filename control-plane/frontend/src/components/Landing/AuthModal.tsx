@@ -24,11 +24,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
     try {
       if (mode === 'login') {
         await login(email, password);
+        onClose();
+        navigate('/dashboard');
       } else {
         await signup(email, password);
+        onClose();
+        navigate('/select-plan');
       }
-      onClose();
-      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'An error occurred. Please try again.');
     } finally {

@@ -1,22 +1,71 @@
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:16
     container_name: cloudbot-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: cloudbot123
-      POSTGRES_DB: cloudbot_platform
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cloudbot123}
+      POSTGRES_DB: ${POSTGRES_DB:-cloudbot_platform}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: cloudbot-redis
     ports:
       - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # CloudBot Control Plane API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudbot-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-cloudbot123}@postgres:5432/${POSTGRES_DB:-cloudbot_platform}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_REFRESH_SECRET_KEY=${JWT_REFRESH_SECRET_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - EC2_SECURITY_GROUP_ID=${EC2_SECURITY_GROUP_ID}
+      - EC2_SUBNET_ID=${EC2_SUBNET_ID}
+      - EC2_KEY_PAIR_NAME=${EC2_KEY_PAIR_NAME:-cloudbot-key}
+      - UBUNTU_AMI_ID=${UBUNTU_AMI_ID}
+      - CONTROL_PLANE_URL=${CONTROL_PLANE_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PRICE_ID_STARTER=${STRIPE_PRICE_ID_STARTER}
+      - STRIPE_PRICE_ID_PRO=${STRIPE_PRICE_ID_PRO}
+      - STRIPE_PRICE_ID_ENTERPRISE=${STRIPE_PRICE_ID_ENTERPRISE}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

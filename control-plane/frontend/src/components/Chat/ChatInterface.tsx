@@ -541,7 +541,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
     }
 
     const token = localStorage.getItem('access_token') || '';
-    const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
+    // In production, use current origin with wss/ws based on protocol
+    const getWsBaseUrl = () => {
+      if (import.meta.env.VITE_WS_BASE_URL) return import.meta.env.VITE_WS_BASE_URL;
+      if (import.meta.env.PROD) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${protocol}//${window.location.host}`;
+      }
+      return 'ws://localhost:8000';
+    };
+    const WS_BASE_URL = getWsBaseUrl();
 
     if (retryCount > 0) {
       setConnectionStatus(`Reconnecting... (attempt ${retryCount + 1})`);

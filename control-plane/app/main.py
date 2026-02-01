@@ -1,14 +1,15 @@
 """FastAPI application entry point"""
 from fastapi import FastAPI, Request, WebSocket, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 import logging
 import os
 
 from app.config import settings, validate_production_config
 from app.db.connection import get_db, init_db, close_db, AsyncSessionLocal
-from app.api import auth, instances, api_keys
+from app.api import auth, instances, api_keys, payments
 from app.proxy.vnc import proxy_vnc
 from app.proxy.cloudbot import proxy_cloudbot
 from app.auth.middleware import get_current_user
@@ -92,6 +93,7 @@ async def api_info():
             "auth": "/api/auth",
             "instances": "/api/instances",
             "user": "/api/user",
+            "payments": "/api/payments",
             "websocket": {
                 "vnc": "/api/instances/{id}/vnc",
                 "cloudbot": "/api/instances/{id}/cloudbot",
@@ -118,6 +120,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(instances.router, prefix="/api/instances", tags=["instances"])
 app.include_router(api_keys.router, prefix="/api/user/api-keys", tags=["api-keys"])
+app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
 
 
 # WebSocket endpoints - use query param auth since HTTPBearer doesn't work with WebSockets
@@ -207,6 +210,28 @@ async def cloudbot_websocket(
                 pass
 
 
+# Serve frontend static files in production
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.exists(FRONTEND_DIR):
+    # Serve static assets (JS, CSS, images)
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="static")
+
+    # Serve index.html for all non-API routes (SPA routing)
+    @app.get("/{full_path:path}")
+    async def serve_frontend(request: Request, full_path: str):
+        """Serve frontend for all non-API routes"""
+        # Skip API routes
+        if full_path.startswith("api/") or full_path in ["health", "docs", "redoc", "openapi.json"]:
+            return JSONResponse(status_code=404, content={"error": "Not found"})
+
+        # Serve index.html
+        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        if os.path.exists(index_path):
+            with open(index_path) as f:
+                return HTMLResponse(content=f.read())
+        return JSONResponse(status_code=404, content={"error": "Frontend not found"})
+
+
 # Startup event
 @app.on_event("startup")
 async def startup_event():
@@ -217,6 +242,8 @@ async def startup_event():
     if settings.local_dev_mode:
         logger.info("⚠️  Local dev mode enabled (no AWS)")
     logger.info(f"🌐 CORS origins: {settings.cors_origins_list}")
+    if os.path.exists(FRONTEND_DIR):
+        logger.info("📦 Frontend build found - serving static files")
 
     # Initialize database
     try:

@@ -47,6 +47,14 @@ class Settings(BaseSettings):
         alias="UBUNTU_AMI_ID"
     )  # Ubuntu 24.04 LTS in us-east-1
 
+    # Stripe
+    stripe_secret_key: Optional[str] = Field(default=None, alias="STRIPE_SECRET_KEY")
+    stripe_publishable_key: Optional[str] = Field(default=None, alias="STRIPE_PUBLISHABLE_KEY")
+    stripe_webhook_secret: Optional[str] = Field(default=None, alias="STRIPE_WEBHOOK_SECRET")
+    stripe_price_id_starter: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_STARTER")  # t3.medium
+    stripe_price_id_pro: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_PRO")  # t3.large
+    stripe_price_id_enterprise: Optional[str] = Field(default=None, alias="STRIPE_PRICE_ID_ENTERPRISE")  # t3.xlarge
+
     # Features
     local_dev_mode: bool = Field(default=False, alias="LOCAL_DEV_MODE")
     max_instances_per_user: int = Field(default=2, alias="MAX_INSTANCES_PER_USER")

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import AuthModal from './AuthModal';
 
@@ -822,38 +822,17 @@ const LandingPage: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [heroEmail, setHeroEmail] = useState('');
-  const [ctaEmail, setCtaEmail] = useState('');
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [modalEmail, setModalEmail] = useState('');
   const [showAllApps, setShowAllApps] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
 
   const handleSignIn = () => {
     setAuthMode('login');
     setShowAuthModal(true);
   };
 
-  const goToWaitlist = (email?: string) => {
-    if (email) {
-      navigate(`/waitlist?email=${encodeURIComponent(email)}`);
-    } else {
-      navigate('/waitlist');
-    }
-  };
-
-  const handlePricingClick = () => {
-    setShowEmailModal(true);
-    setModalEmail('');
-  };
-
-  const handleModalSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (modalEmail && modalEmail.includes('@')) {
-      setShowEmailModal(false);
-      goToWaitlist(modalEmail);
-    }
+  const handleGetStarted = () => {
+    setAuthMode('signup');
+    setShowAuthModal(true);
   };
 
   const scrollToSection = (id: string) => {
@@ -890,10 +869,10 @@ const LandingPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={handlePricingClick}
+                onClick={handleGetStarted}
                 className="text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded transition-colors"
               >
-                Join waitlist ✨
+                Get Started
               </button>
             </div>
           </div>
@@ -928,27 +907,25 @@ const LandingPage: React.FC = () => {
             Each worker gets a real computer they control: see the screen 👁️, move the mouse 🖱️, type ⌨️, run code 💻, browse 🌐. Like a remote employee that never sleeps 🌙
           </p>
 
-          <form
-            onSubmit={(e) => { e.preventDefault(); goToWaitlist(heroEmail); }}
-            className="flex flex-col sm:flex-row gap-3 mb-8"
-          >
-            <input
-              type="email"
-              value={heroEmail}
-              onChange={(e) => setHeroEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="px-5 py-4 rounded-lg border border-theme bg-theme-secondary text-theme-primary placeholder-theme-muted focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all w-full sm:w-64"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <button
-              type="submit"
+              type="button"
+              onClick={handleGetStarted}
               className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg whitespace-nowrap"
             >
-              Join Waitlist →
+              Get Started Free →
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={handleSignIn}
+              className="px-8 py-4 border border-theme text-theme-primary rounded-lg font-semibold hover:bg-theme-secondary transition-all whitespace-nowrap"
+            >
+              Sign In
+            </button>
+          </div>
 
           <p className="text-xs text-theme-muted">
-            ⭐ 2,500+ companies on the waitlist · 💳 No credit card required
+            🚀 Start building in minutes · 💳 Pay only for what you use
           </p>
         </div>
 
@@ -2092,7 +2069,7 @@ const LandingPage: React.FC = () => {
                 {pricingTiers.map((tier, i) => (
                   <tr
                     key={i}
-                    onClick={handlePricingClick}
+                    onClick={handleGetStarted}
                     className={`border-b border-theme cursor-pointer transition-colors hover:bg-blue-500/10 ${tier.recommended ? 'bg-blue-500/5' : ''}`}
                   >
                     <td className="py-4 px-3">
@@ -2132,7 +2109,7 @@ const LandingPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
-            <p className="text-center text-xs text-theme-muted mt-3">Click any plan to join the waitlist</p>
+            <p className="text-center text-xs text-theme-muted mt-3">Sign up to get started with any plan</p>
           </div>
 
           {/* Enterprise */}
@@ -2289,26 +2266,17 @@ const LandingPage: React.FC = () => {
           <p className="text-theme-secondary mb-10">
             Get an AI with its own computer working for you 24/7
           </p>
-          <form
-            onSubmit={(e) => { e.preventDefault(); goToWaitlist(ctaEmail); }}
-            className="flex flex-col sm:flex-row gap-3 justify-center items-center"
-          >
-            <input
-              type="email"
-              value={ctaEmail}
-              onChange={(e) => setCtaEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="px-5 py-4 rounded-lg border border-theme bg-theme-secondary text-theme-primary placeholder-theme-muted focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all w-full sm:w-64"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <button
-              type="submit"
+              type="button"
+              onClick={handleGetStarted}
               className="px-10 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg text-lg whitespace-nowrap"
             >
-              Join the Waitlist →
+              Get Started Now →
             </button>
-          </form>
+          </div>
           <p className="text-xs text-theme-muted mt-6">
-            💳 No credit card required
+            🚀 Create your first AI worker in minutes
           </p>
         </div>
       </section>
@@ -2379,42 +2347,6 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
-
-      {/* Email Modal for Pricing */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-theme-card border border-theme rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <div className="text-center mb-6">
-              <span className="text-4xl mb-3 block">🎉</span>
-              <h3 className="text-xl font-semibold mb-2">Great choice!</h3>
-              <p className="text-theme-secondary text-sm">Enter your email to join the waitlist and be first to know when we launch.</p>
-            </div>
-            <form onSubmit={handleModalSubmit}>
-              <input
-                type="email"
-                value={modalEmail}
-                onChange={(e) => setModalEmail(e.target.value)}
-                placeholder="your@email.com"
-                autoFocus
-                className="w-full px-4 py-3 rounded-lg border border-theme bg-theme-secondary text-theme-primary placeholder-theme-muted focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all mb-4"
-              />
-              <button
-                type="submit"
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all"
-              >
-                Continue →
-              </button>
-            </form>
-            <button
-              type="button"
-              onClick={() => setShowEmailModal(false)}
-              className="w-full mt-3 text-sm text-theme-muted hover:text-theme-primary transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Auth Modal */}
       {showAuthModal && (

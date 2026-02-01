@@ -13,6 +13,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    stripe_customer_id = Column(String(255), unique=True, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
 
@@ -20,6 +21,7 @@ class User(Base):
     api_keys = relationship("UserApiKey", back_populates="user", cascade="all, delete-orphan")
     instances = relationship("Instance", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
+    subscriptions = relationship("Subscription", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserApiKey(Base):
@@ -70,3 +72,23 @@ class Session(Base):
 
     # Relationships
     user = relationship("User", back_populates="sessions")
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    stripe_subscription_id = Column(String(255), unique=True, nullable=True, index=True)
+    stripe_price_id = Column(String(255), nullable=True)
+    plan_type = Column(String(50), nullable=False)  # 'starter', 'pro', 'enterprise'
+    status = Column(String(50), default="pending")  # pending, active, canceled, past_due
+    instance_type = Column(String(50), nullable=False)  # t3.medium, t3.large, t3.xlarge
+    max_workers = Column(Integer, default=1)
+    current_period_start = Column(DateTime, nullable=True)
+    current_period_end = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="subscriptions")

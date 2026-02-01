@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInstances } from '../../contexts/InstanceContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 
 const INSTANCE_TYPES = [
   {
@@ -47,8 +48,28 @@ const CreateInstance: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState('anthropic');
   const [apiKey, setApiKey] = useState('');
-  const { createInstance, selectInstance } = useInstances();
+  const { createInstance, selectInstance, instances } = useInstances();
+  const { subscription, hasActiveSubscription, loading: subLoading } = useSubscription();
   const navigate = useNavigate();
+
+  // Set instance type based on subscription plan
+  useEffect(() => {
+    if (subscription?.instance_type) {
+      setInstanceType(subscription.instance_type);
+    }
+  }, [subscription]);
+
+  // If no active subscription, redirect to select plan
+  useEffect(() => {
+    if (!subLoading && !hasActiveSubscription) {
+      navigate('/select-plan');
+    }
+  }, [subLoading, hasActiveSubscription, navigate]);
+
+  // Check if user has reached their worker limit
+  const activeInstances = instances.filter(i => i.status !== 'terminated').length;
+  const maxWorkers = subscription?.max_workers || 1;
+  const canCreateMore = activeInstances < maxWorkers;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +97,50 @@ const CreateInstance: React.FC = () => {
     }
   };
 
+  if (subLoading) {
+    return (
+      <div className="max-w-xl mx-auto text-center py-12">
+        <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-theme-muted">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!canCreateMore) {
+    return (
+      <div className="max-w-xl mx-auto">
+        <div className="text-center py-12 px-6 border border-theme rounded-xl bg-theme-card">
+          <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-theme-primary mb-2">Worker Limit Reached</h2>
+          <p className="text-theme-secondary mb-6">
+            You have {activeInstances} of {maxWorkers} workers active on your {subscription?.plan_type} plan.
+            Upgrade your plan to add more workers.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="px-6 py-2 border border-theme text-theme-secondary rounded-lg hover:bg-theme-secondary"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/select-plan')}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Upgrade Plan
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-xl mx-auto">
       <div className="mb-8">
@@ -85,6 +150,11 @@ const CreateInstance: React.FC = () => {
         <p className="mt-2 text-sm text-theme-muted">
           Ubuntu desktop with Chrome, VS Code, LibreOffice
         </p>
+        {subscription && (
+          <p className="mt-1 text-xs text-theme-muted">
+            {activeInstances} of {maxWorkers} workers used ({subscription.plan_type} plan)
+          </p>
+        )}
       </div>
       <form className="space-y-6" onSubmit={handleSubmit}>
         {error && (

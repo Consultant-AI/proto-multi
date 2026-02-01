@@ -2,15 +2,17 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { InstanceProvider } from './contexts/InstanceContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import LandingPage from './components/Landing/LandingPage';
-import WaitlistPage from './components/Landing/WaitlistPage';
 import PrivacyPage from './components/Landing/PrivacyPage';
 import TermsPage from './components/Landing/TermsPage';
 import ApiKeySetup from './components/Auth/ApiKeySetup';
 import InstanceList from './components/Dashboard/InstanceList';
 import CreateInstance from './components/Dashboard/CreateInstance';
 import SplitView from './components/Desktop/SplitView';
+import SelectPlan from './components/Payment/SelectPlan';
+import PaymentSuccess from './components/Payment/PaymentSuccess';
 
 // Theme toggle icons
 const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -179,8 +181,26 @@ const AppRoutes: React.FC = () => {
         }
       />
 
-      {/* Waitlist page */}
-      <Route path="/waitlist" element={<WaitlistPage />} />
+      {/* Payment pages */}
+      <Route
+        path="/select-plan"
+        element={
+          <ProtectedRoute>
+            <SelectPlan />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payment-success"
+        element={
+          <ProtectedRoute>
+            <PaymentSuccess />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Legacy waitlist redirect */}
+      <Route path="/waitlist" element={<Navigate to="/" replace />} />
 
       {/* Legal pages */}
       <Route path="/privacy" element={<PrivacyPage />} />
@@ -200,9 +220,11 @@ const App: React.FC = () => {
     <Router>
       <ThemeProvider>
         <AuthProvider>
-          <InstanceProvider>
-            <AppRoutes />
-          </InstanceProvider>
+          <SubscriptionProvider>
+            <InstanceProvider>
+              <AppRoutes />
+            </InstanceProvider>
+          </SubscriptionProvider>
         </AuthProvider>
       </ThemeProvider>
     </Router>
