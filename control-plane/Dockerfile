@@ -1,4 +1,5 @@
 # Multi-stage build for CloudBot Control Plane
+# Build v2
 
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
@@ -31,6 +32,8 @@ COPY app/ ./app/
 COPY alembic.ini ./
 COPY cloudbot-wallpaper.jpg ./
 COPY openclaw.tgz ./
+COPY start.sh ./
+RUN chmod +x start.sh
 
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
@@ -44,7 +47,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+    CMD sh -c "curl -f http://localhost:\${PORT:-8000}/health || exit 1"
 
-# Run the application (use PORT env var from Railway, default to 8000)
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Run the application
+CMD ["./start.sh"]

@@ -9,7 +9,10 @@ import os
 
 from app.config import settings, validate_production_config
 from app.db.connection import get_db, init_db, close_db, AsyncSessionLocal
-from app.api import auth, instances, api_keys, payments
+import app.api.auth as auth
+import app.api.instances as instances
+import app.api.apikeys as api_keys
+import app.api.payments as payments
 from app.proxy.vnc import proxy_vnc
 from app.proxy.cloudbot import proxy_cloudbot
 from app.auth.middleware import get_current_user

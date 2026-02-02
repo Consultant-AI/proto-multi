@@ -19,11 +19,11 @@ class Settings(BaseSettings):
     )
     redis_url: str = Field(default="redis://localhost:6379", alias="REDIS_URL")
 
-    # JWT
-    jwt_secret_key: str = Field(default="dev-secret-change-in-production", alias="JWT_SECRET_KEY")
+    # JWT (support both JWT_SECRET and JWT_SECRET_KEY)
+    jwt_secret_key: str = Field(default="dev-secret-change-in-production", validation_alias="JWT_SECRET")
     jwt_refresh_secret_key: str = Field(
         default="dev-refresh-secret-change-in-production",
-        alias="JWT_REFRESH_SECRET_KEY"
+        validation_alias="JWT_REFRESH_SECRET"
     )
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(default=60, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
