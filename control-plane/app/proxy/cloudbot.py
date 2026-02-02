@@ -95,6 +95,13 @@ async def proxy_cloudbot(
                     async for message in cloudbot_ws:
                         if stop_event.is_set():
                             break
+                        # Log chat events to help debug
+                        try:
+                            msg_data = json.loads(message)
+                            if msg_data.get('type') == 'event' and msg_data.get('event') == 'chat':
+                                logger.info(f"Chat event payload: {json.dumps(msg_data.get('payload', {}))}")
+                        except:
+                            pass
                         # Forward to browser
                         await websocket.send_text(message)
                 except Exception as e:

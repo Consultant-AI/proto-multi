@@ -832,7 +832,8 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                 } else if (typeof msg.content === 'string') {
                   content = msg.content;
                 }
-                if (content) {
+                // Skip internal heartbeat/system messages
+                if (content && !content.includes('HEARTBEAT')) {
                   historyMessages.push({
                     id: msg.id || generateId(),
                     role: msg.role as 'user' | 'assistant',
