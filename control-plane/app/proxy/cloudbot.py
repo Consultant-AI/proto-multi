@@ -93,18 +93,42 @@ async def proxy_cloudbot(
             async def forward_from_cloudbot():
                 """Forward messages from CloudBot to browser"""
                 try:
-                    async for message in cloudbot_ws:
+                    while not stop_event.is_set():
+                        try:
+                            message = await asyncio.wait_for(cloudbot_ws.recv(), timeout=30.0)
+                        except asyncio.TimeoutError:
+                            # No message received, but connection is still alive (ping/pong handles keepalive)
+                            continue
+
                         if stop_event.is_set():
                             break
-                        # Log chat events to help debug
+
+                        # Log events to help debug
                         try:
                             msg_data = json.loads(message)
-                            if msg_data.get('type') == 'event' and msg_data.get('event') == 'chat':
-                                logger.info(f"Chat event payload: {json.dumps(msg_data.get('payload', {}))}")
+                            event_type = msg_data.get('event', '')
+                            if msg_data.get('type') == 'event':
+                                if event_type == 'chat':
+                                    logger.info(f"Chat event payload: {json.dumps(msg_data.get('payload', {}))}")
+                                elif event_type == 'agent':
+                                    logger.info(f"Agent event: {msg_data.get('payload', {}).get('phase', 'unknown')}")
+                                elif event_type not in ('tick', 'health', 'presence'):
+                                    logger.info(f"Event: {event_type}")
+                            elif msg_data.get('type') == 'res':
+                                logger.info(f"Response: ok={msg_data.get('ok')} id={msg_data.get('id', 'unknown')[:8]}...")
                         except:
                             pass
+
                         # Forward to browser
-                        await websocket.send_text(message)
+                        try:
+                            await websocket.send_text(message)
+                        except Exception as send_err:
+                            logger.error(f"Error sending to browser: {send_err}")
+                            stop_event.set()
+                            break
+                except websockets.exceptions.ConnectionClosed as e:
+                    logger.info(f"CloudBot WebSocket closed: {e.code} {e.reason}")
+                    stop_event.set()
                 except Exception as e:
                     logger.error(f"Error forwarding from CloudBot: {e}")
                     stop_event.set()
