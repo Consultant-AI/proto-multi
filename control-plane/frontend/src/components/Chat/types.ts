@@ -76,8 +76,11 @@ export function getDefaultSessionKey(instanceId: string): string {
 /** Get the display name for a session */
 export function getSessionDisplayName(session: SessionInfo): string {
   const name = session.label || session.derivedTitle || 'Untitled';
-  // Strip timestamp prefix like "[Mon 2026-02-02 19:52 UTC] "
-  return name.replace(/^\[[^\]]*\]\s*/, '').trim() || 'Untitled';
+  // Strip timestamp prefix like "[Mon 2026-02-02 19:52 UTC] " and message_id suffix like " [message_id: xyz]"
+  return name
+    .replace(/^\[[^\]]*\]\s*/, '')  // Remove timestamp prefix
+    .replace(/\s*\[message_id:[^\]]*\]$/, '')  // Remove message_id suffix
+    .trim() || 'Untitled';
 }
 
 /** Format relative time (e.g., "2h ago") */
