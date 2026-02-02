@@ -66,9 +66,10 @@ async def proxy_cloudbot(
         async with websockets.connect(
             cloudbot_url,
             open_timeout=10,
-            ping_interval=20,
-            ping_timeout=10,
-            close_timeout=5
+            ping_interval=10,  # More frequent pings to keep connection alive
+            ping_timeout=20,
+            close_timeout=5,
+            max_size=10 * 1024 * 1024  # 10MB max message size
         ) as cloudbot_ws:
             logger.info(f"Connected to CloudBot at {cloudbot_url}")
 
