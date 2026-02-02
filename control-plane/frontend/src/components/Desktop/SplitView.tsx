@@ -3,7 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useInstances } from '../../contexts/InstanceContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import RemoteDesktop from './RemoteDesktop';
-import ChatInterface from '../Chat/ChatInterface';
+import ChatInterface, { type ChatInterfaceRef } from '../Chat/ChatInterface';
+import type { SessionInfo } from '../Chat/types';
+import {
+  generateSessionKey,
+  getDefaultSessionKey,
+  getSessionDisplayName,
+  formatRelativeTime,
+  getActiveSessionKey,
+  getSessionsCacheKey,
+} from '../Chat/types';
 
 const CHAT_WIDTH_KEY = 'cloudbot-chat-panel-width';
 const DEFAULT_CHAT_WIDTH = 400;
@@ -44,6 +53,25 @@ const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
 const MoonIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  </svg>
+);
+
+const StopIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+  </svg>
+);
+
+const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const TrashIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
 
@@ -156,6 +184,143 @@ const SplitView: React.FC = () => {
   });
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<ChatInterfaceRef>(null);
+
+  // Session state
+  const [sessions, setSessions] = useState<SessionInfo[]>(() => {
+    // Load cached sessions from localStorage
+    if (instanceId) {
+      const cached = localStorage.getItem(getSessionsCacheKey(instanceId));
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
+  const [activeSessionKey, setActiveSessionKey] = useState<string>(() => {
+    // Load active session from localStorage or use default
+    if (instanceId) {
+      const saved = localStorage.getItem(getActiveSessionKey(instanceId));
+      if (saved) return saved;
+    }
+    return instanceId ? getDefaultSessionKey(instanceId) : '';
+  });
+  const [isAgentRunning, setIsAgentRunning] = useState(false);
+  const [isChatConnected, setIsChatConnected] = useState(false);
+  const [showSessionDropdown, setShowSessionDropdown] = useState(false);
+
+  // Save sessions to localStorage when they change
+  useEffect(() => {
+    if (instanceId && sessions.length > 0) {
+      localStorage.setItem(getSessionsCacheKey(instanceId), JSON.stringify(sessions));
+    }
+  }, [instanceId, sessions]);
+
+  // Save active session to localStorage when it changes
+  useEffect(() => {
+    if (instanceId && activeSessionKey) {
+      localStorage.setItem(getActiveSessionKey(instanceId), activeSessionKey);
+    }
+  }, [instanceId, activeSessionKey]);
+
+  // Reset session state when instanceId changes
+  useEffect(() => {
+    if (instanceId) {
+      // Load cached sessions
+      const cached = localStorage.getItem(getSessionsCacheKey(instanceId));
+      if (cached) {
+        try {
+          setSessions(JSON.parse(cached));
+        } catch {
+          setSessions([]);
+        }
+      } else {
+        setSessions([]);
+      }
+      // Load active session
+      const savedSession = localStorage.getItem(getActiveSessionKey(instanceId));
+      setActiveSessionKey(savedSession || getDefaultSessionKey(instanceId));
+    }
+  }, [instanceId]);
+
+  // Handle sessions loaded from ChatInterface
+  const handleSessionsLoaded = useCallback((loadedSessions: SessionInfo[]) => {
+    setSessions(loadedSessions);
+    // If current session not in list, switch to first one or create new
+    if (loadedSessions.length > 0) {
+      const exists = loadedSessions.some(s => s.key === activeSessionKey);
+      if (!exists && instanceId) {
+        setActiveSessionKey(loadedSessions[0].key);
+      }
+    }
+  }, [activeSessionKey, instanceId]);
+
+  // Handle session selection
+  const handleSelectSession = useCallback((sessionKey: string) => {
+    setActiveSessionKey(sessionKey);
+    setShowSessionDropdown(false);
+    chatRef.current?.loadSessionHistory(sessionKey);
+  }, []);
+
+  // Handle new session creation
+  const handleNewSession = useCallback(() => {
+    if (instanceId) {
+      const newKey = generateSessionKey(instanceId);
+      setActiveSessionKey(newKey);
+      setShowSessionDropdown(false);
+    }
+  }, [instanceId]);
+
+  // Handle session deletion
+  const handleDeleteSession = useCallback(async (sessionKey: string) => {
+    if (isAgentRunning) {
+      alert('Please stop the agent first before deleting the session.');
+      return;
+    }
+    const result = await chatRef.current?.deleteSession(sessionKey);
+    if (result && sessionKey === activeSessionKey && instanceId) {
+      // Switch to another session
+      const remaining = sessions.filter(s => s.key !== sessionKey);
+      if (remaining.length > 0) {
+        setActiveSessionKey(remaining[0].key);
+      } else {
+        setActiveSessionKey(getDefaultSessionKey(instanceId));
+      }
+    }
+  }, [activeSessionKey, instanceId, isAgentRunning, sessions]);
+
+  // Handle stop agent
+  const handleStopAgent = useCallback(() => {
+    chatRef.current?.abortAgent();
+    setIsAgentRunning(false);
+  }, []);
+
+  // Handle refresh sessions
+  const handleRefreshSessions = useCallback(() => {
+    chatRef.current?.refreshSessions();
+  }, []);
+
+  // Get current session display name
+  const currentSessionName = sessions.find(s => s.key === activeSessionKey);
+  const displayName = currentSessionName ? getSessionDisplayName(currentSessionName) : 'New conversation';
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showSessionDropdown) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.session-dropdown-container')) {
+          setShowSessionDropdown(false);
+        }
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showSessionDropdown]);
 
   // Save chat width to localStorage when it changes
   useEffect(() => {
@@ -350,18 +515,88 @@ const SplitView: React.FC = () => {
             className={`flex items-center h-10 border-l border-theme bg-theme-nav ${!showViewer ? 'flex-1 border-l-0' : ''}`}
             style={showViewer ? { width: chatWidth } : undefined}
           >
-            <span className="px-3 text-sm text-theme-primary flex-1">New conversation</span>
+            {/* Session Dropdown */}
+            <div className="relative flex-1 session-dropdown-container">
+              <button
+                type="button"
+                onClick={() => isChatConnected && setShowSessionDropdown(!showSessionDropdown)}
+                disabled={!isChatConnected}
+                className={`flex items-center gap-1 px-3 h-10 text-sm text-theme-primary hover:bg-theme-hover transition-colors w-full ${!isChatConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <span className="truncate flex-1 text-left">{displayName}</span>
+                <ChevronDownIcon className={`w-4 h-4 flex-shrink-0 transition-transform ${showSessionDropdown ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown menu */}
+              {showSessionDropdown && (
+                <div className="absolute top-full left-0 right-0 bg-theme-nav border border-theme rounded-b-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {sessions.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-theme-muted">No sessions yet</div>
+                  ) : (
+                    sessions.map((session) => (
+                      <div
+                        key={session.key}
+                        className={`flex items-center gap-2 px-3 py-2 hover:bg-theme-hover cursor-pointer group ${
+                          session.key === activeSessionKey ? 'bg-theme-tertiary' : ''
+                        }`}
+                        onClick={() => handleSelectSession(session.key)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-theme-primary truncate">
+                            {getSessionDisplayName(session)}
+                          </div>
+                          {session.updatedAt && (
+                            <div className="text-xs text-theme-muted">
+                              {formatRelativeTime(session.updatedAt)}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSession(session.key);
+                          }}
+                          className="p-1 opacity-0 group-hover:opacity-100 text-theme-muted hover:text-red-500 transition-all"
+                          aria-label="Delete session"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Stop button - visible when agent is running */}
+            {isAgentRunning && (
+              <button
+                type="button"
+                onClick={handleStopAgent}
+                className="px-2 h-10 text-red-500 hover:text-red-400 hover:bg-theme-hover transition-colors"
+                aria-label="Stop agent"
+                title="Stop agent"
+              >
+                <StopIcon className="w-4 h-4" />
+              </button>
+            )}
+
             <button
               type="button"
+              onClick={handleRefreshSessions}
               className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
-              aria-label="Refresh"
+              aria-label="Refresh sessions"
+              title="Refresh sessions"
             >
               <RefreshIcon className="w-4 h-4" />
             </button>
             <button
               type="button"
+              onClick={handleNewSession}
               className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
               aria-label="New conversation"
+              title="New conversation"
             >
               <PlusIcon className="w-4 h-4" />
             </button>
@@ -428,9 +663,14 @@ const SplitView: React.FC = () => {
               style={showViewer ? { width: chatWidth } : undefined}
             >
               <ChatInterface
+                ref={chatRef}
                 instanceId={instanceId!}
                 instanceStatus={selectedInstance?.status}
                 showHeader={false}
+                sessionKey={activeSessionKey}
+                onSessionsLoaded={handleSessionsLoaded}
+                onAgentStateChange={setIsAgentRunning}
+                onConnectedChange={setIsChatConnected}
               />
             </div>
           )}
@@ -462,9 +702,14 @@ const SplitView: React.FC = () => {
               style={showViewer ? { width: chatWidth } : undefined}
             >
               <ChatInterface
+                ref={chatRef}
                 instanceId={instanceId!}
                 instanceStatus={selectedInstance?.status}
                 showHeader={false}
+                sessionKey={activeSessionKey}
+                onSessionsLoaded={handleSessionsLoaded}
+                onAgentStateChange={setIsAgentRunning}
+                onConnectedChange={setIsChatConnected}
               />
             </div>
           )}

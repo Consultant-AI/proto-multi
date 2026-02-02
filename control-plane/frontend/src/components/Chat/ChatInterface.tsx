@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense, useImperativeHandle, forwardRef } from 'react';
 import { checkWebGLSupport } from '../Avatar';
+import type { SessionInfo } from './types';
+import { generateSessionKey } from './types';
 
 // Lazy load the avatar component - only loads when avatar is enabled
 const TalkingAvatar = lazy(() => import('../Avatar/TalkingAvatar'));
@@ -15,6 +17,30 @@ interface ChatInterfaceProps {
   instanceId: string;
   instanceStatus?: string;
   showHeader?: boolean;
+  /** Controlled session key from parent - if provided, used instead of internal generation */
+  sessionKey?: string;
+  /** Called when sessions list is loaded from OpenClaw */
+  onSessionsLoaded?: (sessions: SessionInfo[]) => void;
+  /** Called when agent running state changes */
+  onAgentStateChange?: (running: boolean) => void;
+  /** Called when connected state changes */
+  onConnectedChange?: (connected: boolean) => void;
+}
+
+/** Methods exposed via ref for parent control */
+export interface ChatInterfaceRef {
+  /** Abort the currently running agent */
+  abortAgent: () => void;
+  /** Load chat history for a session */
+  loadSessionHistory: (sessionKey: string) => void;
+  /** Delete a session */
+  deleteSession: (sessionKey: string) => Promise<boolean>;
+  /** Rename a session */
+  renameSession: (sessionKey: string, label: string) => Promise<boolean>;
+  /** Refresh sessions list */
+  refreshSessions: () => void;
+  /** Check if WebSocket is connected */
+  isConnected: () => boolean;
 }
 
 // Generate unique IDs
@@ -85,22 +111,133 @@ const StatusDot: React.FC<{ status: 'connected' | 'connecting' | 'error' | 'disc
   return <span className={`w-2 h-2 rounded-full ${colors[status]}`} />;
 };
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatus, showHeader = true }) => {
+const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
+  instanceId,
+  instanceStatus,
+  showHeader = true,
+  sessionKey: controlledSessionKey,
+  onSessionsLoaded,
+  onAgentStateChange,
+  onConnectedChange,
+}, ref) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('Connecting...');
   const [retryCount, setRetryCount] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const sessionKeyRef = useRef(`web-${instanceId}-${generateId()}`);
+  // Use controlled sessionKey if provided, otherwise generate one
+  const internalSessionKeyRef = useRef(`web:${instanceId}:main`);
+  const sessionKeyRef = useRef(controlledSessionKey || internalSessionKeyRef.current);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const mountedRef = useRef(false); // Track if we've already connected for this instance
   const connectionIdRef = useRef(0); // Unique ID for each connection attempt
   const streamingTextRef = useRef<string>(''); // Accumulate streaming text from agent events
   const currentRunIdRef = useRef<string | null>(null); // Track current run for streaming
+  const pendingRequestsRef = useRef<Map<string, string>>(new Map()); // Track pending requests by id -> method
+
+  // Update sessionKeyRef when controlled prop changes
+  useEffect(() => {
+    if (controlledSessionKey) {
+      sessionKeyRef.current = controlledSessionKey;
+      // Load history for the new session if connected
+      if (connected && wsRef.current?.readyState === WebSocket.OPEN) {
+        loadSessionHistory(controlledSessionKey);
+      }
+    }
+  }, [controlledSessionKey, connected]);
+
+  // Notify parent of loading state changes (agent running)
+  useEffect(() => {
+    onAgentStateChange?.(loading);
+  }, [loading, onAgentStateChange]);
+
+  // Notify parent of connection state changes
+  useEffect(() => {
+    onConnectedChange?.(connected);
+  }, [connected, onConnectedChange]);
+
+  // Helper to send WebSocket request
+  const sendRequest = useCallback((method: string, params: Record<string, unknown>): string | null => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.warn('Cannot send request, WebSocket not connected');
+      return null;
+    }
+    const requestId = generateId();
+    const request = {
+      type: 'req',
+      id: requestId,
+      method,
+      params,
+    };
+    pendingRequestsRef.current.set(requestId, method);
+    wsRef.current.send(JSON.stringify(request));
+    return requestId;
+  }, []);
+
+  // Load session history
+  const loadSessionHistory = useCallback((sessionKey: string) => {
+    console.log('Loading history for session:', sessionKey);
+    setHistoryLoading(true);
+    setMessages([]); // Clear messages while loading
+    sendRequest('chat.history', {
+      sessionKey,
+      limit: 200,
+    });
+  }, [sendRequest]);
+
+  // Fetch sessions list
+  const refreshSessions = useCallback(() => {
+    console.log('Refreshing sessions list');
+    sendRequest('sessions.list', {
+      limit: 50,
+      includeDerivedTitles: true,
+      includeLastMessage: true,
+    });
+  }, [sendRequest]);
+
+  // Abort running agent
+  const abortAgent = useCallback(() => {
+    console.log('Aborting agent for session:', sessionKeyRef.current);
+    sendRequest('chat.abort', {
+      sessionKey: sessionKeyRef.current,
+    });
+    setLoading(false);
+  }, [sendRequest]);
+
+  // Delete session
+  const deleteSession = useCallback(async (sessionKey: string): Promise<boolean> => {
+    console.log('Deleting session:', sessionKey);
+    const requestId = sendRequest('sessions.delete', {
+      key: sessionKey,
+      deleteTranscript: true,
+    });
+    return requestId !== null;
+  }, [sendRequest]);
+
+  // Rename session
+  const renameSession = useCallback(async (sessionKey: string, label: string): Promise<boolean> => {
+    console.log('Renaming session:', sessionKey, 'to:', label);
+    const requestId = sendRequest('sessions.patch', {
+      key: sessionKey,
+      label,
+    });
+    return requestId !== null;
+  }, [sendRequest]);
+
+  // Expose methods via ref
+  useImperativeHandle(ref, () => ({
+    abortAgent,
+    loadSessionHistory,
+    deleteSession,
+    renameSession,
+    refreshSessions,
+    isConnected: () => connected,
+  }), [abortAgent, loadSessionHistory, deleteSession, renameSession, refreshSessions, connected]);
 
   // Avatar state
   const [avatarEnabled, setAvatarEnabled] = useState(() => {
@@ -620,14 +757,96 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
 
         // Handle response frames
         if (data.type === 'res') {
+          const pendingMethod = pendingRequestsRef.current.get(data.id);
+          if (pendingMethod) {
+            pendingRequestsRef.current.delete(data.id);
+          }
+
           if (data.ok && data.payload?.type === 'hello-ok') {
             console.log('CloudBot handshake complete', data.payload);
             setConnected(true);
             setConnectionStatus('Ready');
             setRetryCount(0); // Reset retry count on successful connection
 
-            // Add welcome message on first connection
-            if (messages.length === 0) {
+            // Fetch sessions list after connection
+            const sessionsReqId = generateId();
+            pendingRequestsRef.current.set(sessionsReqId, 'sessions.list');
+            websocket.send(JSON.stringify({
+              type: 'req',
+              id: sessionsReqId,
+              method: 'sessions.list',
+              params: {
+                limit: 50,
+                includeDerivedTitles: true,
+                includeLastMessage: true,
+              },
+            }));
+
+            // Load history for current session
+            const historyReqId = generateId();
+            pendingRequestsRef.current.set(historyReqId, 'chat.history');
+            websocket.send(JSON.stringify({
+              type: 'req',
+              id: historyReqId,
+              method: 'chat.history',
+              params: {
+                sessionKey: sessionKeyRef.current,
+                limit: 200,
+              },
+            }));
+
+            setTimeout(() => inputRef.current?.focus(), 100);
+            return;
+          }
+
+          // Handle sessions.list response
+          if (data.ok && pendingMethod === 'sessions.list' && data.payload?.sessions) {
+            console.log('Sessions list received:', data.payload.sessions.length, 'sessions');
+            const sessions: SessionInfo[] = data.payload.sessions.map((s: any) => ({
+              key: s.key,
+              sessionId: s.sessionId,
+              label: s.label,
+              derivedTitle: s.derivedTitle,
+              lastMessagePreview: s.lastMessagePreview,
+              updatedAt: s.updatedAt,
+              kind: s.kind || 'direct',
+            }));
+            onSessionsLoaded?.(sessions);
+            return;
+          }
+
+          // Handle chat.history response
+          if (data.ok && pendingMethod === 'chat.history' && data.payload) {
+            console.log('Chat history received:', data.payload.messages?.length || 0, 'messages');
+            setHistoryLoading(false);
+            const historyMessages: Message[] = [];
+
+            if (data.payload.messages && Array.isArray(data.payload.messages)) {
+              for (const msg of data.payload.messages) {
+                let content = '';
+                if (Array.isArray(msg.content)) {
+                  content = msg.content
+                    .filter((c: any) => c.type === 'text')
+                    .map((c: any) => c.text)
+                    .join('\n');
+                } else if (typeof msg.content === 'string') {
+                  content = msg.content;
+                }
+                if (content) {
+                  historyMessages.push({
+                    id: msg.id || generateId(),
+                    role: msg.role as 'user' | 'assistant',
+                    content,
+                    timestamp: new Date(msg.timestamp || Date.now()),
+                  });
+                }
+              }
+            }
+
+            if (historyMessages.length > 0) {
+              setMessages(historyMessages);
+            } else {
+              // No history, show welcome message
               setMessages([{
                 id: 'welcome',
                 role: 'system',
@@ -635,14 +854,58 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
                 timestamp: new Date(),
               }]);
             }
+            return;
+          }
 
-            setTimeout(() => inputRef.current?.focus(), 100);
+          // Handle sessions.delete response
+          if (pendingMethod === 'sessions.delete') {
+            if (data.ok) {
+              console.log('Session deleted successfully');
+              // Refresh sessions list
+              const reqId = generateId();
+              pendingRequestsRef.current.set(reqId, 'sessions.list');
+              websocket.send(JSON.stringify({
+                type: 'req',
+                id: reqId,
+                method: 'sessions.list',
+                params: { limit: 50, includeDerivedTitles: true, includeLastMessage: true },
+              }));
+            } else {
+              console.error('Failed to delete session:', data.error);
+            }
+            return;
+          }
+
+          // Handle sessions.patch response
+          if (pendingMethod === 'sessions.patch') {
+            if (data.ok) {
+              console.log('Session renamed successfully');
+              // Refresh sessions list
+              const reqId = generateId();
+              pendingRequestsRef.current.set(reqId, 'sessions.list');
+              websocket.send(JSON.stringify({
+                type: 'req',
+                id: reqId,
+                method: 'sessions.list',
+                params: { limit: 50, includeDerivedTitles: true, includeLastMessage: true },
+              }));
+            } else {
+              console.error('Failed to rename session:', data.error);
+            }
+            return;
+          }
+
+          // Handle chat.abort response
+          if (pendingMethod === 'chat.abort') {
+            console.log('Agent abort result:', data.ok ? 'success' : 'failed');
+            setLoading(false);
             return;
           }
 
           if (!data.ok && data.error) {
-            console.error('Connection failed:', data.error);
-            setConnectionStatus(`Error: ${data.error.message || 'Connection failed'}`);
+            console.error('Request failed:', data.error);
+            setHistoryLoading(false);
+            setConnectionStatus(`Error: ${data.error.message || 'Request failed'}`);
             return;
           }
 
@@ -924,8 +1187,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
   };
 
   const handleNewConversation = () => {
-    setMessages([]);
-    sessionKeyRef.current = `web-${instanceId}-${generateId()}`;
+    const newKey = generateSessionKey(instanceId);
+    sessionKeyRef.current = newKey;
+    setMessages([{
+      id: 'welcome',
+      role: 'system',
+      content: 'CloudBot is ready! You can ask me to control the desktop, browse the web, or help with any task.',
+      timestamp: new Date(),
+    }]);
+    // Refresh sessions list to show the new session after first message
   };
 
   const statusType = getStatusType();
@@ -1056,6 +1326,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
                 <p className="text-sm text-theme-muted">
                   {connectionStatus}
                 </p>
+              </div>
+            ) : historyLoading ? (
+              // Loading chat history
+              <div className="mb-6">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-theme-tertiary flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+                <h2 className="text-base font-medium text-theme-primary mb-2">
+                  Loading conversation...
+                </h2>
               </div>
             ) : (
               // Connected - show suggestions
@@ -1250,6 +1530,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
       </div>
     </div>
   );
-};
+});
+
+ChatInterface.displayName = 'ChatInterface';
 
 export default ChatInterface;
