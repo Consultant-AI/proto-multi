@@ -99,6 +99,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
   const wsRef = useRef<WebSocket | null>(null);
   const mountedRef = useRef(false); // Track if we've already connected for this instance
   const connectionIdRef = useRef(0); // Unique ID for each connection attempt
+  const streamingTextRef = useRef<string>(''); // Accumulate streaming text from agent events
+  const currentRunIdRef = useRef<string | null>(null); // Track current run for streaming
 
   // Avatar state
   const [avatarEnabled, setAvatarEnabled] = useState(() => {
@@ -656,33 +658,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
         // Handle chat responses
         if (data.type === 'event' && data.event === 'chat') {
           const payload = data.payload;
+          console.log('Chat event payload:', JSON.stringify(payload, null, 2));
 
-          if (payload.state === 'final' && payload.message) {
-            let content = '';
-            if (Array.isArray(payload.message.content)) {
-              content = payload.message.content
-                .filter((c: any) => c.type === 'text')
-                .map((c: any) => c.text)
-                .join('\n');
-            } else if (typeof payload.message.content === 'string') {
-              content = payload.message.content;
-            }
-
-            if (content) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: payload.runId || Date.now().toString(),
-                  role: 'assistant',
-                  content,
-                  timestamp: new Date(),
-                },
-              ]);
-              // Trigger avatar to speak the response
-              handleAvatarSpeak(content);
-            }
-            setLoading(false);
-          } else if (payload.state === 'error') {
+          // Handle error state
+          if (payload.state === 'error') {
             console.error('Chat error:', payload.errorMessage);
             setMessages((prev) => [
               ...prev,
@@ -694,13 +673,160 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ instanceId, instanceStatu
               },
             ]);
             setLoading(false);
+            return;
+          }
+
+          // Extract content from various formats OpenClaw might send
+          let content = '';
+
+          // Format 1: payload.state === 'final' with payload.message
+          if (payload.state === 'final' && payload.message) {
+            if (Array.isArray(payload.message.content)) {
+              content = payload.message.content
+                .filter((c: any) => c.type === 'text')
+                .map((c: any) => c.text)
+                .join('\n');
+            } else if (typeof payload.message.content === 'string') {
+              content = payload.message.content;
+            }
+          }
+          // Format 2: payload.messages array (OpenClaw webchat format)
+          else if (payload.messages && Array.isArray(payload.messages)) {
+            const lastMessage = payload.messages[payload.messages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+              if (Array.isArray(lastMessage.content)) {
+                content = lastMessage.content
+                  .filter((c: any) => c.type === 'text')
+                  .map((c: any) => c.text)
+                  .join('\n');
+              } else if (typeof lastMessage.content === 'string') {
+                content = lastMessage.content;
+              }
+            }
+          }
+          // Format 3: Direct content in payload
+          else if (payload.content) {
+            if (Array.isArray(payload.content)) {
+              content = payload.content
+                .filter((c: any) => c.type === 'text')
+                .map((c: any) => c.text)
+                .join('\n');
+            } else if (typeof payload.content === 'string') {
+              content = payload.content;
+            }
+          }
+          // Format 4: sessionState with messages (OpenClaw webchat)
+          else if (payload.sessionState?.messages) {
+            const messages = payload.sessionState.messages;
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+              if (Array.isArray(lastMessage.content)) {
+                content = lastMessage.content
+                  .filter((c: any) => c.type === 'text')
+                  .map((c: any) => c.text)
+                  .join('\n');
+              } else if (typeof lastMessage.content === 'string') {
+                content = lastMessage.content;
+              }
+            }
+          }
+          // Format 5: snapshot with currentSession messages
+          else if (payload.snapshot?.currentSession?.messages) {
+            const messages = payload.snapshot.currentSession.messages;
+            const lastMessage = messages[messages.length - 1];
+            if (lastMessage && lastMessage.role === 'assistant') {
+              if (Array.isArray(lastMessage.content)) {
+                content = lastMessage.content
+                  .filter((c: any) => c.type === 'text')
+                  .map((c: any) => c.text)
+                  .join('\n');
+              } else if (typeof lastMessage.content === 'string') {
+                content = lastMessage.content;
+              }
+            }
+          }
+
+          if (content) {
+            console.log('Extracted chat content:', content);
+            // Clear streaming refs since we got content from chat event
+            streamingTextRef.current = '';
+            currentRunIdRef.current = null;
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: payload.runId || Date.now().toString(),
+                role: 'assistant',
+                content,
+                timestamp: new Date(),
+              },
+            ]);
+            // Trigger avatar to speak the response
+            handleAvatarSpeak(content);
+            setLoading(false);
+          } else {
+            console.log('No content extracted from chat event, payload:', payload);
+            // If no content in chat event but we have streaming text, use that
+            if (streamingTextRef.current.trim() && payload.state === 'final') {
+              console.log('Using streaming text as fallback:', streamingTextRef.current.substring(0, 100) + '...');
+              const streamedContent = streamingTextRef.current.trim();
+              streamingTextRef.current = '';
+              currentRunIdRef.current = null;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: payload.runId || Date.now().toString(),
+                  role: 'assistant',
+                  content: streamedContent,
+                  timestamp: new Date(),
+                },
+              ]);
+              handleAvatarSpeak(streamedContent);
+              setLoading(false);
+            }
           }
           return;
         }
 
-        // Handle agent events
+        // Handle agent events - accumulate streaming text
         if (data.type === 'event' && data.event === 'agent') {
-          console.log('Agent event:', data.payload);
+          const payload = data.payload;
+          console.log('Agent event:', payload);
+
+          // Track the run ID for streaming
+          if (payload.runId && payload.runId !== currentRunIdRef.current) {
+            currentRunIdRef.current = payload.runId;
+            streamingTextRef.current = ''; // Reset for new run
+          }
+
+          // Accumulate text stream content
+          if (payload.stream === 'text' && payload.data?.text) {
+            streamingTextRef.current += payload.data.text;
+            console.log('Agent text chunk accumulated, total length:', streamingTextRef.current.length);
+          }
+
+          // Check for lifecycle end - use accumulated streaming text if no chat event content
+          if (payload.stream === 'lifecycle' && payload.data?.phase === 'end') {
+            console.log('Agent lifecycle end:', payload.data);
+
+            // If we have accumulated streaming text and loading is still true, show it
+            if (streamingTextRef.current.trim()) {
+              console.log('Using accumulated streaming text:', streamingTextRef.current.substring(0, 100) + '...');
+              const content = streamingTextRef.current.trim();
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: currentRunIdRef.current || Date.now().toString(),
+                  role: 'assistant',
+                  content,
+                  timestamp: new Date(),
+                },
+              ]);
+              handleAvatarSpeak(content);
+              setLoading(false);
+              streamingTextRef.current = ''; // Reset after use
+              currentRunIdRef.current = null;
+            }
+          }
           return;
         }
 

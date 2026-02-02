@@ -566,8 +566,6 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
   "agents": {
     "defaults": {
       "workspace": "/root/cloudbot-workspace",
-      "skipBootstrap": true,
-      "thinkingDefault": "off",
       "model": {
         "primary": "anthropic/claude-sonnet-4-20250514"
       }
