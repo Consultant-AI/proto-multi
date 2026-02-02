@@ -569,19 +569,6 @@ const SplitView: React.FC = () => {
               )}
             </div>
 
-            {/* Stop button - visible when agent is running */}
-            {isAgentRunning && (
-              <button
-                type="button"
-                onClick={handleStopAgent}
-                className="px-2 h-10 text-red-500 hover:text-red-400 hover:bg-theme-hover transition-colors"
-                aria-label="Stop agent"
-                title="Stop agent"
-              >
-                <StopIcon className="w-4 h-4" />
-              </button>
-            )}
-
             <button
               type="button"
               onClick={handleRefreshSessions}

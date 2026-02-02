@@ -72,6 +72,12 @@ const MicIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
+const StopIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
 const AttachmentIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -1499,12 +1505,25 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
               </div>
             </div>
 
-            {/* Mic or Send button */}
-            {input.trim() ? (
+            {/* Stop, Send, or Mic button */}
+            {loading ? (
+              <button
+                type="button"
+                onClick={() => {
+                  // Call abort via the exposed ref method or directly
+                  sendRequest('chat.abort', { sessionKey: sessionKeyRef.current });
+                  setLoading(false);
+                }}
+                className="w-12 h-12 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+                aria-label="Stop agent"
+              >
+                <StopIcon className="w-5 h-5" />
+              </button>
+            ) : input.trim() ? (
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={loading || !connected}
+                disabled={!connected}
                 aria-label="Send message"
                 className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-colors shadow-lg flex-shrink-0"
               >
@@ -1514,7 +1533,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
               <button
                 type="button"
                 onClick={startRecording}
-                disabled={!connected || loading}
+                disabled={!connected}
                 className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
                 aria-label="Voice input"
               >
