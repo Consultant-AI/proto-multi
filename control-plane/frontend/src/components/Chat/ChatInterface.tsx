@@ -774,6 +774,23 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             setConnectionStatus('Ready');
             setRetryCount(0); // Reset retry count on successful connection
 
+            // Start keepalive ping every 15 seconds to prevent Railway timeout
+            const keepaliveInterval = setInterval(() => {
+              if (websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                  type: 'req',
+                  id: generateId(),
+                  method: 'health.check',
+                  params: {},
+                }));
+              } else {
+                clearInterval(keepaliveInterval);
+              }
+            }, 15000);
+
+            // Store interval for cleanup
+            (websocket as any)._keepaliveInterval = keepaliveInterval;
+
             // Fetch sessions list after connection
             const sessionsReqId = generateId();
             pendingRequestsRef.current.set(sessionsReqId, 'sessions.list');
@@ -1121,6 +1138,11 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
       setLoading(false);
       setConnected(false);
 
+      // Clean up keepalive interval
+      if ((websocket as any)._keepaliveInterval) {
+        clearInterval((websocket as any)._keepaliveInterval);
+      }
+
       // Schedule retry if not at max retries and instance is still running
       if (retryCount < MAX_RETRIES && (!instanceStatus || instanceStatus === 'running')) {
         const delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
@@ -1138,6 +1160,11 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
       // (Prevents StrictMode from closing our active connection)
       if (connectionIdRef.current !== thisConnectionId) {
         return; // A newer connection has been created, don't close
+      }
+
+      // Clean up keepalive interval
+      if ((websocket as any)._keepaliveInterval) {
+        clearInterval((websocket as any)._keepaliveInterval);
       }
 
       if (retryTimeoutRef.current) {
