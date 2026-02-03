@@ -135,11 +135,16 @@ async def proxy_cloudbot(
                                 elif event_type == 'chat':
                                     logger.info(f"Chat event payload: {json.dumps(msg_data.get('payload', {}))}")
                                 elif event_type == 'agent':
-                                    logger.info(f"Agent event: {msg_data.get('payload', {}).get('phase', 'unknown')}")
+                                    # Log full agent payload for debugging
+                                    logger.info(f"Agent event: {json.dumps(msg_data.get('payload', {}))}")
                                 else:
                                     logger.info(f"Event: {event_type}")
                             elif msg_data.get('type') == 'res':
-                                logger.info(f"Response: ok={msg_data.get('ok')} id={msg_data.get('id', 'unknown')[:8]}...")
+                                if msg_data.get('ok'):
+                                    logger.info(f"Response: ok=True id={msg_data.get('id', 'unknown')[:8]}...")
+                                else:
+                                    # Log full error response for debugging
+                                    logger.error(f"Response ERROR: {json.dumps(msg_data)}")
                         except:
                             pass
 

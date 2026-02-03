@@ -824,7 +824,9 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             console.log('CloudBot handshake complete', data.payload);
             setConnected(true);
             setConnectionStatus('Ready');
-            setRetryCount(0); // Reset retry count on successful connection
+            // Note: Don't reset retryCount here as it's a useEffect dependency
+            // Resetting it would trigger the effect to re-run and close this connection
+            // Instead, retryCount is reset at the start of each new connection attempt
 
             // Start keepalive ping every 15 seconds to prevent Railway timeout
             const keepaliveInterval = setInterval(() => {
