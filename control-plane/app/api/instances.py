@@ -35,13 +35,21 @@ async def _get_user_api_keys(user_id, db: AsyncSession) -> Dict[str, str]:
     )
     api_keys = result.scalars().all()
 
+    logger.info(f"Found {len(api_keys)} API keys in database for user {user_id}")
+
     decrypted_keys = {}
     for key in api_keys:
         try:
-            decrypted_keys[key.provider] = decrypt_api_key(key.encrypted_key)
+            decrypted_value = decrypt_api_key(key.encrypted_key)
+            decrypted_keys[key.provider] = decrypted_value
+            # Log success with partial key for debugging (first 10 chars)
+            key_preview = decrypted_value[:10] + "..." if len(decrypted_value) > 10 else decrypted_value
+            logger.info(f"Successfully decrypted API key for {key.provider}: {key_preview}")
         except Exception as e:
-            logger.warning(f"Failed to decrypt API key for provider {key.provider}: {e}")
+            logger.error(f"FAILED to decrypt API key for provider {key.provider}: {e}")
+            logger.error(f"  Encrypted key length: {len(key.encrypted_key)}")
 
+    logger.info(f"Total decrypted keys: {len(decrypted_keys)} providers: {list(decrypted_keys.keys())}")
     return decrypted_keys
 
 

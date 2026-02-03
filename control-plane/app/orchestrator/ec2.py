@@ -102,8 +102,12 @@ echo "CloudBot instance starting..."
         env_exports = []
 
         # Add control plane URL if configured
+        logger.info(f"CONTROL_PLANE_URL setting: {settings.control_plane_url}")
         if settings.control_plane_url:
             env_exports.append(f"export CONTROL_PLANE_URL='{settings.control_plane_url}'")
+            logger.info(f"Added CONTROL_PLANE_URL to user_data: {settings.control_plane_url}")
+        else:
+            logger.error("CONTROL_PLANE_URL is NOT SET - EC2 instances will fail to download OpenClaw!")
 
         # Add moltbot tarball URL if configured
         if settings.moltbot_tarball_url:
