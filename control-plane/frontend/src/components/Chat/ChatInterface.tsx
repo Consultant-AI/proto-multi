@@ -829,18 +829,21 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             // Instead, retryCount is reset at the start of each new connection attempt
 
             // Start keepalive ping every 15 seconds to prevent Railway timeout
+            // Note: The proxy already sends ping events, but we send sessions.list
+            // as a lightweight keepalive since health.check is not a valid method
             const keepaliveInterval = setInterval(() => {
               if (websocket.readyState === WebSocket.OPEN) {
+                // Use sessions.list as a lightweight ping (returns quickly)
                 websocket.send(JSON.stringify({
                   type: 'req',
                   id: generateId(),
-                  method: 'health.check',
-                  params: {},
+                  method: 'sessions.list',
+                  params: { limit: 1 },
                 }));
               } else {
                 clearInterval(keepaliveInterval);
               }
-            }, 15000);
+            }, 30000); // Reduced frequency since proxy has its own keepalive
 
             // Store interval for cleanup
             (websocket as any)._keepaliveInterval = keepaliveInterval;
