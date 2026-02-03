@@ -75,6 +75,25 @@ async def proxy_cloudbot(
 
             stop_event = asyncio.Event()
 
+            async def keepalive_to_browser():
+                """Send periodic pings to browser to keep Railway connection alive"""
+                try:
+                    while not stop_event.is_set():
+                        await asyncio.sleep(5)  # Ping every 5 seconds
+                        if stop_event.is_set():
+                            break
+                        try:
+                            # Send a ping frame to keep the connection alive
+                            await websocket.send_text(json.dumps({
+                                "type": "event",
+                                "event": "ping",
+                                "payload": {}
+                            }))
+                        except Exception:
+                            break
+                except asyncio.CancelledError:
+                    pass
+
             async def forward_to_cloudbot():
                 """Forward WebSocket messages from browser to CloudBot"""
                 try:
@@ -141,8 +160,9 @@ async def proxy_cloudbot(
                     logger.error(f"Error forwarding from CloudBot: {e}")
                     stop_event.set()
 
-            # Run both directions concurrently
+            # Run all tasks concurrently
             await asyncio.gather(
+                keepalive_to_browser(),
                 forward_to_cloudbot(),
                 forward_from_cloudbot(),
                 return_exceptions=True
