@@ -75,6 +75,30 @@ class InstanceListResponse(BaseModel):
     instances: List[InstanceResponse]
 
 
+# Debug endpoint - MUST be defined BEFORE routes with {instance_id} parameter
+@router.get("/debug/config")
+async def debug_config():
+    """Debug endpoint to check configuration values used for instance provisioning"""
+    import os
+    tarball_path = os.path.join(os.path.dirname(__file__), "..", "..", "openclaw.tgz")
+    wallpaper_path = os.path.join(os.path.dirname(__file__), "..", "..", "cloudbot-wallpaper.jpg")
+    return {
+        "environment": settings.environment,
+        "control_plane_url": settings.control_plane_url,
+        "control_plane_url_set": settings.control_plane_url is not None,
+        "moltbot_tarball_url": settings.moltbot_tarball_url,
+        "moltbot_tarball_url_set": settings.moltbot_tarball_url is not None,
+        "local_dev_mode": settings.local_dev_mode,
+        "aws_region": settings.aws_region,
+        "aws_access_key_id_set": settings.aws_access_key_id is not None,
+        "ec2_security_group_id": settings.ec2_security_group_id,
+        "ec2_subnet_id": settings.ec2_subnet_id,
+        "openclaw_tarball_exists": os.path.exists(tarball_path),
+        "openclaw_tarball_path": tarball_path,
+        "wallpaper_exists": os.path.exists(wallpaper_path),
+    }
+
+
 @router.post("", response_model=InstanceResponse, status_code=status.HTTP_201_CREATED)
 async def create_instance(
     request: CreateInstanceRequest,
@@ -419,26 +443,3 @@ async def delete_instance(
     await db.commit()
 
     return None
-
-
-@router.get("/debug/config")
-async def debug_config():
-    """Debug endpoint to check configuration values used for instance provisioning"""
-    import os
-    tarball_path = os.path.join(os.path.dirname(__file__), "..", "..", "openclaw.tgz")
-    wallpaper_path = os.path.join(os.path.dirname(__file__), "..", "..", "cloudbot-wallpaper.jpg")
-    return {
-        "environment": settings.environment,
-        "control_plane_url": settings.control_plane_url,
-        "control_plane_url_set": settings.control_plane_url is not None,
-        "moltbot_tarball_url": settings.moltbot_tarball_url,
-        "moltbot_tarball_url_set": settings.moltbot_tarball_url is not None,
-        "local_dev_mode": settings.local_dev_mode,
-        "aws_region": settings.aws_region,
-        "aws_access_key_id_set": settings.aws_access_key_id is not None,
-        "ec2_security_group_id": settings.ec2_security_group_id,
-        "ec2_subnet_id": settings.ec2_subnet_id,
-        "openclaw_tarball_exists": os.path.exists(tarball_path),
-        "openclaw_tarball_path": tarball_path,
-        "wallpaper_exists": os.path.exists(wallpaper_path),
-    }
