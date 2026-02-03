@@ -58,11 +58,20 @@ async def log_requests(request: Request, call_next):
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint with config info for debugging"""
+    tarball_path = os.path.join(os.path.dirname(__file__), "..", "openclaw.tgz")
     return {
         "status": "ok",
         "timestamp": datetime.utcnow().isoformat(),
         "environment": settings.environment,
+        "config": {
+            "control_plane_url": settings.control_plane_url,
+            "control_plane_url_set": settings.control_plane_url is not None,
+            "moltbot_tarball_url_set": settings.moltbot_tarball_url is not None,
+            "local_dev_mode": settings.local_dev_mode,
+            "aws_region": settings.aws_region,
+            "openclaw_tarball_exists": os.path.exists(tarball_path),
+        }
     }
 
 
