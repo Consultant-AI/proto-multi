@@ -67,7 +67,7 @@ async def health_check():
 
 
 # Debug endpoint to check configuration
-@app.get("/debug/config")
+@app.get("/api/debug/config")
 async def debug_config():
     """Debug endpoint to check configuration values used for instance provisioning"""
     tarball_path = os.path.join(os.path.dirname(__file__), "..", "openclaw.tgz")
