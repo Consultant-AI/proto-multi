@@ -25,6 +25,14 @@ interface ChatInterfaceProps {
   onAgentStateChange?: (running: boolean) => void;
   /** Called when connected state changes */
   onConnectedChange?: (connected: boolean) => void;
+  /** Controlled avatar enabled state from parent */
+  avatarEnabled?: boolean;
+  /** Callback when avatar enabled state changes */
+  onAvatarEnabledChange?: (enabled: boolean) => void;
+  /** Controlled auto-speak state from parent */
+  autoSpeak?: boolean;
+  /** Callback when auto-speak state changes */
+  onAutoSpeakChange?: (enabled: boolean) => void;
 }
 
 /** Methods exposed via ref for parent control */
@@ -47,13 +55,6 @@ export interface ChatInterfaceRef {
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
 // Icons
-const SettingsIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
 const PlusIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -125,6 +126,10 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   onSessionsLoaded,
   onAgentStateChange,
   onConnectedChange,
+  avatarEnabled: controlledAvatarEnabled,
+  onAvatarEnabledChange,
+  autoSpeak: controlledAutoSpeak,
+  onAutoSpeakChange,
 }, ref) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -134,7 +139,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   const [retryCount, setRetryCount] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   // Use controlled sessionKey if provided, otherwise generate one
   const internalSessionKeyRef = useRef(`web:${instanceId}:main`);
   const sessionKeyRef = useRef(controlledSessionKey || internalSessionKeyRef.current);
@@ -145,14 +150,38 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   const streamingTextRef = useRef<string>(''); // Accumulate streaming text from agent events
   const currentRunIdRef = useRef<string | null>(null); // Track current run for streaming
   const pendingRequestsRef = useRef<Map<string, string>>(new Map()); // Track pending requests by id -> method
+  const historyLoadedSessionRef = useRef<string | null>(null); // Track which session's history has been loaded
 
   // Update sessionKeyRef when controlled prop changes
+  // Track previous session key to detect actual session changes vs reconnections
+  const prevControlledSessionKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (controlledSessionKey) {
+      const isSessionChange = prevControlledSessionKeyRef.current !== null &&
+                              prevControlledSessionKeyRef.current !== controlledSessionKey;
+
       sessionKeyRef.current = controlledSessionKey;
-      // Load history for the new session if connected
-      if (connected && wsRef.current?.readyState === WebSocket.OPEN) {
-        loadSessionHistory(controlledSessionKey);
+      prevControlledSessionKeyRef.current = controlledSessionKey;
+
+      // Only load history when session KEY actually changes (user switched sessions)
+      // NOT on reconnection (when connected changes from false to true)
+      // The inline code in the main WebSocket effect handles initial/reconnection history loading
+      if (isSessionChange && connected && wsRef.current?.readyState === WebSocket.OPEN) {
+        // Send history request directly to avoid circular dependency with loadSessionHistory
+        setHistoryLoading(true);
+        setMessages([]);
+        const historyReqId = generateId();
+        pendingRequestsRef.current.set(historyReqId, 'chat.history');
+        wsRef.current.send(JSON.stringify({
+          type: 'req',
+          id: historyReqId,
+          method: 'chat.history',
+          params: {
+            sessionKey: controlledSessionKey,
+            limit: 200,
+          },
+        }));
       }
     }
   }, [controlledSessionKey, connected]);
@@ -245,24 +274,37 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     isConnected: () => connected,
   }), [abortAgent, loadSessionHistory, deleteSession, renameSession, refreshSessions, connected]);
 
-  // Avatar state
-  const [avatarEnabled, setAvatarEnabled] = useState(() => {
-    // Check if WebGL is supported and user preference
+  // Avatar state - use controlled props if provided, otherwise use internal state
+  const [internalAvatarEnabled, setInternalAvatarEnabled] = useState(() => {
     const saved = localStorage.getItem('cloudbot-avatar-enabled');
     return saved !== null ? saved === 'true' : checkWebGLSupport();
   });
+  const avatarEnabled = controlledAvatarEnabled ?? internalAvatarEnabled;
+  const setAvatarEnabled = useCallback((enabled: boolean) => {
+    setInternalAvatarEnabled(enabled);
+    onAvatarEnabledChange?.(enabled);
+  }, [onAvatarEnabledChange]);
+
   const [currentSpeech, setCurrentSpeech] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [avatarLoaded, setAvatarLoaded] = useState(false);
   const [avatarCharacter, setAvatarCharacter] = useState(() => {
     return localStorage.getItem('cloudbot-avatar-character') || 'brunette';
   });
-
-  // Auto-speak state (TTS for AI responses)
-  const [autoSpeak, setAutoSpeak] = useState(() => {
-    const saved = localStorage.getItem('cloudbot-auto-speak');
-    return saved !== null ? saved === 'true' : true; // Default to enabled
+  const [avatarBackground, setAvatarBackground] = useState(() => {
+    return localStorage.getItem('cloudbot-avatar-background') || 'black';
   });
+
+  // Auto-speak state - use controlled props if provided, otherwise use internal state
+  const [internalAutoSpeak, setInternalAutoSpeak] = useState(() => {
+    const saved = localStorage.getItem('cloudbot-auto-speak');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const autoSpeak = controlledAutoSpeak ?? internalAutoSpeak;
+  const setAutoSpeak = useCallback((enabled: boolean) => {
+    setInternalAutoSpeak(enabled);
+    onAutoSpeakChange?.(enabled);
+  }, [onAutoSpeakChange]);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Voice input state (speech-to-text)
@@ -284,20 +326,29 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     connectedRef.current = connected;
   }, [connected]);
 
-  // Save avatar preference
+  // Save avatar preference (only when using internal state)
   useEffect(() => {
-    localStorage.setItem('cloudbot-avatar-enabled', avatarEnabled.toString());
-  }, [avatarEnabled]);
+    if (controlledAvatarEnabled === undefined) {
+      localStorage.setItem('cloudbot-avatar-enabled', internalAvatarEnabled.toString());
+    }
+  }, [internalAvatarEnabled, controlledAvatarEnabled]);
 
   // Save avatar character preference
   useEffect(() => {
     localStorage.setItem('cloudbot-avatar-character', avatarCharacter);
   }, [avatarCharacter]);
 
-  // Save auto-speak preference
+  // Save avatar background preference
   useEffect(() => {
-    localStorage.setItem('cloudbot-auto-speak', autoSpeak.toString());
-  }, [autoSpeak]);
+    localStorage.setItem('cloudbot-avatar-background', avatarBackground);
+  }, [avatarBackground]);
+
+  // Save auto-speak preference (only when using internal state)
+  useEffect(() => {
+    if (controlledAutoSpeak === undefined) {
+      localStorage.setItem('cloudbot-auto-speak', internalAutoSpeak.toString());
+    }
+  }, [internalAutoSpeak, controlledAutoSpeak]);
 
   // Fallback browser TTS when avatar is not available
   const speakWithBrowserTTS = useCallback((text: string) => {
@@ -648,6 +699,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     setConnected(false);
     setMessages([]);
     mountedRef.current = false;
+    historyLoadedSessionRef.current = null; // Clear so history loads for new instance
     // connectionIdRef is incremented in the main effect
   }, [instanceId]);
 
@@ -805,18 +857,20 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
               },
             }));
 
-            // Load history for current session
-            const historyReqId = generateId();
-            pendingRequestsRef.current.set(historyReqId, 'chat.history');
-            websocket.send(JSON.stringify({
-              type: 'req',
-              id: historyReqId,
-              method: 'chat.history',
-              params: {
-                sessionKey: sessionKeyRef.current,
-                limit: 200,
-              },
-            }));
+            // Load history for current session (skip if already loaded to prevent reconnection flash)
+            if (historyLoadedSessionRef.current !== sessionKeyRef.current) {
+              const historyReqId = generateId();
+              pendingRequestsRef.current.set(historyReqId, 'chat.history');
+              websocket.send(JSON.stringify({
+                type: 'req',
+                id: historyReqId,
+                method: 'chat.history',
+                params: {
+                  sessionKey: sessionKeyRef.current,
+                  limit: 200,
+                },
+              }));
+            }
 
             setTimeout(() => inputRef.current?.focus(), 100);
             return;
@@ -842,6 +896,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
           if (data.ok && pendingMethod === 'chat.history' && data.payload) {
             console.log('Chat history received:', data.payload.messages?.length || 0, 'messages');
             setHistoryLoading(false);
+            historyLoadedSessionRef.current = sessionKeyRef.current; // Mark this session's history as loaded
             const historyMessages: Message[] = [];
 
             if (data.payload.messages && Array.isArray(data.payload.messages)) {
@@ -1195,6 +1250,10 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     setMessages((prev) => [...prev, userMessage]);
     const messageText = input;
     setInput('');
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
     setLoading(true);
 
     const requestId = generateId();
@@ -1238,7 +1297,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
     <div className="h-full flex flex-col bg-theme-primary text-theme-primary">
       {/* Header - only shown if showHeader is true */}
       {showHeader && (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-theme bg-theme-nav">
+        <div className={`flex items-center justify-between px-4 py-2 border-b border-theme bg-theme-nav ${!avatarEnabled && connected ? 'py-3' : ''}`}>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-theme-primary">New conversation</span>
             <div className="flex items-center gap-1">
@@ -1246,23 +1305,30 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {/* Show avatar toggle when avatar is hidden */}
+            {!avatarEnabled && connected && (
+              <button
+                type="button"
+                onClick={() => setAvatarEnabled(true)}
+                className="p-1.5 rounded hover:bg-theme-hover text-theme-muted hover:text-theme-primary transition-colors"
+                aria-label="Show avatar"
+                title="Show avatar"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setAutoSpeak(!autoSpeak)}
               className={`p-1.5 rounded hover:bg-theme-hover transition-colors ${
-                autoSpeak ? 'text-blue-500' : 'text-theme-muted hover:text-theme-primary'
+                autoSpeak ? 'text-theme-primary hover:text-theme-primary' : 'text-theme-muted/60 hover:text-theme-muted'
               }`}
               aria-label={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
               title={autoSpeak ? 'Auto-speak enabled' : 'Auto-speak disabled'}
             >
               <SpeakerIcon className="w-4 h-4" muted={!autoSpeak} />
-            </button>
-            <button
-              type="button"
-              className="p-1.5 rounded hover:bg-theme-hover text-theme-muted hover:text-theme-primary transition-colors"
-              aria-label="Settings"
-            >
-              <SettingsIcon className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -1276,8 +1342,8 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
         </div>
       )}
 
-      {/* Avatar Section - lazy loaded */}
-      {avatarEnabled && connected && (
+      {/* Avatar Section - lazy loaded, stays mounted to prevent glitchy reconnection */}
+      {avatarEnabled && (
         <div className="border-b border-theme bg-theme-tertiary/30">
           <div className="relative">
             <Suspense fallback={
@@ -1298,9 +1364,21 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                 enabled={avatarEnabled}
                 characterId={avatarCharacter}
                 onCharacterChange={setAvatarCharacter}
+                backgroundId={avatarBackground}
+                onBackgroundChange={setAvatarBackground}
                 showCharacterSelector={true}
+                audioEnabled={autoSpeak}
               />
             </Suspense>
+            {/* Disconnected overlay */}
+            {!connected && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-6 h-6 border-2 border-white/50 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-xs text-white/70">Reconnecting...</p>
+                </div>
+              </div>
+            )}
             {/* Avatar toggle button */}
             <button
               type="button"
@@ -1317,19 +1395,6 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
         </div>
       )}
 
-      {/* Show avatar button when disabled */}
-      {!avatarEnabled && connected && (
-        <button
-          type="button"
-          onClick={() => setAvatarEnabled(true)}
-          className="w-full py-2 text-xs text-theme-muted hover:text-theme-primary hover:bg-theme-hover border-b border-theme transition-colors flex items-center justify-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          Show Avatar
-        </button>
-      )}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
@@ -1446,8 +1511,8 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
       <div className="px-2 py-2 bg-theme-primary">
         {isRecording ? (
           /* Recording UI */
-          <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center gap-3 bg-theme-secondary dark:bg-gray-700 rounded-full px-4 py-2">
+          <div className="flex items-center gap-2 w-full">
+            <div className="flex-1 min-w-0 flex items-center gap-3 bg-theme-secondary dark:bg-gray-700 rounded-full px-4 py-2">
               {/* Delete/Cancel button */}
               <button
                 type="button"
@@ -1489,30 +1554,36 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             <button
               type="button"
               onClick={() => stopRecording()}
-              className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+              className="w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
               aria-label="Stop and send"
             >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 6h12v12H6z" />
               </svg>
             </button>
           </div>
         ) : (
           /* Normal input UI - WhatsApp style */
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-2 w-full">
             {/* Input field with icons */}
-            <div className="flex-1 flex items-center bg-theme-secondary dark:bg-gray-700 rounded-full px-4 py-2">
-              <input
+            <div className="flex-1 min-w-0 flex items-center bg-[#1f2c34] dark:bg-[#1f2c34] rounded-full px-3 py-2">
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  // Auto-resize textarea
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={connected ? "Message" : connectionStatus}
                 disabled={loading || !connected}
-                className="flex-1 bg-transparent text-sm text-theme-primary placeholder-theme-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
+                rows={1}
+                className="flex-1 bg-transparent text-sm text-theme-primary placeholder-theme-muted focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed min-w-0 resize-none overflow-y-auto leading-5"
+                style={{ maxHeight: '100px', height: '20px' }}
               />
-              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+              <div className="flex items-center gap-0.5 ml-2 flex-shrink-0">
                 <button
                   type="button"
                   disabled={!connected}
@@ -1541,10 +1612,10 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                   sendRequest('chat.abort', { sessionKey: sessionKeyRef.current });
                   setLoading(false);
                 }}
-                className="w-12 h-12 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+                className="w-10 h-10 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
                 aria-label="Stop agent"
               >
-                <StopIcon className="w-5 h-5" />
+                <StopIcon className="w-4 h-4" />
               </button>
             ) : input.trim() ? (
               <button
@@ -1552,19 +1623,19 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                 onClick={handleSend}
                 disabled={!connected}
                 aria-label="Send message"
-                className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+                className="w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-colors shadow-lg flex-shrink-0"
               >
-                <SendIcon className="w-5 h-5" />
+                <SendIcon className="w-4 h-4" />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={startRecording}
                 disabled={!connected}
-                className="w-12 h-12 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
+                className="w-10 h-10 flex items-center justify-center bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-full transition-colors shadow-lg flex-shrink-0"
                 aria-label="Voice input"
               >
-                <MicIcon className="w-6 h-6" />
+                <MicIcon className="w-5 h-5" />
               </button>
             )}
           </div>

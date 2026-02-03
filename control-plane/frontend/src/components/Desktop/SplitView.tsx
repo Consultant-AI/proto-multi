@@ -56,16 +56,28 @@ const MoonIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const StopIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-  </svg>
-);
-
 const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const VideoIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
+
+const SpeakerIcon: React.FC<{ className?: string; muted?: boolean }> = ({ className, muted }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    {muted ? (
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+      </>
+    ) : (
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+    )}
   </svg>
 );
 
@@ -213,6 +225,25 @@ const SplitView: React.FC = () => {
   const [isChatConnected, setIsChatConnected] = useState(false);
   const [showSessionDropdown, setShowSessionDropdown] = useState(false);
 
+  // Avatar controls (synced with ChatInterface via localStorage)
+  const [avatarEnabled, setAvatarEnabled] = useState(() => {
+    const saved = localStorage.getItem('cloudbot-avatar-enabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [autoSpeak, setAutoSpeak] = useState(() => {
+    const saved = localStorage.getItem('cloudbot-auto-speak');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  // Sync avatar state to localStorage
+  useEffect(() => {
+    localStorage.setItem('cloudbot-avatar-enabled', avatarEnabled.toString());
+  }, [avatarEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('cloudbot-auto-speak', autoSpeak.toString());
+  }, [autoSpeak]);
+
   // Save sessions to localStorage when they change
   useEffect(() => {
     if (instanceId && sessions.length > 0) {
@@ -292,12 +323,6 @@ const SplitView: React.FC = () => {
       }
     }
   }, [activeSessionKey, instanceId, isAgentRunning, sessions]);
-
-  // Handle stop agent
-  const handleStopAgent = useCallback(() => {
-    chatRef.current?.abortAgent();
-    setIsAgentRunning(false);
-  }, []);
 
   // Handle refresh sessions
   const handleRefreshSessions = useCallback(() => {
@@ -516,14 +541,14 @@ const SplitView: React.FC = () => {
             style={showViewer ? { width: chatWidth } : undefined}
           >
             {/* Session Dropdown */}
-            <div className="relative flex-1 session-dropdown-container">
+            <div className="relative flex-1 min-w-0 session-dropdown-container">
               <button
                 type="button"
                 onClick={() => isChatConnected && setShowSessionDropdown(!showSessionDropdown)}
                 disabled={!isChatConnected}
                 className={`flex items-center gap-1 px-3 h-10 text-sm text-theme-primary hover:bg-theme-hover transition-colors w-full ${!isChatConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <span className="truncate flex-1 text-left">{displayName}</span>
+                <span className="truncate text-left">{displayName}</span>
                 <ChevronDownIcon className={`w-4 h-4 flex-shrink-0 transition-transform ${showSessionDropdown ? 'rotate-180' : ''}`} />
               </button>
 
@@ -569,38 +594,69 @@ const SplitView: React.FC = () => {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleRefreshSessions}
-              className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
-              aria-label="Refresh sessions"
-              title="Refresh sessions"
-            >
-              <RefreshIcon className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleNewSession}
-              className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
-              aria-label="New conversation"
-              title="New conversation"
-            >
-              <PlusIcon className="w-4 h-4" />
-            </button>
-            {/* Only show close when viewer is visible (can't close last panel) */}
-            {showViewer && (
+            {/* Icon buttons - always visible */}
+            <div className="flex items-center flex-shrink-0">
+              {/* Show avatar button when avatar is hidden */}
+              {!avatarEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarEnabled(true)}
+                  className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
+                  aria-label="Show avatar"
+                  title="Show avatar"
+                >
+                  <VideoIcon className="w-4 h-4" />
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setShowChat(false)}
-                className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
-                aria-label="Close chat"
+                onClick={() => setAutoSpeak(!autoSpeak)}
+                className={`px-2 h-10 hover:bg-theme-hover transition-colors ${
+                  autoSpeak ? 'text-theme-primary' : 'text-theme-muted/60 hover:text-theme-muted'
+                }`}
+                aria-label={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
+                title={autoSpeak ? 'Auto-speak enabled' : 'Auto-speak disabled'}
               >
-                <CloseIcon className="w-4 h-4" />
+                <SpeakerIcon className="w-4 h-4" muted={!autoSpeak} />
               </button>
-            )}
+              <button
+                type="button"
+                onClick={handleRefreshSessions}
+                className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
+                aria-label="Refresh sessions"
+                title="Refresh sessions"
+              >
+                <RefreshIcon className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNewSession}
+                className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
+                aria-label="New conversation"
+                title="New conversation"
+              >
+                <PlusIcon className="w-4 h-4" />
+              </button>
+              {/* Only show close when viewer is visible (can't close last panel) */}
+              {showViewer && (
+                <button
+                  type="button"
+                  onClick={() => setShowChat(false)}
+                  className="px-2 h-10 text-theme-muted hover:text-theme-primary hover:bg-theme-hover transition-colors"
+                  aria-label="Close chat"
+                >
+                  <CloseIcon className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Drag overlay - prevents iframe from capturing mouse during resize */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 cursor-col-resize" />
+      )}
 
       {/* Content */}
       {showInstanceSelector ? (
@@ -658,6 +714,10 @@ const SplitView: React.FC = () => {
                 onSessionsLoaded={handleSessionsLoaded}
                 onAgentStateChange={setIsAgentRunning}
                 onConnectedChange={setIsChatConnected}
+                avatarEnabled={avatarEnabled}
+                onAvatarEnabledChange={setAvatarEnabled}
+                autoSpeak={autoSpeak}
+                onAutoSpeakChange={setAutoSpeak}
               />
             </div>
           )}
@@ -697,6 +757,10 @@ const SplitView: React.FC = () => {
                 onSessionsLoaded={handleSessionsLoaded}
                 onAgentStateChange={setIsAgentRunning}
                 onConnectedChange={setIsChatConnected}
+                avatarEnabled={avatarEnabled}
+                onAvatarEnabledChange={setAvatarEnabled}
+                autoSpeak={autoSpeak}
+                onAutoSpeakChange={setAutoSpeak}
               />
             </div>
           )}

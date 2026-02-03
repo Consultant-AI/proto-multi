@@ -265,6 +265,337 @@ sudo journalctl -u openclaw -f
 sudo cat /etc/openclaw.env
 ```
 
+---
+
+## DevOps & Deployment
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           CLOUDBOT PLATFORM                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────────┐         ┌──────────────────┐                     │
+│  │    RAILWAY       │         │    AWS EC2       │                     │
+│  │                  │         │                  │                     │
+│  │  ┌────────────┐  │         │  ┌────────────┐  │                     │
+│  │  │ Control    │  │ WebSocket│  │ CloudBot   │  │                     │
+│  │  │ Plane      │◄─┼─Proxy───┼──┤ Instance   │  │                     │
+│  │  │ (FastAPI)  │  │         │  │ (Ubuntu)   │  │                     │
+│  │  └─────┬──────┘  │         │  └────────────┘  │                     │
+│  │        │         │         │       │          │                     │
+│  │  ┌─────┴──────┐  │         │  ┌────┴───────┐  │                     │
+│  │  │ PostgreSQL │  │         │  │ OpenClaw   │  │                     │
+│  │  │ (Railway)  │  │         │  │ Gateway    │  │                     │
+│  │  └────────────┘  │         │  └────────────┘  │                     │
+│  │                  │         │       │          │                     │
+│  │  ┌────────────┐  │         │  ┌────┴───────┐  │                     │
+│  │  │ Redis      │  │         │  │ VNC + XFCE │  │                     │
+│  │  │ (Railway)  │  │         │  │ Desktop    │  │                     │
+│  │  └────────────┘  │         │  └────────────┘  │                     │
+│  └──────────────────┘         └──────────────────┘                     │
+│           │                            ▲                                │
+│           │                            │                                │
+│  ┌────────┴─────────┐        ┌────────┴────────┐                       │
+│  │    AWS S3        │        │  User Browser   │                       │
+│  │                  │        │                 │                       │
+│  │ • openclaw.tgz   │        │ • React Frontend│                       │
+│  │ • wallpaper.jpg  │        │ • VNC Client    │                       │
+│  │                  │        │ • Chat UI       │                       │
+│  └──────────────────┘        └─────────────────┘                       │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Hosting Locations
+
+| Component | Service | URL/Location |
+|-----------|---------|--------------|
+| Control Plane (API + Frontend) | Railway | https://cloudbot-ai.com |
+| PostgreSQL Database | Railway (Plugin) | Auto-provisioned |
+| Redis Cache | Railway (Plugin) | Auto-provisioned |
+| EC2 Instances | AWS eu-central-1 | Dynamic IPs |
+| OpenClaw Tarball | AWS S3 | s3://cloudbot-moltbot-assets/openclaw.tgz |
+| Wallpaper Asset | Railway (static) | https://cloudbot-ai.com/assets/wallpaper.jpg |
+
+### Railway Deployment
+
+The control plane is deployed on Railway with automatic deployments from the main branch.
+
+#### Initial Setup
+
+1. **Create Railway Project**:
+   ```bash
+   # Install Railway CLI
+   npm install -g @railway/cli
+
+   # Login
+   railway login
+
+   # Initialize project (from control-plane directory)
+   cd control-plane
+   railway init
+   ```
+
+2. **Add Services**:
+   - Add PostgreSQL plugin
+   - Add Redis plugin
+   - Railway auto-provisions these
+
+3. **Configure Environment Variables** in Railway dashboard:
+   ```
+   # Required
+   ENVIRONMENT=production
+   JWT_SECRET_KEY=<generate secure key>
+   JWT_REFRESH_SECRET_KEY=<generate secure key>
+   ENCRYPTION_KEY=<generate Fernet key>
+
+   # AWS (for EC2 provisioning)
+   AWS_ACCESS_KEY_ID=<your key>
+   AWS_SECRET_ACCESS_KEY=<your secret>
+   AWS_REGION=eu-central-1
+   EC2_SECURITY_GROUP_ID=sg-xxxxx
+   EC2_SUBNET_ID=subnet-xxxxx
+   EC2_KEY_PAIR_NAME=cloudbot-key
+   UBUNTU_AMI_ID=ami-xxxxx
+
+   # Public URL for EC2 instances to download assets
+   CONTROL_PLANE_URL=https://cloudbot-ai.com
+
+   # CORS
+   CORS_ORIGINS=https://cloudbot-ai.com
+
+   # Stripe (optional)
+   STRIPE_SECRET_KEY=sk_live_xxx
+   STRIPE_PUBLISHABLE_KEY=pk_live_xxx
+   ```
+
+4. **Deploy**:
+   ```bash
+   # Push to main branch triggers auto-deploy
+   git push origin main
+
+   # Or manual deploy
+   railway up
+   ```
+
+#### Updating the Control Plane
+
+```bash
+# 1. Make your changes
+git add .
+git commit -m "Your changes"
+
+# 2. Push to main - Railway auto-deploys
+git push origin main
+
+# 3. Monitor deployment
+railway logs
+```
+
+Railway automatically:
+- Builds the Docker image (frontend + backend)
+- Runs database migrations
+- Zero-downtime deploys
+
+### EC2 Instance Deployment
+
+When a user creates a new instance from the dashboard:
+
+1. **Control Plane** calls AWS EC2 API via boto3
+2. **EC2 launches** with Ubuntu AMI
+3. **user_data.sh** runs on first boot:
+   - Installs XFCE desktop, VNC, Chrome, VS Code, LibreOffice
+   - Downloads OpenClaw from `CONTROL_PLANE_URL/assets/openclaw.tgz`
+   - Downloads wallpaper from `CONTROL_PLANE_URL/assets/wallpaper.jpg`
+   - Configures OpenClaw with user's API keys
+   - Starts all services (VNC, OpenClaw gateway)
+
+#### Instance Bootstrap Flow
+
+```
+EC2 Launch
+    │
+    ▼
+user_data.sh starts
+    │
+    ├── Install packages (XFCE, Chrome, VS Code, etc.)
+    │
+    ├── Download openclaw.tgz from $CONTROL_PLANE_URL/assets/
+    │
+    ├── npm install -g openclaw.tgz
+    │
+    ├── Create /etc/openclaw.env with API keys
+    │
+    ├── Create workspace at /root/cloudbot-workspace/
+    │
+    ├── Start services:
+    │   ├── xvfb (virtual display :99)
+    │   ├── x11vnc (VNC server on :5900)
+    │   ├── xfce-session (desktop)
+    │   └── openclaw (gateway on :18789)
+    │
+    └── Debug server on :8080
+```
+
+#### Key Environment Variables Injected
+
+The control plane injects these into user_data.sh:
+- `CONTROL_PLANE_URL` - For downloading assets
+- `MOLTBOT_TARBALL_URL` - Fallback URL for OpenClaw
+- `ANTHROPIC_API_KEY` - User's API key (encrypted in DB, decrypted at launch)
+- Other API keys as configured by user
+
+### Updating OpenClaw
+
+When you make changes to the `cloudbot/` code:
+
+```bash
+# From repo root
+./control-plane/scripts/deploy-openclaw.sh
+```
+
+This script:
+1. Builds the cloudbot package (`npm run build`)
+2. Creates tarball (`npm pack`)
+3. Uploads to S3 (`aws s3 cp openclaw.tgz s3://cloudbot-moltbot-assets/`)
+
+**Note**: Existing instances keep the old version. Only **new instances** get updates.
+
+### Manual OpenClaw Deploy
+
+```bash
+cd cloudbot
+npm run build
+npm pack
+
+# Upload to S3
+aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
+
+# The tarball is also served from Railway
+# Copy to control-plane for Docker build
+cp openclaw-*.tgz ../control-plane/openclaw.tgz
+```
+
+### Debugging EC2 Instances
+
+Each instance runs a debug HTTP server on port 8080:
+
+```bash
+# Get instance IP from dashboard, then:
+
+# View bootstrap log
+curl http://<instance-ip>:8080/log
+
+# Check OpenClaw status
+curl http://<instance-ip>:8080/debug
+
+# Test API key
+curl http://<instance-ip>:8080/testapi
+
+# Check npm installation
+curl http://<instance-ip>:8080/check
+```
+
+#### SSH Access
+
+```bash
+ssh -i ~/.ssh/cloudbot.pem ubuntu@<instance-ip>
+
+# Check services
+sudo systemctl status openclaw
+sudo systemctl status x11vnc
+sudo systemctl status xfce-session
+
+# View logs
+sudo journalctl -u openclaw -f
+cat /var/log/user-data.log
+
+# Restart OpenClaw
+sudo systemctl restart openclaw
+```
+
+### Asset Files
+
+The control plane serves static assets that EC2 instances download:
+
+| Asset | Path | Source |
+|-------|------|--------|
+| OpenClaw | `/assets/openclaw.tgz` | `control-plane/openclaw.tgz` |
+| Wallpaper | `/assets/wallpaper.jpg` | `control-plane/cloudbot-wallpaper.jpg` |
+
+These are copied into the Docker image and served by FastAPI.
+
+### Environment Differences
+
+| Setting | Local (.env) | Production (Railway) |
+|---------|--------------|---------------------|
+| `CONTROL_PLANE_URL` | `https://cloudbot-ai.com`* | `https://cloudbot-ai.com` |
+| `DATABASE_URL` | localhost PostgreSQL | Railway PostgreSQL |
+| `CORS_ORIGINS` | `localhost:5173,5174,3000` | `https://cloudbot-ai.com` |
+| `ENVIRONMENT` | `development` | `production` |
+
+*Set local to production URL so EC2 instances can download assets.
+
+### Railway Configuration Files
+
+- **railway.json** - Build and deploy settings
+- **Dockerfile** - Multi-stage build (frontend + backend)
+- **start.sh** - Runtime entrypoint
+
+### Useful Railway Commands
+
+```bash
+# View logs
+railway logs
+
+# Open dashboard
+railway open
+
+# List services
+railway status
+
+# SSH into container (debugging)
+railway shell
+
+# Set environment variable
+railway variables set KEY=value
+
+# Run database migrations
+railway run alembic upgrade head
+```
+
+### CI/CD Flow
+
+```
+Developer pushes to main
+        │
+        ▼
+Railway detects push
+        │
+        ▼
+Docker build (Dockerfile)
+├── Stage 1: Build React frontend
+└── Stage 2: Python backend + frontend dist
+        │
+        ▼
+Health check (/health endpoint)
+        │
+        ▼
+Traffic switched to new container
+        │
+        ▼
+Old container terminated
+```
+
+### Monitoring
+
+- **Railway Dashboard**: View logs, metrics, deployments
+- **EC2 Debug Server**: `http://<ip>:8080/debug`
+- **CloudWatch**: AWS metrics for EC2 instances
+
+---
+
 ## License
 
 MIT

@@ -15,6 +15,48 @@ export interface AvatarCharacter {
   voice: string;
 }
 
+export interface AvatarBackground {
+  id: string;
+  name: string;
+  type: 'color' | 'gradient' | 'image';
+  value: string; // CSS color/gradient or image URL
+}
+
+export const AVATAR_BACKGROUNDS: AvatarBackground[] = [
+  // Solid colors
+  { id: 'black', name: 'Black', type: 'color', value: '#000000' },
+  { id: 'dark-gray', name: 'Dark Gray', type: 'color', value: '#1a1a2e' },
+  { id: 'navy', name: 'Navy', type: 'color', value: '#0f0f23' },
+  { id: 'purple', name: 'Purple', type: 'color', value: '#2d1b4e' },
+  // Gradients
+  { id: 'sunset', name: 'Sunset', type: 'gradient', value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+  { id: 'ocean', name: 'Ocean', type: 'gradient', value: 'linear-gradient(135deg, #1a365d 0%, #2a4365 50%, #1a365d 100%)' },
+  { id: 'forest', name: 'Forest', type: 'gradient', value: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)' },
+  { id: 'aurora', name: 'Aurora', type: 'gradient', value: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)' },
+  // Nature images
+  { id: 'mountains', name: 'Mountains', type: 'image', value: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80' },
+  { id: 'beach', name: 'Beach', type: 'image', value: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80' },
+  { id: 'forest-img', name: 'Forest', type: 'image', value: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80' },
+  { id: 'lake', name: 'Lake', type: 'image', value: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80' },
+  // Home & Indoor
+  { id: 'cozy-room', name: 'Cozy Room', type: 'image', value: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80' },
+  { id: 'living-room', name: 'Living Room', type: 'image', value: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80' },
+  { id: 'modern-home', name: 'Modern Home', type: 'image', value: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80' },
+  { id: 'bedroom', name: 'Bedroom', type: 'image', value: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80' },
+  { id: 'kitchen', name: 'Kitchen', type: 'image', value: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80' },
+  // Office & Work
+  { id: 'office', name: 'Office', type: 'image', value: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80' },
+  { id: 'home-office', name: 'Home Office', type: 'image', value: 'https://images.unsplash.com/photo-1593062096033-9a26b09da705?w=800&q=80' },
+  { id: 'modern-office', name: 'Modern Office', type: 'image', value: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80' },
+  { id: 'library', name: 'Library', type: 'image', value: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80' },
+  // Outdoor & Garden
+  { id: 'porch-garden', name: 'Porch & Garden', type: 'image', value: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80' },
+  { id: 'garden-view', name: 'Garden View', type: 'image', value: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&q=80' },
+  { id: 'terrace', name: 'Terrace', type: 'image', value: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80' },
+  { id: 'balcony-nature', name: 'Balcony Nature', type: 'image', value: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80' },
+  { id: 'backyard', name: 'Backyard', type: 'image', value: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80' },
+];
+
 const TALKINGHEAD_CDN = 'https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars';
 
 export const AVATAR_CHARACTERS: AvatarCharacter[] = [
@@ -52,7 +94,11 @@ interface TalkingAvatarProps {
   enabled?: boolean;
   characterId?: string;
   onCharacterChange?: (characterId: string) => void;
+  backgroundId?: string;
+  onBackgroundChange?: (backgroundId: string) => void;
   showCharacterSelector?: boolean;
+  /** When false, avatar will animate lips but not play audio */
+  audioEnabled?: boolean;
 }
 
 const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
@@ -66,7 +112,10 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
   enabled = true,
   characterId = 'brunette',
   onCharacterChange,
+  backgroundId = 'black',
+  onBackgroundChange,
   showCharacterSelector = true,
+  audioEnabled = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const headRef = useRef<any>(null);
@@ -83,9 +132,30 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
   const headTTSRef = useRef<any>(null);
   const lastTextRef = useRef<string | null>(null);
   const currentCharacterRef = useRef<string>(characterId);
-  const [showSelector, setShowSelector] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'avatar' | 'background'>('avatar');
 
   const currentCharacter = AVATAR_CHARACTERS.find(c => c.id === characterId) || AVATAR_CHARACTERS[0];
+  const currentBackground = AVATAR_BACKGROUNDS.find(b => b.id === backgroundId) || AVATAR_BACKGROUNDS[0];
+
+  // Generate background style
+  const getBackgroundStyle = (): React.CSSProperties => {
+    if (currentBackground.type === 'image') {
+      return {
+        backgroundImage: `url(${currentBackground.value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    } else if (currentBackground.type === 'gradient') {
+      return {
+        background: currentBackground.value,
+      };
+    } else {
+      return {
+        backgroundColor: currentBackground.value,
+      };
+    }
+  };
 
   // Wait for TalkingHead library to load
   useEffect(() => {
@@ -499,40 +569,52 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
 
       console.log('Created AudioBuffer:', audioBuffer.duration.toFixed(1) + 's');
 
-      // Start browser TTS for actual audio
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      if (voice) utterance.voice = voice;
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-
       setIsActuallySpeaking(true);
       onSpeakingStart?.();
 
-      utterance.onend = () => {
-        console.log('>>> Browser TTS ENDED');
-        setIsActuallySpeaking(false);
-        onSpeakingEnd?.();
-      };
+      // Only play browser TTS audio if audioEnabled is true
+      // Lip sync animation will still run regardless
+      let keepAlive: ReturnType<typeof setInterval> | null = null;
+      if (audioEnabled) {
+        // Start browser TTS for actual audio
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        if (voice) utterance.voice = voice;
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
 
-      utterance.onerror = (e) => {
-        console.error('>>> Browser TTS ERROR:', e.error);
-        setIsActuallySpeaking(false);
-        onSpeakingEnd?.();
-      };
+        utterance.onend = () => {
+          console.log('>>> Browser TTS ENDED');
+          setIsActuallySpeaking(false);
+          onSpeakingEnd?.();
+        };
 
-      // Start browser TTS
-      window.speechSynthesis.speak(utterance);
+        utterance.onerror = (e) => {
+          console.error('>>> Browser TTS ERROR:', e.error);
+          setIsActuallySpeaking(false);
+          onSpeakingEnd?.();
+        };
 
-      // Chrome workaround: keep speech alive for long texts
-      const keepAlive = setInterval(() => {
-        if (window.speechSynthesis.speaking) {
-          window.speechSynthesis.pause();
-          window.speechSynthesis.resume();
-        } else {
-          clearInterval(keepAlive);
-        }
-      }, 10000);
+        // Start browser TTS
+        window.speechSynthesis.speak(utterance);
+
+        // Chrome workaround: keep speech alive for long texts
+        keepAlive = setInterval(() => {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          } else {
+            if (keepAlive) clearInterval(keepAlive);
+          }
+        }, 10000);
+      } else {
+        // Audio disabled - just run lip sync animation, end after duration
+        console.log('Audio disabled, running lip sync only');
+        setTimeout(() => {
+          setIsActuallySpeaking(false);
+          onSpeakingEnd?.();
+        }, totalDuration * 1000);
+      }
 
       // Use TalkingHead's speakAudio with viseme data for lip sync
       try {
@@ -565,7 +647,7 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
     // Start speaking
     speakWithHeadTTS();
 
-  }, [text, isSpeaking, enabled, onSpeakingStart, onSpeakingEnd]);
+  }, [text, isSpeaking, enabled, audioEnabled, onSpeakingStart, onSpeakingEnd]);
 
   // Stop speaking only when explicitly requested (isSpeaking goes from true to false)
   const prevIsSpeakingRef = useRef(isSpeaking);
@@ -579,6 +661,18 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
     }
     prevIsSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
+
+  // Stop audio (but not lip sync) when audioEnabled is toggled off mid-speech
+  const prevAudioEnabledRef = useRef(audioEnabled);
+  useEffect(() => {
+    // If audio was just disabled while speaking, cancel the TTS audio
+    // but let the lip sync animation continue
+    if (prevAudioEnabledRef.current && !audioEnabled) {
+      console.log('Audio disabled mid-speech, stopping TTS but keeping lip sync');
+      window.speechSynthesis?.cancel();
+    }
+    prevAudioEnabledRef.current = audioEnabled;
+  }, [audioEnabled]);
 
   // Reset lastTextRef when text changes to null (ready for new speech)
   useEffect(() => {
@@ -597,10 +691,10 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
   if (!enabled) return null;
 
   return (
-    <div className="relative" style={{ height }}>
+    <div className="relative" style={{ height, ...getBackgroundStyle() }}>
       {/* Loading states */}
       {!libraryLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-blue-900/50 to-purple-900/50 rounded-lg">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
           <div className="text-center">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-sm text-white/80">Loading libraries...</p>
@@ -609,7 +703,7 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
       )}
 
       {libraryLoaded && isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-blue-900/50 to-purple-900/50 rounded-lg">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
           <div className="text-center">
             <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-sm text-white/80">Loading avatar...</p>
@@ -618,7 +712,7 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
       )}
 
       {error && !isLoading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-red-900/30 to-purple-900/50 rounded-lg p-4">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg p-4">
           <p className="text-sm text-red-400 mb-3">{error}</p>
           <button
             type="button"
@@ -640,113 +734,151 @@ const TalkingAvatar: React.FC<TalkingAvatarProps> = ({
         style={{ opacity: isLoading || error ? 0 : 1 }}
       />
 
+      {/* Settings button - portrait icon (person with background frame) */}
       {showCharacterSelector && !isLoading && !error && (
-        <>
-          <button
-            type="button"
-            onClick={() => setShowSelector(!showSelector)}
-            className="absolute bottom-2 left-2 p-1.5 rounded bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition-colors"
-            title="Change character"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              console.log('=== AUDIO TEST ===');
-
-              // Step 1: Test Web Audio API with audible beep
-              try {
-                const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-                const ctx = audioContextRef.current || new AudioContextClass();
-                if (ctx.state === 'suspended') {
-                  await ctx.resume();
-                }
-                console.log('AudioContext state:', ctx.state);
-
-                // Play an audible beep
-                const oscillator = ctx.createOscillator();
-                const gain = ctx.createGain();
-                oscillator.frequency.value = 440; // A4 note
-                gain.gain.value = 0.3;
-                oscillator.connect(gain);
-                gain.connect(ctx.destination);
-                oscillator.start();
-                oscillator.stop(ctx.currentTime + 0.2);
-                console.log('Beep played - did you hear it?');
-              } catch (e) {
-                console.error('Web Audio failed:', e);
-              }
-
-              // Step 2: Test TalkingHead capabilities and speak
-              setTimeout(() => {
-                console.log('=== TALKINGHEAD CAPABILITIES TEST ===');
-                const head = headRef.current as any;
-
-                if (head) {
-                  // Log all available methods
-                  const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(head))
-                    .filter(m => typeof head[m] === 'function');
-                  console.log('Available TalkingHead methods:', methods);
-
-                  // Check for viseme-related properties
-                  console.log('head.animQueue:', head.animQueue);
-                  console.log('head.visemeNames:', head.visemeNames);
-                  console.log('head.playViseme:', typeof head.playViseme);
-                  console.log('head.avatar:', head.avatar);
-                  console.log('head.model:', head.model);
-
-                  // Try to test speaking with HeadTTS if available
-                  if (headTTSRef.current) {
-                    console.log('HeadTTS is available! Testing...');
-                    headTTSRef.current.synthesize('Hello test').then((audio: any) => {
-                      console.log('HeadTTS generated audio:', audio);
-                      head.speakAudio(audio, { lipsyncLang: 'en' });
-                    }).catch((e: any) => console.error('HeadTTS test failed:', e));
-                  } else {
-                    console.log('HeadTTS not available, using browser TTS');
-                    // Just speak with browser TTS
-                    const voices = window.speechSynthesis.getVoices();
-                    const utterance = new SpeechSynthesisUtterance('Hello, this is a test.');
-                    const voice = voices.find(v => v.name === 'Samantha') || voices[0];
-                    if (voice) utterance.voice = voice;
-                    window.speechSynthesis.speak(utterance);
-                  }
-                }
-              }, 500);
-            }}
-            className="absolute bottom-2 right-2 p-1.5 rounded bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition-colors"
-            title="Test audio (beep + avatar speech)"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            </svg>
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={() => setShowSettings(!showSettings)}
+          className="absolute top-10 right-2 p-1 rounded bg-black/30 hover:bg-black/50 text-white/70 hover:text-white transition-colors"
+          title="Avatar settings"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {/* Background frame */}
+            <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Person silhouette */}
+            <circle cx="12" cy="9" r="3" strokeLinecap="round" strokeLinejoin="round" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21v-1a5 5 0 0110 0v1" />
+          </svg>
+        </button>
       )}
 
-      {showSelector && (
-        <div className="absolute bottom-10 left-2 bg-gray-900/95 rounded-lg shadow-xl border border-gray-700 p-2 min-w-[120px]">
-          <p className="text-xs text-gray-400 px-2 pb-1 border-b border-gray-700 mb-1">Character</p>
-          {AVATAR_CHARACTERS.map((char) => (
+      {/* Unified settings dropdown */}
+      {showSettings && (
+        <div className="absolute top-16 right-2 bg-gray-900/95 rounded-lg shadow-xl border border-gray-700 min-w-[160px] max-h-[280px] overflow-hidden flex flex-col">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-700">
             <button
-              key={char.id}
               type="button"
-              onClick={() => {
-                onCharacterChange?.(char.id);
-                setShowSelector(false);
-              }}
-              className={`w-full text-left px-2 py-1.5 rounded text-sm transition-colors ${
-                char.id === characterId
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700'
+              onClick={() => setSettingsTab('avatar')}
+              className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                settingsTab === 'avatar'
+                  ? 'text-white bg-gray-800'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
-              {char.name}
+              Avatar
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => setSettingsTab('background')}
+              className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                settingsTab === 'background'
+                  ? 'text-white bg-gray-800'
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              Background
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-2 overflow-y-auto">
+            {settingsTab === 'avatar' ? (
+              /* Avatar selector */
+              <div className="space-y-1">
+                {AVATAR_CHARACTERS.map((char) => (
+                  <button
+                    key={char.id}
+                    type="button"
+                    onClick={() => {
+                      onCharacterChange?.(char.id);
+                      setShowSettings(false);
+                    }}
+                    className={`w-full text-left px-2 py-1.5 rounded text-sm transition-colors ${
+                      char.id === characterId
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    {char.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              /* Background selector */
+              <div>
+                {/* Colors section */}
+                <p className="text-[10px] text-gray-500 px-1 mb-1">Colors</p>
+                <div className="flex flex-wrap gap-1 px-1 pb-2">
+                  {AVATAR_BACKGROUNDS.filter(b => b.type === 'color').map((bg) => (
+                    <button
+                      key={bg.id}
+                      type="button"
+                      onClick={() => {
+                        onBackgroundChange?.(bg.id);
+                        setShowSettings(false);
+                      }}
+                      className={`w-6 h-6 rounded border-2 transition-all ${
+                        bg.id === backgroundId
+                          ? 'border-blue-500 scale-110'
+                          : 'border-transparent hover:border-gray-500'
+                      }`}
+                      style={{ backgroundColor: bg.value }}
+                      title={bg.name}
+                    />
+                  ))}
+                </div>
+
+                {/* Gradients section */}
+                <p className="text-[10px] text-gray-500 px-1 mb-1">Gradients</p>
+                <div className="flex flex-wrap gap-1 px-1 pb-2">
+                  {AVATAR_BACKGROUNDS.filter(b => b.type === 'gradient').map((bg) => (
+                    <button
+                      key={bg.id}
+                      type="button"
+                      onClick={() => {
+                        onBackgroundChange?.(bg.id);
+                        setShowSettings(false);
+                      }}
+                      className={`w-6 h-6 rounded border-2 transition-all ${
+                        bg.id === backgroundId
+                          ? 'border-blue-500 scale-110'
+                          : 'border-transparent hover:border-gray-500'
+                      }`}
+                      style={{ background: bg.value }}
+                      title={bg.name}
+                    />
+                  ))}
+                </div>
+
+                {/* Images section */}
+                <p className="text-[10px] text-gray-500 px-1 mb-1">Environments</p>
+                <div className="space-y-1">
+                  {AVATAR_BACKGROUNDS.filter(b => b.type === 'image').map((bg) => (
+                    <button
+                      key={bg.id}
+                      type="button"
+                      onClick={() => {
+                        onBackgroundChange?.(bg.id);
+                        setShowSettings(false);
+                      }}
+                      className={`w-full text-left px-2 py-1 rounded text-xs transition-colors flex items-center gap-2 ${
+                        bg.id === backgroundId
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <div
+                        className="w-8 h-5 rounded bg-cover bg-center flex-shrink-0"
+                        style={{ backgroundImage: `url(${bg.value})` }}
+                      />
+                      {bg.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

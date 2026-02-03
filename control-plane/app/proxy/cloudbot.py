@@ -103,23 +103,31 @@ async def proxy_cloudbot(
                         if stop_event.is_set():
                             break
 
-                        # Log events to help debug
+                        # Log events and filter high-frequency ones to prevent slow consumer disconnects
+                        should_forward = True
                         try:
                             msg_data = json.loads(message)
                             event_type = msg_data.get('event', '')
                             if msg_data.get('type') == 'event':
-                                if event_type == 'chat':
+                                # Skip high-frequency events that aren't needed by the chat UI
+                                # This prevents "slow consumer" disconnects from CloudBot
+                                if event_type in ('tick', 'health', 'presence'):
+                                    should_forward = False
+                                elif event_type == 'chat':
                                     logger.info(f"Chat event payload: {json.dumps(msg_data.get('payload', {}))}")
                                 elif event_type == 'agent':
                                     logger.info(f"Agent event: {msg_data.get('payload', {}).get('phase', 'unknown')}")
-                                elif event_type not in ('tick', 'health', 'presence'):
+                                else:
                                     logger.info(f"Event: {event_type}")
                             elif msg_data.get('type') == 'res':
                                 logger.info(f"Response: ok={msg_data.get('ok')} id={msg_data.get('id', 'unknown')[:8]}...")
                         except:
                             pass
 
-                        # Forward to browser
+                        # Forward to browser (skip filtered events)
+                        if not should_forward:
+                            continue
+
                         try:
                             await websocket.send_text(message)
                         except Exception as send_err:
