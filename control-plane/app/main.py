@@ -246,8 +246,8 @@ if os.path.exists(FRONTEND_DIR):
     @app.get("/{full_path:path}")
     async def serve_frontend(request: Request, full_path: str):
         """Serve frontend for all non-API routes"""
-        # Skip API routes
-        if full_path.startswith("api/") or full_path in ["health", "docs", "redoc", "openapi.json"]:
+        # Skip API and debug routes
+        if full_path.startswith(("api/", "debug/")) or full_path in ["health", "docs", "redoc", "openapi.json"]:
             return JSONResponse(status_code=404, content={"error": "Not found"})
 
         # Serve index.html
