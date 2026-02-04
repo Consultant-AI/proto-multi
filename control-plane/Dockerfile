@@ -1,5 +1,5 @@
 # Multi-stage build for CloudBot Control Plane
-# Build v2
+# Build v3 - force rebuild
 
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
