@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY alembic.ini ./
 COPY cloudbot-wallpaper.jpg ./
-COPY openclaw.tgz ./
+COPY assets/ ./assets/
 COPY start.sh ./
 RUN chmod +x start.sh
 
