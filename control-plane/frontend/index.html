@@ -30,24 +30,8 @@
         }
       })();
     </script>
-    <!-- Load HeadTTS for browser-based neural TTS with lip sync -->
-    <script type="module">
-      (async () => {
-        try {
-          const { HeadTTS } = await import('https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.5/+esm');
-          window.HeadTTS = HeadTTS;
-          window.HeadTTSConfig = {
-            workerModule: 'https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.5/modules/worker-tts.mjs',
-            dictionaryURL: 'https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.5/dictionaries/'
-          };
-          console.log('HeadTTS library loaded');
-          window.dispatchEvent(new Event('headtts-loaded'));
-        } catch (err) {
-          console.error('Failed to load HeadTTS:', err);
-          window.dispatchEvent(new CustomEvent('headtts-error', { detail: err.message }));
-        }
-      })();
-    </script>
+    <!-- HeadTTS disabled - package @met4citizen/headtts@1.5 returns 404 from npm -->
+    <!-- Avatar will use browser TTS fallback instead -->
     <!-- Load noVNC from official GitHub (ESM with top-level await support) -->
     <script type="module">
       (async () => {
