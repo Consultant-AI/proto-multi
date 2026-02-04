@@ -401,21 +401,23 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   void _stopBrowserTTS; // Suppress unused warning
 
   // Trigger avatar speech when new assistant message arrives
+  // Avatar always animates lips; audioEnabled controls whether sound plays
   const handleAvatarSpeak = useCallback((text: string) => {
-    if (!autoSpeak || !text) return;
+    if (!text) return;
 
-    console.log('handleAvatarSpeak called:', { avatarEnabled, avatarLoaded, textLength: text.length });
+    console.log('handleAvatarSpeak called:', { avatarEnabled, avatarLoaded, autoSpeak, textLength: text.length });
 
     if (avatarEnabled) {
-      // Always use avatar when enabled - it handles its own TTS
-      console.log('Using avatar for speech');
+      // Always animate avatar - it uses audioEnabled prop to control sound
+      console.log('Using avatar for speech, audio:', autoSpeak ? 'ON' : 'OFF');
       setCurrentSpeech(text);
       setIsSpeaking(true);
-    } else {
-      // Fallback to browser TTS only when avatar is disabled
+    } else if (autoSpeak) {
+      // Avatar disabled but sound is on - use browser TTS
       console.log('Avatar disabled, using browser TTS');
       speakWithBrowserTTS(text);
     }
+    // If avatar disabled and sound off, do nothing (no animation, no sound)
   }, [avatarEnabled, autoSpeak, speakWithBrowserTTS]);
 
   // Keep ref updated for use in WebSocket handler (avoids stale closure)
