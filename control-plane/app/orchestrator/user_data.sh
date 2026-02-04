@@ -93,11 +93,8 @@ echo "Setting up OpenClaw gateway..."
 
 OPENCLAW_INSTALLED=false
 
-# Download CloudBot tarball from control-plane assets
-CLOUDBOT_TARBALL_URL=""
-if [ -n "$CONTROL_PLANE_URL" ]; then
-  CLOUDBOT_TARBALL_URL="${CONTROL_PLANE_URL}/assets/openclaw.tgz"
-fi
+# Download CloudBot tarball from S3
+CLOUDBOT_TARBALL_URL="https://cloudbot-moltbot-assets.s3.amazonaws.com/openclaw.tgz"
 
 if [ -n "$CLOUDBOT_TARBALL_URL" ]; then
   echo "Installing CloudBot from $CLOUDBOT_TARBALL_URL..."
