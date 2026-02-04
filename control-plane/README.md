@@ -386,22 +386,49 @@ The control plane is deployed on Railway with automatic deployments from the mai
 
 4. **Deploy**:
    ```bash
-   # Push to main branch triggers auto-deploy
-   git push origin main
-
-   # Or manual deploy
+   # Manual deploy (recommended)
+   cd control-plane
    railway up
    ```
 
-#### Updating the Control Plane
+#### Full Deployment Steps (Control Plane + CloudBot)
+
+When deploying changes to the control-plane and/or CloudBot code:
 
 ```bash
+# 1. If CloudBot code changed, rebuild and upload to S3
+cd cloudbot
+pnpm install
+npm pack
+aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
+
+# 2. Commit control-plane changes
+cd ../control-plane
+git add .
+git commit -m "Your changes"
+git push origin main
+
+# 3. Deploy to Railway (manual - doesn't auto-deploy from GitHub)
+railway up
+
+# 4. Verify deployment
+curl https://cloudbot-ai.com/health
+
+# 5. Create new EC2 instance to test (existing instances won't update)
+```
+
+#### Updating the Control Plane Only
+
+```bash
+cd control-plane
+
 # 1. Make your changes
 git add .
 git commit -m "Your changes"
-
-# 2. Push to main - Railway auto-deploys
 git push origin main
+
+# 2. Deploy to Railway
+railway up
 
 # 3. Monitor deployment
 railway logs
@@ -420,10 +447,10 @@ When a user creates a new instance from the dashboard:
 2. **EC2 launches** with Ubuntu AMI
 3. **user_data.sh** runs on first boot:
    - Installs XFCE desktop, VNC, Chrome, VS Code, LibreOffice
-   - Downloads OpenClaw from `CONTROL_PLANE_URL/assets/openclaw.tgz`
+   - Downloads CloudBot from S3 (`s3://cloudbot-moltbot-assets/openclaw.tgz`)
    - Downloads wallpaper from `CONTROL_PLANE_URL/assets/wallpaper.jpg`
-   - Configures OpenClaw with user's API keys
-   - Starts all services (VNC, OpenClaw gateway)
+   - Configures CloudBot with user's API keys
+   - Starts all services (VNC, CloudBot gateway)
 
 #### Instance Bootstrap Flow
 
@@ -435,7 +462,7 @@ user_data.sh starts
     │
     ├── Install packages (XFCE, Chrome, VS Code, etc.)
     │
-    ├── Download openclaw.tgz from $CONTROL_PLANE_URL/assets/
+    ├── Download openclaw.tgz from S3
     │
     ├── npm install -g openclaw.tgz
     │
