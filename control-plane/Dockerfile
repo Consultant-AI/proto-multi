@@ -31,6 +31,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY alembic.ini ./
 COPY cloudbot-wallpaper.jpg ./
+
+# Cache bust for assets - change this value to force rebuild
+ARG ASSETS_CACHE_BUST=2026.2.3
 COPY assets/ ./assets/
 COPY start.sh ./
 RUN chmod +x start.sh
