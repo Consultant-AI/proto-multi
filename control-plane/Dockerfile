@@ -1,5 +1,5 @@
 # Multi-stage build for CloudBot Control Plane
-# Build v4 - bust cache
+# Build v5 - use assets folder for CloudBot tarball
 
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
