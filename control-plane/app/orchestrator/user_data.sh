@@ -745,8 +745,9 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
   "agents": {
     "defaults": {
       "workspace": "/root/cloudbot-workspace",
+      "thinking": "off",
       "model": {
-        "primary": "anthropic/claude-3-5-sonnet-20241022"
+        "primary": "anthropic/claude-sonnet-4-5-20250929"
       }
     },
     "list": [
@@ -754,8 +755,9 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
         "id": "cloudbot",
         "default": true,
         "workspace": "/root/cloudbot-workspace",
+        "thinking": "off",
         "model": {
-          "primary": "anthropic/claude-3-5-sonnet-20241022"
+          "primary": "anthropic/claude-sonnet-4-5-20250929"
         },
         "identity": {
           "name": "CloudBot",
