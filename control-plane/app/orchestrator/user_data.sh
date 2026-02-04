@@ -747,7 +747,7 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
       "workspace": "/root/cloudbot-workspace",
       "thinkingDefault": "off",
       "model": {
-        "primary": "anthropic/claude-opus-4-5-20250929"
+        "primary": "anthropic/claude-sonnet-4-20250514"
       }
     },
     "list": [
@@ -756,7 +756,7 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
         "default": true,
         "workspace": "/root/cloudbot-workspace",
         "model": {
-          "primary": "anthropic/claude-opus-4-5-20250929"
+          "primary": "anthropic/claude-sonnet-4-20250514"
         },
         "identity": {
           "name": "CloudBot",
