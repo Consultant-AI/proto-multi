@@ -93,19 +93,17 @@ echo "Setting up OpenClaw gateway..."
 
 OPENCLAW_INSTALLED=false
 
-# Download OpenClaw tarball - try control-plane first, then fallback to MOLTBOT_TARBALL_URL
-OPENCLAW_TARBALL_URL=""
+# Download CloudBot tarball from control-plane assets
+CLOUDBOT_TARBALL_URL=""
 if [ -n "$CONTROL_PLANE_URL" ]; then
-  OPENCLAW_TARBALL_URL="${CONTROL_PLANE_URL}/assets/openclaw.tgz"
-elif [ -n "$MOLTBOT_TARBALL_URL" ]; then
-  OPENCLAW_TARBALL_URL="$MOLTBOT_TARBALL_URL"
+  CLOUDBOT_TARBALL_URL="${CONTROL_PLANE_URL}/assets/openclaw.tgz"
 fi
 
-if [ -n "$OPENCLAW_TARBALL_URL" ]; then
-  echo "Installing OpenClaw from $OPENCLAW_TARBALL_URL..."
+if [ -n "$CLOUDBOT_TARBALL_URL" ]; then
+  echo "Installing CloudBot from $CLOUDBOT_TARBALL_URL..."
 
   # Download tarball
-  curl -fsSL "$OPENCLAW_TARBALL_URL" -o /tmp/openclaw.tgz
+  curl -fsSL "$CLOUDBOT_TARBALL_URL" -o /tmp/openclaw.tgz
 
   if [ -f /tmp/openclaw.tgz ]; then
     # Install globally
@@ -747,7 +745,7 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
       "workspace": "/root/cloudbot-workspace",
       "thinkingDefault": "off",
       "model": {
-        "primary": "anthropic/claude-3-5-sonnet-20241022"
+        "primary": "anthropic/claude-sonnet-4-5-20250929"
       }
     },
     "list": [
@@ -756,7 +754,7 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
         "default": true,
         "workspace": "/root/cloudbot-workspace",
         "model": {
-          "primary": "anthropic/claude-3-5-sonnet-20241022"
+          "primary": "anthropic/claude-sonnet-4-5-20250929"
         },
         "identity": {
           "name": "CloudBot",
