@@ -31,15 +31,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY alembic.ini ./
 COPY cloudbot-wallpaper.jpg ./
-
-# Cache bust for assets - change this value to force rebuild
-ARG ASSETS_CACHE_BUST=2026.2.3
-COPY assets/ ./assets/
 COPY start.sh ./
 RUN chmod +x start.sh
 
 # Copy built frontend
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
+# Copy CloudBot assets AFTER frontend (to break caching)
+# Version: 2026.2.3 - supports Claude Sonnet 4.5
+COPY assets/ ./assets/
 
 # Create non-root user
 RUN useradd -m -u 1000 cloudbot && chown -R cloudbot:cloudbot /app
