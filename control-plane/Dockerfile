@@ -1,5 +1,5 @@
 # Multi-stage build for CloudBot Control Plane
-# Build v5 - use assets folder for CloudBot tarball
+# Build v6 - CloudBot 2026.2.3 with Sonnet 4.5 support
 
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
