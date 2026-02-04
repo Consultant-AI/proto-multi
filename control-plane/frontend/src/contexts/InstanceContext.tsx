@@ -73,7 +73,9 @@ export const InstanceProvider: React.FC<{ children: ReactNode }> = ({ children }
       setInstances((prev) =>
         prev.map((inst) => (inst.id === id ? updated : inst))
       );
-      if (selectedInstance?.id === id) {
+      // Always set selectedInstance when refreshing - handles direct URL access
+      // where selectedInstance is null but we want to display this instance
+      if (!selectedInstance || selectedInstance.id === id) {
         setSelectedInstance(updated);
       }
     } catch (error) {
