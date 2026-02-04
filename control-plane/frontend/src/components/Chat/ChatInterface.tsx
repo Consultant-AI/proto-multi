@@ -1110,6 +1110,15 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
             // Trigger avatar to speak the response
             handleAvatarSpeak(content);
             setLoading(false);
+            // Refresh sessions list to update derived titles after first message
+            const sessionsRefreshId = generateId();
+            pendingRequestsRef.current.set(sessionsRefreshId, 'sessions.list');
+            websocket.send(JSON.stringify({
+              type: 'req',
+              id: sessionsRefreshId,
+              method: 'sessions.list',
+              params: { limit: 50, includeDerivedTitles: true, includeLastMessage: true },
+            }));
           } else {
             console.log('No content extracted from chat event, payload:', payload);
             // If no content in chat event but we have streaming text, use that
@@ -1129,6 +1138,15 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
               ]);
               handleAvatarSpeak(streamedContent);
               setLoading(false);
+              // Refresh sessions list to update derived titles after first message
+              const sessionsRefreshId = generateId();
+              pendingRequestsRef.current.set(sessionsRefreshId, 'sessions.list');
+              websocket.send(JSON.stringify({
+                type: 'req',
+                id: sessionsRefreshId,
+                method: 'sessions.list',
+                params: { limit: 50, includeDerivedTitles: true, includeLastMessage: true },
+              }));
             }
           }
           return;
@@ -1172,6 +1190,15 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
               setLoading(false);
               streamingTextRef.current = ''; // Reset after use
               currentRunIdRef.current = null;
+              // Refresh sessions list to update derived titles after first message
+              const sessionsRefreshId = generateId();
+              pendingRequestsRef.current.set(sessionsRefreshId, 'sessions.list');
+              websocket.send(JSON.stringify({
+                type: 'req',
+                id: sessionsRefreshId,
+                method: 'sessions.list',
+                params: { limit: 50, includeDerivedTitles: true, includeLastMessage: true },
+              }));
             }
           }
           return;
@@ -1502,7 +1529,6 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                       <span className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
                       <span className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce" />
                     </div>
-                    <span className="text-xs text-theme-muted animate-pulse">Thinking...</span>
                   </div>
                 </div>
               </div>
