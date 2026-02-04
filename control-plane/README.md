@@ -212,12 +212,12 @@ The `cloudbot/` directory contains our fork of [OpenClaw](https://github.com/ope
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│    cloudbot/    │     │ control-plane/  │     │  EC2 Instance   │
-│  (OpenClaw fork)│     │    assets/      │     │                 │
-│                 │     │                 │     │                 │
-│  pnpm build     │────▶│  openclaw.tgz   │────▶│  user_data.sh   │
-│  npm pack       │     │                 │     │  downloads &    │
-│                 │     │  (via Railway)  │     │  installs       │
+│    cloudbot/    │     │     AWS S3      │     │  EC2 Instance   │
+│  (OpenClaw fork)│     │                 │     │                 │
+│                 │     │ cloudbot-       │     │                 │
+│  pnpm build     │────▶│ moltbot-assets/ │────▶│  user_data.sh   │
+│  npm pack       │     │ openclaw.tgz    │     │  downloads &    │
+│                 │     │                 │     │  installs       │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
@@ -229,17 +229,10 @@ cd cloudbot
 pnpm install          # Install dependencies (including tsdown)
 npm pack              # Builds and creates openclaw-*.tgz
 
-# 2. Copy tarball to control-plane assets
-cp openclaw-*.tgz ../control-plane/assets/openclaw.tgz
+# 2. Upload to S3
+aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
 
-# 3. Commit and push to deploy via Railway
-cd ..
-git add control-plane/assets/openclaw.tgz cloudbot
-git commit -m "Update CloudBot to vX.X.X"
-git push origin main
-
-# 4. Wait for Railway deployment (~2-3 minutes)
-# 5. Create a new instance from the dashboard to use the updated code
+# 3. Create a new instance from the dashboard to use the updated code
 ```
 
 ### Pulling Updates from Upstream OpenClaw
@@ -254,16 +247,16 @@ git remote add openclaw https://github.com/openclaw/openclaw.git
 git fetch openclaw
 git merge openclaw/main
 
-# Resolve any conflicts, then rebuild
+# Resolve any conflicts, then rebuild and upload
 npm pack
-cp openclaw-*.tgz ../control-plane/assets/openclaw.tgz
+aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
 ```
 
 ### How It Works
 
 When an EC2 instance launches:
 1. `user_data.sh` runs on boot
-2. Downloads `openclaw.tgz` from `https://cloudbot-ai.com/assets/openclaw.tgz`
+2. Downloads `openclaw.tgz` from S3 (`s3://cloudbot-moltbot-assets/openclaw.tgz`)
 3. Installs via `npm install -g /tmp/openclaw.tgz`
 4. API keys are set in `/etc/openclaw.env`
 5. OpenClaw gateway starts as a systemd service
@@ -318,17 +311,13 @@ sudo cat /etc/openclaw.env
 │  └──────────────────┘         └──────────────────┘                     │
 │           │                            ▲                                │
 │           │                            │                                │
-│           │                   ┌────────┴────────┐                       │
-│           │                   │  User Browser   │                       │
-│           │                   │                 │                       │
-│           │                   │ • React Frontend│                       │
-│           │                   │ • VNC Client    │                       │
-│           │                   │ • Chat UI       │                       │
-│           │                   └─────────────────┘                       │
-│           │                                                             │
-│  Assets served from Railway:                                            │
-│  • /assets/openclaw.tgz (CloudBot tarball)                              │
-│  • /assets/wallpaper.jpg                                                │
+│  ┌────────┴─────────┐        ┌────────┴────────┐                       │
+│  │    AWS S3        │        │  User Browser   │                       │
+│  │                  │        │                 │                       │
+│  │ cloudbot-        │        │ • React Frontend│                       │
+│  │ moltbot-assets/  │        │ • VNC Client    │                       │
+│  │ • openclaw.tgz   │        │ • Chat UI       │                       │
+│  └──────────────────┘        └─────────────────┘                       │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -340,7 +329,7 @@ sudo cat /etc/openclaw.env
 | PostgreSQL Database | Railway (Plugin) | Auto-provisioned |
 | Redis Cache | Railway (Plugin) | Auto-provisioned |
 | EC2 Instances | AWS eu-central-1 | Dynamic IPs |
-| CloudBot Tarball | Railway (static) | https://cloudbot-ai.com/assets/openclaw.tgz |
+| CloudBot Tarball | AWS S3 | s3://cloudbot-moltbot-assets/openclaw.tgz |
 | Wallpaper Asset | Railway (static) | https://cloudbot-ai.com/assets/wallpaper.jpg |
 
 ### Railway Deployment
@@ -481,12 +470,8 @@ cd cloudbot
 pnpm install
 npm pack
 
-# 2. Copy to assets and deploy
-cp openclaw-*.tgz ../control-plane/assets/openclaw.tgz
-cd ..
-git add control-plane/assets/openclaw.tgz cloudbot
-git commit -m "Update CloudBot"
-git push origin main
+# 2. Upload to S3
+aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
 ```
 
 **Note**: Existing instances keep the old version. Only **new instances** get updates.
@@ -531,14 +516,14 @@ sudo systemctl restart openclaw
 
 ### Asset Files
 
-The control plane serves static assets that EC2 instances download:
+EC2 instances download CloudBot from S3:
 
-| Asset | Path | Source |
-|-------|------|--------|
-| CloudBot | `/assets/openclaw.tgz` | `control-plane/assets/openclaw.tgz` |
-| Wallpaper | `/assets/wallpaper.jpg` | `control-plane/cloudbot-wallpaper.jpg` |
+| Asset | Location | Source |
+|-------|----------|--------|
+| CloudBot | `s3://cloudbot-moltbot-assets/openclaw.tgz` | Built from `cloudbot/` directory |
+| Wallpaper | Railway static | `control-plane/cloudbot-wallpaper.jpg` |
 
-These are copied into the Docker image via the `assets/` folder and served by FastAPI.
+The CloudBot tarball is uploaded to S3 after building from the `cloudbot/` fork.
 
 ### Environment Differences
 
