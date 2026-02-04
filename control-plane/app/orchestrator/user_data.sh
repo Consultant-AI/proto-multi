@@ -839,7 +839,7 @@ WorkingDirectory=/root/cloudbot-workspace
 Environment=DISPLAY=:99
 Environment=HOME=/root
 Environment=OPENCLAW_GATEWAY_PASSWORD=cloudbot-gateway-secret
-Environment=NODE_OPTIONS=--max-old-space-size=768
+Environment=NODE_OPTIONS=--max-old-space-size=1024
 ExecStart=/usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password
 Restart=always
 RestartSec=5
@@ -896,7 +896,7 @@ ss -tlnp | grep 18789 && echo "OpenClaw listening on 18789: OK" || {
 
     echo "Starting OpenClaw gateway directly..."
     cd /root/cloudbot-workspace
-    DISPLAY=:99 HOME=/root NODE_OPTIONS="--max-old-space-size=768" nohup /usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password > /var/log/openclaw-direct.log 2>&1 &
+    DISPLAY=:99 HOME=/root NODE_OPTIONS="--max-old-space-size=1024" nohup /usr/local/bin/openclaw gateway --verbose --bind lan --port 18789 --auth password > /var/log/openclaw-direct.log 2>&1 &
     OPENCLAW_PID=$!
     echo "Started OpenClaw gateway directly with PID: $OPENCLAW_PID"
 

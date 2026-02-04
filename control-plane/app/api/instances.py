@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import List, Optional, Union, Dict
 from app.db.connection import get_db
@@ -54,10 +54,20 @@ async def _get_user_api_keys(user_id, db: AsyncSession) -> Dict[str, str]:
 
 
 # Request/Response models
+ALLOWED_INSTANCE_TYPES = {'t3.medium', 't3.large', 't3.xlarge'}
+
+
 class CreateInstanceRequest(BaseModel):
     name: Optional[str] = None
-    instance_type: str = 't3.micro'  # t3.micro, t3.small, t3.medium, t3.large, t3.xlarge
+    instance_type: str = 't3.large'  # t3.medium, t3.large, t3.xlarge
     api_keys: Optional[Dict[str, str]] = None  # Provider -> API key mapping
+
+    @field_validator('instance_type')
+    @classmethod
+    def validate_instance_type(cls, v: str) -> str:
+        if v not in ALLOWED_INSTANCE_TYPES:
+            raise ValueError(f'Invalid instance type: {v}. Must be one of: {", ".join(sorted(ALLOWED_INSTANCE_TYPES))}')
+        return v
 
 
 class InstanceResponse(BaseModel):

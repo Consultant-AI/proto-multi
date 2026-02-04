@@ -159,7 +159,7 @@ exec /tmp/cloudbot-setup.sh
         self,
         user_id: str,
         instance_name: Optional[str] = None,
-        instance_type: str = 't3.small',
+        instance_type: str = 't3.large',
         api_keys: Dict[str, str] = None
     ) -> Dict[str, Any]:
         """Provision a new EC2 instance"""
