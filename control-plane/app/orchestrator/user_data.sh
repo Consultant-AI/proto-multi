@@ -747,11 +747,6 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
       "workspace": "/root/cloudbot-workspace",
       "model": {
         "primary": "anthropic/claude-sonnet-4-5-20250929"
-      },
-      "models": {
-        "anthropic/claude-sonnet-4-5-20250929": {
-          "params": { "thinking": "off" }
-        }
       }
     },
     "list": [
