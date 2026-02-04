@@ -151,6 +151,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
   const currentRunIdRef = useRef<string | null>(null); // Track current run for streaming
   const pendingRequestsRef = useRef<Map<string, string>>(new Map()); // Track pending requests by id -> method
   const historyLoadedSessionRef = useRef<string | null>(null); // Track which session's history has been loaded
+  const handleAvatarSpeakRef = useRef<((text: string) => void) | null>(null); // Ref for avatar speech to avoid stale closures
 
   // Update sessionKeyRef when controlled prop changes
   // Track previous session key to detect actual session changes vs reconnections
@@ -416,6 +417,11 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
       speakWithBrowserTTS(text);
     }
   }, [avatarEnabled, autoSpeak, speakWithBrowserTTS]);
+
+  // Keep ref updated for use in WebSocket handler (avoids stale closure)
+  useEffect(() => {
+    handleAvatarSpeakRef.current = handleAvatarSpeak;
+  }, [handleAvatarSpeak]);
 
   const handleSpeakingEnd = useCallback(() => {
     setIsSpeaking(false);
@@ -1107,8 +1113,8 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                 timestamp: new Date(),
               },
             ]);
-            // Trigger avatar to speak the response
-            handleAvatarSpeak(content);
+            // Trigger avatar to speak the response (use ref to avoid stale closure)
+            handleAvatarSpeakRef.current?.(content);
             setLoading(false);
             // Refresh sessions list to update derived titles after first message
             const sessionsRefreshId = generateId();
@@ -1136,7 +1142,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                   timestamp: new Date(),
                 },
               ]);
-              handleAvatarSpeak(streamedContent);
+              handleAvatarSpeakRef.current?.(streamedContent);
               setLoading(false);
               // Refresh sessions list to update derived titles after first message
               const sessionsRefreshId = generateId();
@@ -1186,7 +1192,7 @@ const ChatInterface = forwardRef<ChatInterfaceRef, ChatInterfaceProps>(({
                   timestamp: new Date(),
                 },
               ]);
-              handleAvatarSpeak(content);
+              handleAvatarSpeakRef.current?.(content);
               setLoading(false);
               streamingTextRef.current = ''; // Reset after use
               currentRunIdRef.current = null;
