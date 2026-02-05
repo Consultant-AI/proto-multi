@@ -334,7 +334,7 @@ sudo cat /etc/openclaw.env
 
 ### Railway Deployment
 
-The control plane is deployed on Railway with automatic deployments from the main branch.
+The control plane is deployed on Railway. Deployments are **manual** via `railway up` (not auto-deploy from GitHub).
 
 #### Initial Setup
 
@@ -593,26 +593,68 @@ railway run alembic upgrade head
 
 ### CI/CD Flow
 
+**Important:** Railway does NOT auto-deploy from GitHub. Deployments are manual via `railway up`.
+
 ```
-Developer pushes to main
+Developer makes changes
         │
-        ▼
-Railway detects push
+        ├── CloudBot changes?
+        │       │
+        │       ├── cd cloudbot && pnpm install && npm pack
+        │       └── aws s3 cp openclaw-*.tgz s3://cloudbot-moltbot-assets/openclaw.tgz
         │
-        ▼
-Docker build (Dockerfile)
-├── Stage 1: Build React frontend
-└── Stage 2: Python backend + frontend dist
+        ├── git add, commit, push to GitHub
         │
-        ▼
-Health check (/health endpoint)
-        │
-        ▼
-Traffic switched to new container
-        │
-        ▼
-Old container terminated
+        └── cd control-plane && railway up    ◄── MANUAL DEPLOY
+                │
+                ▼
+        Docker build (Dockerfile)
+        ├── Stage 1: Build React frontend
+        └── Stage 2: Python backend + frontend dist
+                │
+                ▼
+        Health check (/health endpoint)
+                │
+                ▼
+        Traffic switched to new container
+                │
+                ▼
+        Old container terminated
 ```
+
+### Instance Types
+
+The frontend offers three instance sizes that map directly to EC2 instance types:
+
+| Frontend Label | EC2 Type | Specs | Approx Cost |
+|----------------|----------|-------|-------------|
+| Light | t3.medium | 2 vCPU, 4GB RAM | ~$0.04/hr |
+| Regular (default) | t3.large | 2 vCPU, 8GB RAM | ~$0.08/hr |
+| Pro | t3.xlarge | 4 vCPU, 16GB RAM | ~$0.17/hr |
+
+The backend validates that only these three types are allowed. The default is `t3.large`.
+
+### OpenClaw Gateway Configuration
+
+The EC2 bootstrap script (`user_data.sh`) configures the OpenClaw gateway with:
+
+- **Model**: `anthropic/claude-sonnet-4-20250514` (Claude Sonnet 4) - must match an ID registered in the OpenClaw model registry
+- **Extended Thinking**: Disabled via `thinkingDefault: "off"` - required because extended thinking with streaming produces empty responses
+- **Allowed Origins**: `https://cloudbot-ai.com`, `http://localhost:5173`, `http://localhost:3000`
+- **Node.js Heap**: 1024MB (`--max-old-space-size=1024`)
+
+#### Model ID Requirements
+
+OpenClaw has an internal model registry (`cloudbot/src/agents/models-config.providers.ts`). The model ID in the config **must** match an entry in this registry. Currently registered Anthropic models:
+- `claude-sonnet-4-20250514` (Sonnet 4)
+- `claude-sonnet-4-5-20250929` (Sonnet 4.5)
+- `claude-opus-4-5-20251101` (Opus 4.5)
+
+Model aliases (e.g., `anthropic/claude-sonnet-4-5`) are defined in `cloudbot/src/config/defaults.ts` but the config should use the full provider/model-id format.
+
+#### WebSocket Proxy Origin Header
+
+The control plane's WebSocket proxy (`app/proxy/cloudbot.py`) must send an `Origin: https://cloudbot-ai.com` header when connecting to the OpenClaw gateway on EC2. Without this, the gateway rejects the connection with "origin not allowed".
 
 ### Monitoring
 
@@ -620,9 +662,18 @@ Old container terminated
 - **EC2 Debug Server**: `http://<ip>:8080/debug`
 - **CloudWatch**: AWS metrics for EC2 instances
 
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Chat shows "Thinking..." forever | Extended thinking enabled | Set `thinkingDefault: "off"` in OpenClaw config |
+| "origin not allowed" error | Missing Origin header on WS proxy | Ensure `additional_headers={"Origin": "https://cloudbot-ai.com"}` in `cloudbot.py` |
+| "Unknown model" error | Model ID not in OpenClaw registry | Use exact registered model ID (check `models-config.providers.ts`) |
+| Instance stuck on "provisioning" | user_data.sh still running | Wait 3-5 min, check `http://<ip>:8080/log` |
+| OOM crash on instance | Node.js heap too small | Increase `--max-old-space-size` in user_data.sh |
+
 ---
 
 ## License
 
 MIT
-# Updated Wed Feb  4 19:57:01 IST 2026
