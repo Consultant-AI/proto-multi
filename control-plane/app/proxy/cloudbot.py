@@ -69,7 +69,8 @@ async def proxy_cloudbot(
             ping_interval=10,  # More frequent pings to keep connection alive
             ping_timeout=20,
             close_timeout=5,
-            max_size=10 * 1024 * 1024  # 10MB max message size
+            max_size=10 * 1024 * 1024,  # 10MB max message size
+            additional_headers={"Origin": "https://cloudbot-ai.com"}
         ) as cloudbot_ws:
             logger.info(f"Connected to CloudBot at {cloudbot_url}")
 
