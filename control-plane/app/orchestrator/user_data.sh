@@ -734,7 +734,8 @@ cat > /root/.openclaw/openclaw.json <<'OPENCLAWCFG'
       "password": "cloudbot-gateway-secret"
     },
     "controlUi": {
-      "dangerouslyDisableDeviceAuth": true
+      "dangerouslyDisableDeviceAuth": true,
+      "allowedOrigins": ["https://cloudbot-ai.com", "http://localhost:5173", "http://localhost:3000"]
     }
   },
   "agents": {
